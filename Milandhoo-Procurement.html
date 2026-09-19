@@ -85,6 +85,53 @@ code.url{display:block;word-break:break-all;background:#f1f5f3;padding:8px;borde
   body.printing #printroot{display:block}
   #printroot .page{box-shadow:none;margin:0}
   header#top,#banner,.noprint{display:none!important}
+}
+
+/* grid items default to min-width:auto, so the fixed-width A4 preview widens the
+   column past the viewport and defeats the fit-to-width scaler */
+.split>*{min-width:0}
+.modal{min-width:0}
+img{max-width:100%}
+
+@media only screen and (max-width:760px){
+  header#top{padding:6px 12px;gap:8px;min-height:0}
+  header#top .brand{flex:1 1 0;min-width:0;font-size:15px;padding:6px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  header#top .right{order:2}
+  header#top nav{order:3;flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;gap:0;scrollbar-width:none}
+  header#top nav::-webkit-scrollbar{display:none}
+  header#top a{padding:10px 12px;white-space:nowrap;font-size:14px}
+  main{padding:12px}
+  h1{font-size:19px}
+  .card{padding:12px;margin-bottom:12px}
+  .row{gap:10px}
+  .row>*{flex:1 1 150px;min-width:0}
+  .row>.grow,.row>h1,.row>h2,.row>h3{flex:1 1 100%}
+  .row>.chip,.row>.btn{flex:0 0 auto}
+  .row>.right{text-align:left}
+  input[type=text],input[type=number],input[type=date],input[type=password],input[type=email],select,textarea{font-size:16px}
+  input[type=file]{max-width:100%}
+  .btn{padding:10px 14px;min-height:42px}
+  .btn.small{padding:6px 10px;min-height:34px;font-size:13px}
+  .grid2{grid-template-columns:1fr}
+  .kv{grid-template-columns:1fr;gap:0}
+  .kv div:nth-child(odd){font-size:12.5px;margin-top:8px}
+  /* wide tables scroll sideways; the edge shading fades out at the ends of the scroll */
+  table.t{display:block;overflow-x:auto;
+    background-image:linear-gradient(to right,#fff,#fff),linear-gradient(to left,#fff,#fff),linear-gradient(to right,rgba(0,0,0,.16),rgba(0,0,0,0)),linear-gradient(to left,rgba(0,0,0,.16),rgba(0,0,0,0));
+    background-position:0 0,100% 0,0 0,100% 0;background-repeat:no-repeat;
+    background-size:20px 100%,20px 100%,12px 100%,12px 100%;
+    background-attachment:local,local,scroll,scroll}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap;padding:9px 11px}
+  .steps .s{flex:1 1 84px;font-size:11.5px;padding:5px 3px}
+  .previewbox{padding:8px}
+  .modal{padding:14px}
+  .modal-actions{flex-wrap:wrap}
+  .modal-actions .btn{flex:1 1 auto}
+  .toasts{left:12px;right:12px;bottom:12px}
+  .toast{max-width:none}
+  .login{max-width:none;margin:24px auto}
 }</style>
 </head>
 <body>
