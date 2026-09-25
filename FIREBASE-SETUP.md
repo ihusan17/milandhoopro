@@ -10,33 +10,40 @@ The program uses the council's Firebase project **milandhoopro** for two things:
 
 ## One-time setup (about 5 minutes)
 
-### A. Create the office sign-in
+### A. Sign-in methods
+
+The program opens on a sign-in screen. Staff sign in with **Google**, or with
+an e-mail and password.
 
 1. Open <https://console.firebase.google.com> and choose **milandhoopro**.
-2. Go to **Build > Authentication > Get started**. Under **Sign-in method**,
-   turn on **Email/Password** (the first switch only) and save.
-3. Under **Users**, click **Add user**. Enter the office e-mail and a strong
-   password. Everyone who uses the program signs in with this account. You can
-   add more users if you want.
-4. Under **Authentication > Settings > User actions**, untick **Enable create
-   (sign-up)**. This stops anyone else from creating accounts.
+2. Go to **Build > Authentication > Sign-in method**. Make sure **Google** is
+   turned on. You can also turn on **Email/Password** if you want it.
+3. Go to **Authentication > Settings > Authorized domains** and add
+   `mcprocurement.edgeone.dev`, plus any other address the program is opened
+   from. Without this, Google sign-in shows "not allowed on … yet".
+4. If you use e-mail and password: under **Users**, click **Add user** for each
+   person. Then, under **Settings > User actions**, untick **Enable create
+   (sign-up)**.
+
+Anyone with a Google account can complete the Google sign-in step. They only
+get in if their e-mail is listed in the rules (step B). Anyone else sees "The
+account … is not allowed to use this program".
 
 ### B. Publish the security rules
 
 1. Go to **Build > Firestore Database > Rules**.
 2. Paste in the whole of `firestore.rules`. In the line
    `request.auth.token.email in ['office@example.com']`, replace
-   `office@example.com` with the e-mail from step A3. To allow several
-   accounts, list them all, for example
-   `['procurement@council.mv', 'finance@council.mv']`.
+   `office@example.com` with the e-mail address of each person who may use
+   the program: their Google (Gmail) address, or the e-mail and password account
+   you created. For example
+   `['procurement@council.mv', 'someone@gmail.com']`.
 3. Click **Publish**.
 
 ### C. Sign in, on the PC first
 
-1. **On the PC that has the correct data**, open the program and go to
-   **Settings & backup > Sync between devices**. Sign in with the office
-   account. Because the cloud is empty, the PC's data is uploaded.
-2. **On the phone**, open the same web address and sign in the same way. When
+1. **On the PC that has the correct data**, open the program and sign in on the first screen. Because the cloud is empty, the PC's data is uploaded.
+2. **On the phone**, open the same web address and sign in. When
    it asks which data to use, choose **Use the cloud data**. The phone now shows
    the PC's data.
 
