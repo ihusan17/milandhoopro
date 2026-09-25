@@ -3,7 +3,8 @@ rules_version = '2';
 // Milandhoo Council procurement - vendor quotations.
 // rfqs/{id}    : the RFQ behind a short vendor link (?q=<id>), written by the office.
 // replies/{id} : the vendor's submitted quote for that link, written once by the vendor.
-// Nothing can be listed, changed or deleted, so a reply is only readable by
+// office/*     : the office's own data, synced between computers and phones.
+// Nothing in rfqs/replies can be listed, changed or deleted, so a reply is only readable by
 // whoever holds its random link id (the vendor and the council office).
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -26,6 +27,14 @@ service cloud.firestore {
         && request.resource.data.reply.size() < 900000
         && request.resource.data.at is string;
       allow list, update, delete: if false;
+    }
+
+    // The office data shared by every signed-in device (Settings > Sync between devices).
+    // Only the e-mail addresses listed here can read or change it: replace the example
+    // with the office account(s) created under Authentication > Users.
+    match /office/{doc} {
+      allow read, write: if request.auth != null
+        && request.auth.token.email in ['office@example.com'];
     }
 
     match /{document=**} {
