@@ -1,39 +1,34 @@
-# Online vendor replies: setup (EdgeOne Pages)
+# Online vendor replies: setup (Firebase)
 
 Vendors get a short link such as `https://mcprocurement.edgeone.dev/?q=k7pq2x`.
-They open it, enter their rates, sign and press **Submit**. The quote is then
-recorded in the program by itself: the RFQ shows **Received**, and the quote
-appears in **Compare quotes**.
+They open it, enter their rates, sign and press **Submit**. The quote is saved
+in the council's Firebase project (**milandhoopro**, default Firestore
+database). The program then records it by itself: the RFQ shows **Received**,
+and the quote appears in **Compare quotes**.
 
-The replies are stored by `functions/api/mq.js`, a small edge function that runs
-on the same EdgeOne Pages site, in EdgeOne's KV storage.
+The program already contains the project's web settings (project id and web
+API key). These are meant to be public; the security rules below are what
+protect the data.
 
-## One-time setup (about 3 minutes)
+## One-time setup: publish the security rules
 
-1. In the EdgeOne Pages console, open **KV Storage**. Enable it if asked, and
-   create a namespace, for example `milandhoo-quotes`.
-2. Open the **mcprocurement** project and go to **KV Storage > Bind namespace**.
-   Choose the namespace you created, and type the variable name **`MQ_KV`**
-   exactly like this.
-3. Deploy again. The function only goes live when the whole folder, including
-   the `functions` folder, is deployed:
-   - **If the project is connected to GitHub:** redeploy it from the console.
-     The latest push also triggers a new build.
-   - **If you upload files by hand:** upload the whole repository folder, not
-     just `index.html`.
-4. Open the program and go to **Settings & backup > Online vendor replies**.
+1. Open <https://console.firebase.google.com>, choose **milandhoopro**, then
+   **Firestore Database > Rules**.
+2. Replace everything in the editor with the contents of `firestore.rules`, then
+   click **Publish**.
+3. Open the program and go to **Settings & backup > Online vendor replies**.
    Click **Test connection**. It should say "Connected".
 
-Optional: in the project's **Environment variables**, add `OFFICE_KEY` with a
-password, then redeploy and type the same password under Settings. With a key
-set, only the office can create links and read replies.
+Until the rules are published, Firestore refuses every request, and the program
+says so on the RFQ page.
 
 ## Day to day
 
 - Create an RFQ with **"Send to vendor"** and issue it. The RFQ page shows the
   short link, with **Copy link** and **Share on WhatsApp** buttons.
-- While the program is open, it checks for replies every 15 seconds. A new
-  quote can take up to a minute to arrive, because the KV storage spreads
-  updates across EdgeOne's servers.
+- While the program is open, it checks for replies every 15 seconds. When one
+  arrives, you see "Quote received from …".
 - A vendor can submit only once. To let a vendor change a quote, use
   **Revise…** on the RFQ, which gives it a new link.
+- Every link and reply can be seen in the Firebase console under
+  **Firestore Database > Data**, in the `rfqs` and `replies` collections.

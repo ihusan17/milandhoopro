@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Milandhoo Council procurement - vendor quotations.
+// rfqs/{id}    : the RFQ behind a short vendor link (?q=<id>), written by the office.
+// replies/{id} : the vendor's submitted quote for that link, written once by the vendor.
+// Nothing can be listed, changed or deleted, so a reply is only readable by
+// whoever holds its random link id (the vendor and the council office).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /rfqs/{id} {
+      allow get: if true;
+      allow create: if id.matches('[a-z0-9]{6,16}')
+        && request.resource.data.keys().hasOnly(['rfq', 'at'])
+        && request.resource.data.rfq is string
+        && request.resource.data.rfq.size() < 50000
+        && request.resource.data.at is string;
+      allow list, update, delete: if false;
+    }
+
+    match /replies/{id} {
+      allow get: if true;
+      allow create: if exists(/databases/$(database)/documents/rfqs/$(id))
+        && request.resource.data.keys().hasOnly(['reply', 'at'])
+        && request.resource.data.reply is string
+        && request.resource.data.reply.size() < 900000
+        && request.resource.data.at is string;
+      allow list, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
