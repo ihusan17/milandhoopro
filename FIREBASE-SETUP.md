@@ -12,22 +12,26 @@ The program uses the council's Firebase project **milandhoopro** for two things:
 
 ### A. Sign-in methods
 
-The program opens on a sign-in screen. Staff sign in with **Google**, or with
-an e-mail and password.
+The program opens on a sign-in screen. Staff can:
+
+- sign in with **Google**, or
+- use any e-mail address (Gmail, Outlook, a council address and so on): press
+  **Create account** once to choose a password, then use **Sign in**. There is
+  also **Forgot password?**, which e-mails a reset link.
 
 1. Open <https://console.firebase.google.com> and choose **milandhoopro**.
-2. Go to **Build > Authentication > Sign-in method**. Make sure **Google** is
-   turned on. You can also turn on **Email/Password** if you want it.
+2. Go to **Build > Authentication > Sign-in method**. Turn on **Google** and
+   **Email/Password** (the first switch only).
 3. Go to **Authentication > Settings > Authorized domains** and add
    `mcprocurement.edgeone.dev`, plus any other address the program is opened
    from. Without this, Google sign-in shows "not allowed on … yet".
-4. If you use e-mail and password: under **Users**, click **Add user** for each
-   person. Then, under **Settings > User actions**, untick **Enable create
-   (sign-up)**.
+4. Under **Authentication > Settings > User actions**, keep **Enable create
+   (sign-up)** ticked. **Create account** needs it.
 
-Anyone with a Google account can complete the Google sign-in step. They only
-get in if their e-mail is listed in the rules (step B). Anyone else sees "The
-account … is not allowed to use this program".
+Anyone can create an account, but only the e-mail addresses listed in the
+rules (step B) can see or change the data. Anyone else sees "The account … is
+not allowed to use this program". To let a new staff member in, add their
+e-mail to the list and publish the rules again.
 
 ### B. Publish the security rules
 
