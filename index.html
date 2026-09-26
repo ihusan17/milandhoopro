@@ -457,7 +457,7 @@ header#top a.mo,.tb-mi.mo{display:none}
 .tb-res{left:0;right:auto;width:100%;top:calc(100% + 8px)}
 .tb-ph{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 4px}
 .tb-ph h4{margin:0;font-size:15px}
-.lnk{border:0;background:none;color:var(--brand);font:600 13px inherit;cursor:pointer;padding:4px}
+.lnk{border:0;background:none;color:var(--brand);font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;padding:4px}
 .tb-item{display:flex;gap:12px;align-items:flex-start;padding:10px;border-radius:12px;color:var(--fg);text-decoration:none}
 .tb-item:hover{background:var(--hover)}
 .tb-item>span:last-child{min-width:0}
@@ -475,7 +475,7 @@ header#top a.mo,.tb-mi.mo{display:none}
 .tb-sec{padding:6px 10px 10px}
 .tb-sec small{display:block;margin-bottom:6px}
 .seg{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--hover)}
-.seg button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;border:0;border-radius:9px;background:none;color:var(--muted);font:600 13.5px inherit;cursor:pointer}
+.seg button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;border:0;border-radius:9px;background:none;color:var(--muted);font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer}
 .seg button svg{width:16px;height:16px}
 .seg button.on{background:var(--card);color:var(--fg);box-shadow:var(--shadow)}
 .tb-sync{padding:6px 10px;font-size:12px;color:var(--muted)}
@@ -733,6 +733,23 @@ header#top a.on,header#top a.on:hover{background:linear-gradient(135deg,rgba(255
  .screen>h1:first-child,.screen>.row:first-child{padding:20px 18px;margin-bottom:16px}
  .screen>h1:first-child::after,.screen>.row:first-child::after{display:none}
 }
+
+/* Management group in the side bar */
+header#top nav .grp{display:flex;align-items:center;gap:12px;width:100%;height:46px;padding:0 14px;border:0;border-radius:12px;background:none;color:var(--nav-fg);font-family:inherit;font-weight:500;font-size:14.5px;line-height:1;text-align:left;cursor:pointer}
+header#top nav .grp::before{content:"";flex:none;width:19px;height:19px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat;--ic:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='7' width='18' height='13' rx='2'/%3E%3Cpath d='M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18'/%3E%3C/svg%3E")}
+header#top nav .grp:hover{background:rgba(255,255,255,.12);color:#fff}
+header#top nav .grp.on2{color:#fff;font-weight:600}
+header#top nav .grp:focus-visible{outline:2px solid #90E1CE;outline-offset:2px}
+.grp .gl{flex:1}
+.grp .car{transform:rotate(-90deg);transition:transform .2s ease;opacity:.85}
+.grp .car svg{width:16px;height:16px}
+.grp.open .car{transform:rotate(0)}
+.subnav{display:grid;gap:4px;margin:2px 0 6px 23px;padding-left:12px;border-left:1px solid rgba(255,255,255,.22)}
+.subnav[hidden]{display:none}
+header#top .subnav a{height:40px;padding:0 12px;font-size:14px}
+header#top .subnav a::before{width:17px;height:17px}
+@media screen and (max-width:720px){header#top nav .grp,header#top nav .subnav{display:none!important}}
+@media (prefers-reduced-motion:reduce){.grp .car{transition:none}}
 </style>
 </head>
 <body>
@@ -908,7 +925,9 @@ async function SEDIT(s){let v=s||{},nm=o("input",{type:"text",dir:"auto",value:v
 async function REDIT(r){let v=r||{perms:[],level:3,limit:null},nm=o("input",{type:"text",value:v.name||""}),lv=o("select",{},[1,2,3,4,5].map(k=>bt(k,"Level "+k+" — "+["View only","Basic","Standard","Senior","Full control"][k-1],k===v.level))),lim=o("input",{type:"text",inputmode:"decimal",value:v.limit==null?"":_e(v.limit),placeholder:"No limit"}),cbs=PERMS.map(([k,d])=>{let c=o("input",{type:"checkbox",checked:v.perms.includes(k),disabled:!!v.fixed});return{k,c,node:o("label",{class:"chk"},c,o("span",{},d))}}),out=null,res=await Mt(r?"Edit role":"Add role",[o("div",{class:"grid2"},o("div",{},o("label",{},"Role name"),nm),o("div",{},o("label",{},"Authorisation level"),lv)),o("div",{style:{marginTop:"10px"}},o("label",{},"Approval limit (MVR): the largest request this role may authorise, or quote it may award. Leave empty for no limit."),lim),o("label",{style:{marginTop:"14px"}},"Permissions"),o("div",{class:"chks"},cbs.map(x=>x.node)),v.fixed?o("p",{class:"muted small"},"The Administrator role always has every permission."):null],[...(r&&!r.fixed?[{label:"Delete",value:"del"}]:[]),{label:"Cancel",value:!1},{label:r?"Save":"Add role",primary:!0,value:!0,onClick:()=>{let l=yn(lim.value);if(!nm.value.trim()){xt("Type the role name","err");return!1}if(Number.isNaN(l)){xt("Approval limit: type an amount like 50000","err");return!1}out={name:nm.value.trim().slice(0,60),level:Number(lv.value),limit:l,perms:v.fixed?PERMS.map(x=>x[0]):cbs.filter(x=>x.c.checked).map(x=>x.k)}}}]);if(res==="del"){if(STF().some(s=>s.role===r.id)){xt("Move the staff in this role to another role first","err");return}await jt(`Delete the role ${r.name}?`,"Delete")&&await ot(()=>{PCHK("staff");Z.roles=ROLES().filter(x=>x!==r)},"Role deleted");return}if(!res||!out)return;let ok=!1;await ot(()=>{PCHK("staff");ok=!0;if(r){let old={...r};Object.assign(r,out);try{STF().length&&STGUARD(STF())}catch(er){Object.assign(r,old);ok=!1;throw er}}else ROLES().push({id:"r"+Date.now().toString(36),...out})},r?"Role saved":"Role added");ok&&ACCSYNC()}
 
 /* ---- side bar and top bar ---- */
-function aa(){let h=location.hash,T=[["#/dashboard","Dashboard",/^#?\/?(dashboard(\/.*)?)?$/,""],["#/cases","Procurement",/^#\/(cases|case\/|new)/,""],["#/projects","Projects",/^#\/(projects?|plan|worklog)(\/|$)/,""],["#/budget","Finance",/^#\/budget/,""],["#/vendors","Vendors",/^#\/vendors?(\/|$)/,"sub"],["#/products","Products",/^#\/products?(\/|$)/,"sub"],["#/staff","Staff",/^#\/staff/,"sub"],["#/settings","Settings",/^#\/settings/,"sub"]];xe("#top").replaceChildren(o("div",{class:"brand"},o("div",{class:"logo",role:"img","aria-label":"SHMC logo"}),o("div",{},"Milandhoo Council",o("small",{},"Procurement"))),o("nav",{"aria-label":"Main"},T.map(([u,l,re2,c])=>o("a",{href:u,class:[re2.test(h)?"on":"",c].join(" ").trim()},l)),o("a",{href:"#more",class:"mo",onclick:e=>{e.preventDefault();e.stopPropagation();TBP("me")}},"More")),PERM("request")?o("div",{class:"sidecard"},SV(ICO.bolt,"ico"),o("b",{},"Need something?"),o("p",{},"Raise a purchase request in a few seconds."),o("button",{class:"btn",onclick:()=>QRM()},"Quick request")):null);TBR()}
+function aa(){let h=location.hash,T=[["#/dashboard","Dashboard",/^#?\/?(dashboard(\/.*)?)?$/,""],["#/cases","Procurement",/^#\/(cases|case\/|new)/,""],["#/projects","Projects",/^#\/(projects?|plan|worklog)(\/|$)/,""],["#/budget","Finance",/^#\/budget/,""]],M=[["#/vendors","Vendors",/^#\/vendors?(\/|$)/],["#/products","Products",/^#\/products?(\/|$)/],...(PERM("staff")?[["#/staff","Staff",/^#\/staff/]]:[])],mOn=M.some(x=>x[2].test(h)),open=mOn||MGO(),ST=/^#\/settings/.test(h);xe("#top").replaceChildren(o("div",{class:"brand"},o("div",{class:"logo",role:"img","aria-label":"SHMC logo"}),o("div",{},"Milandhoo Council",o("small",{},"Procurement"))),o("nav",{"aria-label":"Main"},T.map(([u,l,re2,c])=>o("a",{href:u,class:[re2.test(h)?"on":"",c].join(" ").trim()},l)),o("button",{type:"button",class:"grp"+(mOn?" on2":"")+(open?" open":""),"aria-expanded":String(open),"aria-controls":"nav-mg",onclick:()=>{MGS(!open);aa()}},o("span",{class:"gl"},"Management"),SV(ICO.caret,"car")),o("div",{class:"subnav",id:"nav-mg",hidden:!open},M.map(([u,l,re2])=>o("a",{href:u,class:re2.test(h)?"on":""},l))),o("a",{href:"#/settings",class:(ST?"on ":"")+"sub"},"Settings"),o("a",{href:"#more",class:"mo",onclick:e=>{e.preventDefault();e.stopPropagation();TBP("me")}},"More")),PERM("request")?o("div",{class:"sidecard"},SV(ICO.bolt,"ico"),o("b",{},"Need something?"),o("p",{},"Raise a purchase request in a few seconds."),o("button",{class:"btn",onclick:()=>QRM()},"Quick request")):null);TBR()}
+function MGO(){try{return localStorage.getItem("mq-mgmt")==="1"}catch{return!1}}
+function MGS(v){try{localStorage.setItem("mq-mgmt",v?"1":"0")}catch{}}
 function TBP(k){POPC=POPC===k?null:k;TBR()}
 function TBINIT(){document.addEventListener("click",e=>{POPC&&!e.target.closest(".tb-pop")&&(POPC=null,TBR())});document.addEventListener("keydown",e=>{e.key==="Escape"&&POPC&&(POPC=null,TBR())})}
 function TBR(){let tb=document.getElementById("topbar");if(!tb)return;if(!SYS().refresh&&/login/.test(location.hash)){tb.replaceChildren();return}let me=ME(),N=NOTIF(),seen=SEENG(),un=N.filter(x=>!seen.has(x.id)).length,dark=document.documentElement.dataset.theme==="dark",q=o("input",{type:"search",placeholder:"Search cases, projects, vendors, products…","aria-label":"Search",dir:"auto"}),res=o("div",{class:"tb-pop tb-res",hidden:!0});q.addEventListener("input",()=>SRCH(q.value,res));q.addEventListener("keydown",e=>{e.key==="Escape"&&(q.value="",res.hidden=!0);if(e.key==="Enter"){let a=res.querySelector("a");a&&(location.hash=a.getAttribute("href"),res.hidden=!0,q.blur())}});q.addEventListener("blur",()=>setTimeout(()=>{res.hidden=!0},150));tb.replaceChildren(o("a",{href:"#/dashboard",class:"tb-logo","aria-label":"Dashboard"}),o("div",{class:"tb-search"},SV(ICO.search,"si"),q,res),o("div",{class:"tb-right"},o("button",{type:"button",class:"tb-btn tb-theme",title:dark?"Light mode":"Dark mode","aria-label":dark?"Switch to light mode":"Switch to dark mode",onclick:()=>{THS(dark?"light":"dark");TBR()}},SV(dark?ICO.sun:ICO.moon)),o("div",{class:"tb-wrap"},o("button",{type:"button",class:"tb-btn","aria-label":"Notifications"+(un?`, ${un} new`:""),"aria-expanded":String(POPC==="bell"),onclick:e=>{e.stopPropagation();TBP("bell")}},SV(ICO.bell),un?o("span",{class:"tb-badge"},un>9?"9+":String(un)):null),POPC==="bell"?NPOP(N,seen):null),o("div",{class:"tb-wrap"},o("button",{type:"button",class:"tb-me","aria-label":"Account menu","aria-expanded":String(POPC==="me"),onclick:e=>{e.stopPropagation();TBP("me")}},o("span",{class:"tb-av"},INI(me.name)),o("span",{class:"nm"},o("b",{dir:"auto"},me.name),o("small",{},me.role)),SV(ICO.caret,"caret")),POPC==="me"?MPOP(me,dark):null)))}

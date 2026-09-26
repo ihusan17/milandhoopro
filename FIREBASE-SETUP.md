@@ -57,7 +57,7 @@ the program keeps the sign-in list up to date (see D).
 
 ### D. Add your staff
 
-1. Open **Staff** in the side bar. Press **Add me as Administrator** first.
+1. Open **Management > Staff** in the side bar. Press **Add me as Administrator** first.
 2. Press **Add staff member** for each person: their name, the e-mail they sign
    in with (Google or e-mail and password), designation and **role**.
 3. Under **Roles & permissions** you can see and change what each role may do:
