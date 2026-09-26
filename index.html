@@ -666,6 +666,73 @@ body.vmode #topbar{display:none!important}
 /* English in Dhivehi-capable text uses the sans face on screen; Thaana still falls back to Faruma. Printed forms are untouched. */
 :is(main,#topbar,.modal,.toasts) [dir=auto]:not(.previewbox *):not(#printroot *){font-family:'Public Sans',system-ui,-apple-system,'Segoe UI',Roboto,'Faruma','Noto Sans Thaana',sans-serif}
 .tv td:first-child{min-width:190px}
+
+/* ===== Council teal theme (logo colours, gradient look) — overrides the indigo tokens above ===== */
+:root{--bg:#EEF6F3;--fg:#14201C;--muted:#5A6862;--label:#3D4C46;--line:#DDE7E3;--line2:#C6D5CF;--brand:#0B7F6D;--brand-d:#08453E;--card:#fff;--card2:#F4FAF8;--hover:#EAF6F2;--th:#F1F8F5;--ok:#15803D;--bad:#C0392B;
+ --grad-btn:linear-gradient(135deg,#12927C 0%,#0B7F6D 45%,#08564B 100%);--grad-fill:linear-gradient(90deg,#0B7F6D 0%,#3BBBA4 100%);
+ --nav-bg:radial-gradient(420px 340px at 0% 100%,rgba(59,187,164,.42),rgba(59,187,164,0) 70%),linear-gradient(180deg,#0C8271 0%,#0A6457 50%,#08453E 100%);--nav-fg:#DDF3EC;
+ --ring:rgba(59,187,164,.35);--shadow:0 1px 2px rgba(20,32,28,.04),0 8px 22px -14px rgba(8,69,62,.22);
+ --t1:#E3F5EF;--t1b:#C4EBE0;--t1i:#0B7F6D;--t2:#EAF7EF;--t2b:#CDEBD8;--t2i:#15803D;--t3:#E5F3F7;--t3b:#C8E4EE;--t3i:#0E6A8A;--t4:#FDEEEC;--t4b:#F6D2CD;--t4i:#C0392B;
+ --viz-line:#0B7F6D;--viz-grid:#E1ECE8;--hero:linear-gradient(105deg,#08564B 0%,#0B7F6D 45%,#3BBBA4 80%,#90E1CE 100%)}
+:root[data-theme=dark]{--bg:#081A17;--fg:#E1F1EC;--muted:#93ADA6;--label:#B7CDC6;--line:#1C3832;--line2:#2A4A42;--brand:#3BBBA4;--brand-d:#90E1CE;--card:#0F2420;--card2:#132B26;--hover:#163530;--th:#12302A;--ok:#4ADE80;--bad:#F87171;
+ --grad-btn:linear-gradient(135deg,#1A9C85 0%,#0B7F6D 55%,#08564B 100%);
+ --nav-bg:radial-gradient(420px 340px at 0% 100%,rgba(59,187,164,.22),rgba(59,187,164,0) 70%),linear-gradient(180deg,#07463E 0%,#063630 50%,#04241F 100%);
+ --ring:rgba(59,187,164,.45);--shadow:0 1px 2px rgba(0,0,0,.35);
+ --t1:#0F3129;--t1b:#1B4A40;--t1i:#90E1CE;--t2:#0F2A1D;--t2b:#17402B;--t2i:#86EFAC;--t3:#0E2A33;--t3b:#1A4250;--t3i:#7DD3FC;--t4:#34151A;--t4b:#4C1D24;--t4i:#FCA5A5;
+ --viz-line:#3BBBA4;--viz-grid:#1E3832;--hero:linear-gradient(105deg,#053A33 0%,#0A6457 45%,#15907C 80%,#3BBBA4 100%)}
+html{background:var(--bg)}
+body{background:radial-gradient(760px 380px at 100% 0%,rgba(144,225,206,.38),rgba(144,225,206,0) 70%),radial-gradient(640px 420px at 264px 100%,rgba(59,187,164,.14),rgba(59,187,164,0) 70%),linear-gradient(180deg,#E3F5EF 0,#EEF6F3 460px,#F1F7F5 100%) fixed}
+:root[data-theme=dark] body{background:radial-gradient(760px 380px at 100% 0%,rgba(59,187,164,.14),rgba(59,187,164,0) 70%),linear-gradient(180deg,#0A211D 0,#081A17 460px) fixed}
+#topbar{background:color-mix(in srgb,var(--bg) 82%,transparent)}
+
+/* side bar: logo teal gradient */
+header#top{background:var(--nav-bg);box-shadow:none}
+header#top .brand .logo{box-shadow:0 0 0 2px rgba(255,255,255,.75),0 6px 16px rgba(4,50,44,.4)}
+header#top .brand small{color:#C4EBE0}
+header#top a{color:var(--nav-fg)}
+header#top a:hover{background:rgba(255,255,255,.12);color:#fff}
+header#top a.on,header#top a.on:hover{background:linear-gradient(135deg,rgba(255,255,255,.28),rgba(255,255,255,.12));color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),0 8px 18px -10px rgba(4,40,35,.8)}
+.sidecard{background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.06));border-color:rgba(255,255,255,.22)}
+.sidecard .ico{background:rgba(144,225,206,.25);color:#fff}
+.sidecard p{color:#D6F1E9}
+.sidecard .btn{background:#fff;border-color:#fff;color:#08453E}
+.sidecard .btn:hover{background:#E3F5EF;color:#08453E}
+
+/* page headers: the council gradient banner */
+.screen>h1:first-child,.screen>.row:first-child{position:relative;overflow:hidden;padding:26px 30px;margin:4px 0 24px;border-radius:18px;color:#fff;background:var(--hero);box-shadow:0 14px 30px -18px rgba(8,86,75,.65)}
+.screen>h1:first-child,.screen>.row:first-child h1{color:#fff}
+.screen>h1:first-child::after,.screen>.row:first-child::after{display:block}
+.screen>.row:first-child .muted,.screen>.row:first-child p{color:rgba(255,255,255,.86)!important}
+.screen>.row:first-child .btn,.screen>.row:first-child .btn.primary{background:#fff;color:#08453E;border-color:rgba(255,255,255,.9);box-shadow:0 6px 16px -6px rgba(4,50,44,.45)}
+.screen>.row:first-child .btn:hover{background:#E3F5EF;color:#08453E}
+.screen>.row:first-child .btn.danger{color:#9B2C26}
+.screen>.row:first-child .datechip{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.35);color:#fff;box-shadow:none}
+.screen>.row:first-child .datechip svg{color:#fff}
+.screen>.row:first-child .tb-av{box-shadow:0 0 0 2px rgba(255,255,255,.7)}
+
+/* buttons, avatars, accents */
+.btn.primary{box-shadow:0 8px 18px -10px rgba(11,127,109,.75)}
+.btn.primary:hover{background:linear-gradient(135deg,#0B7F6D 0%,#0A6B5D 50%,#08453E 100%);color:#fff}
+.pill.on{box-shadow:0 6px 14px -8px rgba(11,127,109,.7)}
+.tb-av{background:linear-gradient(135deg,#0B7F6D,#3BBBA4)}
+.tb-item.unread b::after{background:#3BBBA4}
+.k-info{background:#D8F1EA;color:#0B7F6D}
+:root[data-theme=dark] .k-info{background:rgba(59,187,164,.18);color:#90E1CE}
+.chk input,.task input{accent-color:#0B7F6D}
+.abar{background:linear-gradient(90deg,#0B7F6D 0%,#3BBBA4 60%,#90E1CE 100%)}
+.abar .sp,.legend i.sp{background:#1E4D3A}
+.bsum i.a1{background:#0B7F6D}
+.kpi{background-image:linear-gradient(160deg,rgba(255,255,255,.55),rgba(255,255,255,0) 60%)}
+:root[data-theme=dark] .kpi{background-image:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,0) 60%)}
+.lch .ar{opacity:.14}
+:root[data-theme=dark] :is(.st-Authorised,.st-Opened,.pst-Planned){background:rgba(56,189,248,.16);color:#7DD3FC}
+@media screen and (max-width:720px){
+ header#top nav{background:linear-gradient(180deg,#0A6457,#08453E)}
+ :root[data-theme=dark] header#top nav{background:linear-gradient(180deg,#063630,#04241F)}
+ header#top nav a.on{background:rgba(255,255,255,.2)}
+ .screen>h1:first-child,.screen>.row:first-child{padding:20px 18px;margin-bottom:16px}
+ .screen>h1:first-child::after,.screen>.row:first-child::after{display:none}
+}
 </style>
 </head>
 <body>
