@@ -18,7 +18,7 @@ service cloud.firestore {
     }
     // Owner accounts can always get in, also before the staff list exists.
     function isOwner() {
-      return signedEmail() in ['mhmd.ihsn80@gmail.com'];
+      return signedEmail() in ['mhmd.ihsn80@gmail.com', 'ihus4n@gmail.com'];
     }
     function hasAccess() {
       return exists(/databases/$(database)/documents/config/access);

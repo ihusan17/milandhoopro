@@ -38,7 +38,7 @@ sign in after opening it, so nobody can claim a colleague's address first.
 
 1. Go to **Build > Firestore Database > Rules**.
 2. Paste in the whole of `firestore.rules` and click **Publish**. The line
-   `signedEmail() in ['mhmd.ihsn80@gmail.com']` names the owner, who can
+   `signedEmail() in ['mhmd.ihsn80@gmail.com', 'ihus4n@gmail.com']` names the owners, who can
    always sign in, even before the staff list exists. Add a second owner there
    only if you need one.
 
