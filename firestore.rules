@@ -1,13 +1,37 @@
 rules_version = '2';
 
-// Milandhoo Council procurement - vendor quotations.
-// rfqs/{id}    : the RFQ behind a short vendor link (?q=<id>), written by the office.
-// replies/{id} : the vendor's submitted quote for that link, written once by the vendor.
-// office/*     : the office's own data, synced between computers and phones.
+// Milandhoo Council procurement.
+// rfqs/{id}      : the RFQ behind a short vendor link (?q=<id>), written by the office.
+// replies/{id}   : the vendor's submitted quote for that link, written once by the vendor.
+// office/*       : the office's own data, synced between computers and phones.
+// config/access  : who may sign in, kept up to date by the program's Staff page.
 // Nothing in rfqs/replies can be listed, changed or deleted, so a reply is only readable by
 // whoever holds its random link id (the vendor and the council office).
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // The signed-in e-mail, only once it is verified (Google accounts always are;
+    // e-mail and password accounts must open the link they are sent).
+    function signedEmail() {
+      return request.auth != null && request.auth.token.email_verified == true
+        ? request.auth.token.email.lower() : '';
+    }
+    // Owner accounts can always get in, also before the staff list exists.
+    function isOwner() {
+      return signedEmail() in ['mhmd.ihsn80@gmail.com'];
+    }
+    function hasAccess() {
+      return exists(/databases/$(database)/documents/config/access);
+    }
+    function access() {
+      return get(/databases/$(database)/documents/config/access).data;
+    }
+    function isStaff() {
+      return signedEmail() != '' && (isOwner() || (hasAccess() && signedEmail() in access().emails));
+    }
+    function isAdmin() {
+      return signedEmail() != '' && (isOwner() || (hasAccess() && signedEmail() in access().admins));
+    }
 
     match /rfqs/{id} {
       allow get: if true;
@@ -29,12 +53,19 @@ service cloud.firestore {
       allow list, update, delete: if false;
     }
 
-    // The office data shared by every signed-in device (Settings > Sync between devices).
-    // Only the e-mail addresses listed here can read or change it: replace the example
-    // with the office account(s) created under Authentication > Users.
+    // The office data: every active person in the staff list (or an owner).
     match /office/{doc} {
-      allow read, write: if request.auth != null
-        && request.auth.token.email in ['mhmd.ihsn80@gmail.com'];
+      allow read, write: if isStaff();
+    }
+
+    // The sign-in list, written by the program when an administrator changes staff or roles.
+    match /config/access {
+      allow read: if isStaff();
+      allow write: if isAdmin()
+        && request.resource.data.keys().hasOnly(['emails', 'admins', 'at'])
+        && request.resource.data.emails is list
+        && request.resource.data.admins is list
+        && request.resource.data.emails.size() <= 500;
     }
 
     match /{document=**} {
