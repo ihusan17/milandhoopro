@@ -60,6 +60,20 @@ the program keeps the sign-in list up to date (see D).
 1. Open **Management > Staff** in the side bar. Press **Add me as Administrator** first.
 2. Press **Add staff member** for each person: their name, the e-mail they sign
    in with (Google or e-mail and password), designation and **role**.
+   - Leave **Create a sign-in account with a starting password** ticked to
+     create their account for them. The program sends them a verification
+     e-mail. They open it, sign in with the starting password, and are asked
+     to choose their own password straight away. The Staff list shows
+     "Starting password" until they have done this.
+   - Untick it for people who sign in with Google.
+   - To add many people at once, press **Download template**, fill it in with
+     Excel (Name, Email, Designation, Phone, Role, Status and an optional
+     Password per person), save it, then press **Import from Excel**. You can
+     import `.xlsx` or `.csv` files. A preview shows which rows are ready and
+     which have a problem, such as a bad e-mail, a duplicate or an unknown role.
+   - Open a staff member and press **Send password reset e-mail** if someone
+     forgets their password. Everyone can also use **Change password** in their
+     account menu.
 3. Under **Roles & permissions** you can see and change what each role may do:
 
    | Role | Level | Can |
