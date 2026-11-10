@@ -34,7 +34,8 @@ function applyMap(t, data, custom = {}) {
 async function missingFor(t, data) {
   const tags = await tplTags(t), out = [];
   if (t.perMember) data = Object.assign({}, data, (data[t.perMember + "_members"] || [])[0] || {});
-  tags.filter(x => !x.loop && !x.inLoop).forEach(x => { const v = data[x.name]; if (v == null || v === "") out.push(x.name); });
+  // Leave fields are empty on purpose for members who are present.
+  tags.filter(x => !x.loop && !x.inLoop && !/(^|_)(leave|leave_text|on_leave|absent_mark|present)$/.test(x.name)).forEach(x => { const v = data[x.name]; if (v == null || v === "") out.push(x.name); });
   return out;
 }
 
