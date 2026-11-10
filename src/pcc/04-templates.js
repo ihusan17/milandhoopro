@@ -100,6 +100,7 @@ async function tplAdd() {
     if (!ok) return;
     const fileId = await fput(f.u8, { name: f.name, mime: MIME[f.ext] });
     save(() => { TPL().push({ id: uid(), code: code.value.trim(), nameEn: en.value.trim(), nameDv: dv.value.trim(), group: grp.value, type: f.ext, perMember: pm.value, inPack: pack.checked, order: Number(ord.value) || 0, active: true, version: 1, versions: [{ v: 1, fileId, name: f.name, size: f.size, at: Vt(), by: me(), tags: f.tags, sheets: f.sheets }], mapping: {}, custom: {}, cellMap: [] }); }, "Template added");
+    if (!f.tags.length) { const nt = TPL().find(x => x.code === code.value.trim()); nt && setTimeout(() => tplRules(nt, true), 400); }
   } catch (e) { xt(e.message, "err"); }
 }
 async function tplUpload(t) {
@@ -190,9 +191,15 @@ function suggestRules(chunks, p) {
 }
 async function tplRules(t, fresh) {
   const rules = (t.replace || []).map(r => ({ ...r })), box = o("div", {}), keys = FIELDKEYS();
-  const dl = o("datalist", { id: "pcc-fields2" }, keys.flatMap(k => [k, ...(DATEF.some(d => d[0] === k) ? [k + "_dv", k + "_en", k + "_hijri"] : []), ...(MONEYF.some(m => m[0] === k) ? [k + "_words_dv", k + "_words_en"] : [])]).map(k => o("option", { value: k }, fieldLabel(k))));
-  const draw = () => box.replaceChildren(rules.length ? tbl(["Text in the original document", "Replace with field", ""], rules.map((r, i) => { const f = o("textarea", { rows: 1, dir: "auto" }), fl = o("input", { type: "text", list: "pcc-fields2", value: r.field || "" }); f.value = r.find || ""; f.oninput = () => { r.find = f.value; }; fl.oninput = () => { r.field = fl.value.trim(); }; return o("tr", {}, o("td", { style: { minWidth: "260px" } }, f), o("td", {}, fl, o("div", { class: "muted small" }, fieldLabel(r.field || ""))), o("td", {}, btn("Remove", () => { rules.splice(i, 1); draw(); }, "small"))); })) : o("p", { class: "muted" }, "No rules yet."), btn("Add a rule", () => { rules.push({ find: "", field: "" }); draw(); }, "small"));
+  const dl = o("datalist", { id: "pcc-fields2" }, [...new Set(keys.concat(["bid_meeting_date", "eval_meeting_date"]))].flatMap(k => [k, ...(DATEF.some(d => d[0] === k) || /_meeting_date$/.test(k) ? [k + "_dv", k + "_dv_dmy", k + "_dv_ymd", k + "_dv_both", k + "_en", k + "_hijri"] : []), ...(MONEYF.some(m => m[0] === k) ? [k + "_words_dv", k + "_words_en"] : [])]).map(k => o("option", { value: k }, fieldLabel(k))));
+  const draw = () => box.replaceChildren(rules.length ? tbl(["Text in the original document", "Replace with field", ""], rules.map((r, i) => { const f = o("textarea", { rows: 1, dir: "auto" }), fl = o("input", { type: "text", list: "pcc-fields2", value: r.field || "" }); f.value = r.find || ""; f.oninput = () => { r.find = f.value; }; fl.oninput = () => { r.field = fl.value.trim(); }; return o("tr", {}, o("td", { style: { minWidth: "260px" } }, f), o("td", {}, fl, o("div", { class: "muted small" }, fieldLabel(r.field || "")), r.at && r.at.length ? o("div", { class: "small pcc-tag" }, "Only place" + (r.at.length > 1 ? "s " : " ") + r.at.join(", ") + " where this text appears") : null), o("td", {}, btn("Remove", () => { rules.splice(i, 1); draw(); }, "small"))); })) : o("p", { class: "muted" }, "No rules yet."), btn("Add a rule", () => { rules.push({ find: "", field: "" }); draw(); }, "small"));
   draw();
+  const dbox = o("div", {}), detect = async () => {
+    try { dbox.replaceChildren(o("p", { class: "muted small" }, "Reading the file…")); const chunks = await templateText(await fget(curVer(t).fileId), t.type); dbox.replaceChildren(detectPanel(t, chunks, add => { add.forEach(r => { const i = rules.findIndex(x => x.find === r.find && !(x.at && x.at.length) && !(r.at && r.at.length)); i >= 0 ? (rules[i] = r) : rules.push(r); }); draw(); })); }
+    catch (e) { dbox.replaceChildren(o("p", { class: "pcc-bad small" }, e.message)); }
+  };
+  dbox.append(btn("Detect values in this file", detect, "primary"));
+  (fresh || !rules.length) && setTimeout(detect, 50);
   const pick = S([["", "Choose the project this document was made for…"], ...PRJ().map(p => [p.id, `${p.ref} — ${p.nameDv || p.name}`])], ""), sbox = o("div", {});
   const suggest = async () => {
     const p = prj(pick.value); if (!p) return xt("Choose the project", "err");
@@ -203,10 +210,13 @@ async function tplRules(t, fresh) {
       sbox.replaceChildren(o("p", { class: "small" }, `Found in the file — tick the ones to replace:`), tbl(["", "Text found", "Field", "Times"], S2.map((s, i) => o("tr", {}, o("td", {}, cbs[i]), o("td", { dir: "auto" }, s.find), o("td", {}, fieldLabel(s.field), o("div", { class: "muted small" }, "{" + s.field + "}")), o("td", {}, s.count)))), btn("Add the ticked ones", () => { S2.forEach((s, i) => cbs[i].checked && rules.push({ find: s.find, field: s.field })); sbox.replaceChildren(); draw(); }, "small primary"));
     } catch (e) { xt(e.message, "err"); }
   };
-  const ok = await Mt(`${t.code} — replace text`, [dl, fresh ? o("div", { class: "alert warn" }, "This file has no {placeholders}, so nothing in it would change. Pick the project it was made for and the program will find the text to replace.") : null,
+  const ok = await Mt(`${t.code} — replace text`, [dl, fresh ? o("div", { class: "alert warn" }, "This file has no {placeholders}. You don't need to type any: check the values found below, press Use the ticked values, then Save.") : null,
     o("p", { class: "muted small" }, "Each time a document is generated, the text on the left is replaced with the current project's value. Use this for your original files: last project's name, Iulaan number, dates and amounts become fields. Rules apply to every version of this template."),
+    o("div", { class: "card", style: { margin: "8px 0" } }, o("h4", { style: { marginTop: 0 } }, "Find values automatically"), o("p", { class: "muted small" }, "Reads the file and lists every date, Hijri date, reference/meeting/Iulaan number, time, amount and committee member name, with the field it should become. No project needed."), dbox),
     o("div", { class: "card", style: { margin: "8px 0" } }, o("h4", { style: { marginTop: 0 } }, "Suggest from a project"), o("div", { class: "row", style: { alignItems: "center", gap: "8px" } }, o("div", { class: "grow" }, pick), btn("Find its values in the file", suggest)), sbox),
     o("h4", {}, "Rules"), box], [{ label: "Cancel", value: !1 }, { label: "Save", primary: !0, value: !0 }]);
   if (!ok) return;
-  save(() => { need("templates"); t.replace = rules.filter(r => r.find && r.find.trim() && r.field).map(r => ({ find: r.find, field: r.field })); (t.versions || []).forEach(v => { v.tags = null; }); }, "Replace rules saved — " + rules.filter(r => r.find && r.field).length + " rule(s)");
+  save(() => { need("templates"); t.replace = rules.filter(r => r.find && r.find.trim() && r.field).map(r => (r.at && r.at.length ? { find: r.find, field: r.field, at: r.at } : { find: r.find, field: r.field })); (t.versions || []).forEach(v => { v.tags = null; }); }, "Replace rules saved — " + rules.filter(r => r.find && r.field).length + " rule(s)");
+  const pp = prj(pick.value) || PRJ().find(p => p.committees && (p.committees.bid || []).length && p.advertNo);
+  setTimeout(() => tplPreview(t, pp || undefined), 400);
 }

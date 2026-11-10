@@ -1756,22 +1756,25 @@ function rewriteText(s, rules) {
   for (const r of cleanRules(rules)) s = s.split(r.find).join("{" + r.field + "}");
   return s;
 }
-function textMatches(full, rules) {
+// A rule with "at" replaces only those occurrences (1 = first in the document), so one date can
+// become the bid opening date in one place and the evaluation date in another.
+function textMatches(full, rules, seen = {}) {
   const M = [];
   M.push(...tagMatches(full));
-  for (const r of cleanRules(rules)) { let i = 0; while ((i = full.indexOf(r.find, i)) >= 0) { const e = i + r.find.length; if (!M.some(x => x[0] < e && i < x[1])) M.push([i, e, "{" + r.field + "}"]); i = e; } }
+  const R = cleanRules(rules), finds = [...new Set(R.map(r => r.find))];
+  for (const f of finds) { let i = 0; while ((i = full.indexOf(f, i)) >= 0) { const e = i + f.length, n = (seen[f] = (seen[f] || 0) + 1), r = R.find(x => x.find === f && x.at && x.at.includes(n)) || R.find(x => x.find === f && !(x.at && x.at.length)); if (r && !M.some(x => x[0] < e && i < x[1])) M.push([i, e, "{" + r.field + "}"]); i = e; } }
   return M.sort((a, b) => b[0] - a[0]);
 }
 // Apply text rules inside Word paragraphs, also when the text is split over several runs.
 function rulesDocx(u8, rules) {
-  const zip = new (LIB().PizZip)(u8); let changed = false;
+  const zip = new (LIB().PizZip)(u8), seen = {}; let changed = false;
   docxParts(zip).forEach(n => {
     const xml = zip.file(n).asText();
     const out = xml.replace(/<w:p[ >][\s\S]*?<\/w:p>/g, par => {
       const re = /(<w:t(?:\s[^>]*)?>)([^<]*)(<\/w:t>)/g, segs = []; let m;
       while ((m = re.exec(par))) segs.push({ start: m.index, len: m[0].length, open: m[1], text: decodeEnt(m[2]), close: m[3] });
       if (!segs.length) return par;
-      const texts = segs.map(s => s.text), M = textMatches(texts.join(""), rules);
+      const texts = segs.map(s => s.text), M = textMatches(texts.join(""), rules, seen);
       if (!M.length) return par;
       for (const [s, e, rep] of M) {
         let o0 = 0; const of = texts.map(t => { const x = o0; o0 += t.length; return x; });
@@ -1793,7 +1796,8 @@ function rulesDocx(u8, rules) {
 async function templateText(u8, type) {
   if (type === "xlsx") { const X = await xlsxOpen(u8), out = []; for (const sh of X.sheets) { const f = X.zip.file(sh.path); if (!f) continue; [...xparse(await f.async("string")).getElementsByTagName("c")].forEach(c => { const t = cellText(c, X.ss); t && isNaN(Number(t)) && out.push(t); }); } return out; }
   const zip = new (LIB().PizZip)(u8), out = [];
-  docxParts(zip).forEach(n => zip.file(n).asText().split(/<\/w:p>/).forEach(p => { const t = decodeEnt(p.replace(/<w:tab\/>/g, " ").replace(/<[^>]+>/g, "")); t.trim() && out.push(t); }));
+  // Only the text Word shows (w:t), in paragraph order, the same text the replace rules work on.
+  docxParts(zip).forEach(n => (zip.file(n).asText().match(/<w:p[ >][\s\S]*?<\/w:p>/g) || []).forEach(p => { const t = decodeEnt((p.match(/<w:t(?:\s[^>]*)?>[^<]*<\/w:t>/g) || []).map(x => x.replace(/<[^>]+>/g, "")).join("")); t.trim() && out.push(t); }));
   return out;
 }
 function scanDocx(u8, rules) {
@@ -2400,6 +2404,7 @@ async function tplAdd() {
     if (!ok) return;
     const fileId = await fput(f.u8, { name: f.name, mime: MIME[f.ext] });
     save(() => { TPL().push({ id: uid(), code: code.value.trim(), nameEn: en.value.trim(), nameDv: dv.value.trim(), group: grp.value, type: f.ext, perMember: pm.value, inPack: pack.checked, order: Number(ord.value) || 0, active: true, version: 1, versions: [{ v: 1, fileId, name: f.name, size: f.size, at: Vt(), by: me(), tags: f.tags, sheets: f.sheets }], mapping: {}, custom: {}, cellMap: [] }); }, "Template added");
+    if (!f.tags.length) { const nt = TPL().find(x => x.code === code.value.trim()); nt && setTimeout(() => tplRules(nt, true), 400); }
   } catch (e) { xt(e.message, "err"); }
 }
 async function tplUpload(t) {
@@ -2490,9 +2495,15 @@ function suggestRules(chunks, p) {
 }
 async function tplRules(t, fresh) {
   const rules = (t.replace || []).map(r => ({ ...r })), box = o("div", {}), keys = FIELDKEYS();
-  const dl = o("datalist", { id: "pcc-fields2" }, keys.flatMap(k => [k, ...(DATEF.some(d => d[0] === k) ? [k + "_dv", k + "_en", k + "_hijri"] : []), ...(MONEYF.some(m => m[0] === k) ? [k + "_words_dv", k + "_words_en"] : [])]).map(k => o("option", { value: k }, fieldLabel(k))));
-  const draw = () => box.replaceChildren(rules.length ? tbl(["Text in the original document", "Replace with field", ""], rules.map((r, i) => { const f = o("textarea", { rows: 1, dir: "auto" }), fl = o("input", { type: "text", list: "pcc-fields2", value: r.field || "" }); f.value = r.find || ""; f.oninput = () => { r.find = f.value; }; fl.oninput = () => { r.field = fl.value.trim(); }; return o("tr", {}, o("td", { style: { minWidth: "260px" } }, f), o("td", {}, fl, o("div", { class: "muted small" }, fieldLabel(r.field || ""))), o("td", {}, btn("Remove", () => { rules.splice(i, 1); draw(); }, "small"))); })) : o("p", { class: "muted" }, "No rules yet."), btn("Add a rule", () => { rules.push({ find: "", field: "" }); draw(); }, "small"));
+  const dl = o("datalist", { id: "pcc-fields2" }, [...new Set(keys.concat(["bid_meeting_date", "eval_meeting_date"]))].flatMap(k => [k, ...(DATEF.some(d => d[0] === k) || /_meeting_date$/.test(k) ? [k + "_dv", k + "_dv_dmy", k + "_dv_ymd", k + "_dv_both", k + "_en", k + "_hijri"] : []), ...(MONEYF.some(m => m[0] === k) ? [k + "_words_dv", k + "_words_en"] : [])]).map(k => o("option", { value: k }, fieldLabel(k))));
+  const draw = () => box.replaceChildren(rules.length ? tbl(["Text in the original document", "Replace with field", ""], rules.map((r, i) => { const f = o("textarea", { rows: 1, dir: "auto" }), fl = o("input", { type: "text", list: "pcc-fields2", value: r.field || "" }); f.value = r.find || ""; f.oninput = () => { r.find = f.value; }; fl.oninput = () => { r.field = fl.value.trim(); }; return o("tr", {}, o("td", { style: { minWidth: "260px" } }, f), o("td", {}, fl, o("div", { class: "muted small" }, fieldLabel(r.field || "")), r.at && r.at.length ? o("div", { class: "small pcc-tag" }, "Only place" + (r.at.length > 1 ? "s " : " ") + r.at.join(", ") + " where this text appears") : null), o("td", {}, btn("Remove", () => { rules.splice(i, 1); draw(); }, "small"))); })) : o("p", { class: "muted" }, "No rules yet."), btn("Add a rule", () => { rules.push({ find: "", field: "" }); draw(); }, "small"));
   draw();
+  const dbox = o("div", {}), detect = async () => {
+    try { dbox.replaceChildren(o("p", { class: "muted small" }, "Reading the file…")); const chunks = await templateText(await fget(curVer(t).fileId), t.type); dbox.replaceChildren(detectPanel(t, chunks, add => { add.forEach(r => { const i = rules.findIndex(x => x.find === r.find && !(x.at && x.at.length) && !(r.at && r.at.length)); i >= 0 ? (rules[i] = r) : rules.push(r); }); draw(); })); }
+    catch (e) { dbox.replaceChildren(o("p", { class: "pcc-bad small" }, e.message)); }
+  };
+  dbox.append(btn("Detect values in this file", detect, "primary"));
+  (fresh || !rules.length) && setTimeout(detect, 50);
   const pick = S([["", "Choose the project this document was made for…"], ...PRJ().map(p => [p.id, `${p.ref} — ${p.nameDv || p.name}`])], ""), sbox = o("div", {});
   const suggest = async () => {
     const p = prj(pick.value); if (!p) return xt("Choose the project", "err");
@@ -2503,12 +2514,137 @@ async function tplRules(t, fresh) {
       sbox.replaceChildren(o("p", { class: "small" }, `Found in the file — tick the ones to replace:`), tbl(["", "Text found", "Field", "Times"], S2.map((s, i) => o("tr", {}, o("td", {}, cbs[i]), o("td", { dir: "auto" }, s.find), o("td", {}, fieldLabel(s.field), o("div", { class: "muted small" }, "{" + s.field + "}")), o("td", {}, s.count)))), btn("Add the ticked ones", () => { S2.forEach((s, i) => cbs[i].checked && rules.push({ find: s.find, field: s.field })); sbox.replaceChildren(); draw(); }, "small primary"));
     } catch (e) { xt(e.message, "err"); }
   };
-  const ok = await Mt(`${t.code} — replace text`, [dl, fresh ? o("div", { class: "alert warn" }, "This file has no {placeholders}, so nothing in it would change. Pick the project it was made for and the program will find the text to replace.") : null,
+  const ok = await Mt(`${t.code} — replace text`, [dl, fresh ? o("div", { class: "alert warn" }, "This file has no {placeholders}. You don't need to type any: check the values found below, press Use the ticked values, then Save.") : null,
     o("p", { class: "muted small" }, "Each time a document is generated, the text on the left is replaced with the current project's value. Use this for your original files: last project's name, Iulaan number, dates and amounts become fields. Rules apply to every version of this template."),
+    o("div", { class: "card", style: { margin: "8px 0" } }, o("h4", { style: { marginTop: 0 } }, "Find values automatically"), o("p", { class: "muted small" }, "Reads the file and lists every date, Hijri date, reference/meeting/Iulaan number, time, amount and committee member name, with the field it should become. No project needed."), dbox),
     o("div", { class: "card", style: { margin: "8px 0" } }, o("h4", { style: { marginTop: 0 } }, "Suggest from a project"), o("div", { class: "row", style: { alignItems: "center", gap: "8px" } }, o("div", { class: "grow" }, pick), btn("Find its values in the file", suggest)), sbox),
     o("h4", {}, "Rules"), box], [{ label: "Cancel", value: !1 }, { label: "Save", primary: !0, value: !0 }]);
   if (!ok) return;
-  save(() => { need("templates"); t.replace = rules.filter(r => r.find && r.find.trim() && r.field).map(r => ({ find: r.find, field: r.field })); (t.versions || []).forEach(v => { v.tags = null; }); }, "Replace rules saved — " + rules.filter(r => r.find && r.field).length + " rule(s)");
+  save(() => { need("templates"); t.replace = rules.filter(r => r.find && r.find.trim() && r.field).map(r => (r.at && r.at.length ? { find: r.find, field: r.field, at: r.at } : { find: r.find, field: r.field })); (t.versions || []).forEach(v => { v.tags = null; }); }, "Replace rules saved — " + rules.filter(r => r.find && r.field).length + " rule(s)");
+  const pp = prj(pick.value) || PRJ().find(p => p.committees && (p.committees.bid || []).length && p.advertNo);
+  setTimeout(() => tplPreview(t, pp || undefined), 400);
+}
+
+// ===== 04-tpldetect.js =====
+// Auto-detect: find the values in an original document that change from project to project
+// (reference and meeting numbers, dates in every format, Hijri dates, times, amounts, committee
+// member names) and suggest the field for each from the words around it. No placeholders need
+// to be typed; the result is saved as Replace-text rules, so the original file stays untouched.
+
+const AD_CTX = [
+  [/އިޢުލާނ|އިއުލާނ|IUL|iulaan|advertis/i, "iulaan"],
+  [/ހުޅުވ|bid opening|opened/i, "opening"],
+  [/އިވެލުއޭ|ވަޒަނ|evaluat/i, "eval"],
+  [/ޙަވާލު|ހަވާލު|އެވޯޑް|award/i, "award"],
+  [/އެގްރީމަންޓ|އެއްބަސްވުމ|agreement/i, "agreement"],
+  [/ބައްދަލުވުމ|ބައްދަލުވުނ|ޖަލްސާ|ޙާޟިރުވ|ހާޒިރުވ|meeting/i, "meeting"],
+  [/ލަފާކުރ|estimat/i, "estimate"]
+];
+// The keyword nearest to the value wins (the end of the text before it).
+const adCtx = s => { s = String(s).slice(-90); let best = "", at = -1; for (const [re, k] of AD_CTX) { const g = new RegExp(re.source, "gi"); for (const m of s.matchAll(g)) if (m.index > at) { at = m.index; best = k; } } return best; };
+const adKind = t => (/Evaluation/.test(t.group || "") ? "eval" : "bid");
+const adEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+function adDateField(ctx, t, after = "") {
+  const c = adCtx(ctx), k = adKind(t);
+  // A date followed by a time in a committee document is the meeting's date.
+  if (/Committee/.test(t.group || "") && /^[^\d]{0,30}(?:[01]?\d|2[0-3]):[0-5]\d/.test(after) && c !== "iulaan" && c !== "opening") return k + "_meeting_date";
+  if (c === "iulaan") return "advertised_date";
+  if (c === "opening") return "bid_opening_date";
+  if (c === "award") return "award_date";
+  if (c === "agreement") return "agreement_date";
+  if (c === "meeting") return k + "_meeting_date";
+  if (c === "eval") return "evaluation_date";
+  return "today";
+}
+
+// Find candidates in the paragraphs (and table cells) of a template, in reading order.
+function autoDetect(chunks, t) {
+  const out = [], seen = {}, MON = [...DVMON, ...DVMON2].map(adEsc).join("|"), HM = HJMON.map(adEsc).join("|");
+  // n = which occurrence of this text in the whole document (the engine counts the same way).
+  const occ = (str, f) => str.split(f).length - 1, all = chunks.join("\n");
+  let prior = "";
+  const add = (find, field, ctx, kind, pre) => { if (!find || !find.trim()) return; out.push({ find, field, ctx: ctx.replace(/[\u202A-\u202E\u200E\u200F]/g, "").replace(/\s+/g, " ").trim().slice(-22), kind, n: occ(prior + pre, find) + 1, total: occ(all, find) }); };
+  const st = typeof STAND === "function" ? STAND() : { bid: [], eval: [] };
+  const people = [];
+  ["bid", "eval"].forEach(k => (st[k] || []).forEach((m, i) => { [m.nameDv, m.name].filter(x => x && x.length > 3).forEach(nm => { people.push([nm, k, i]); const bare = nm.replace(/^(އަލްފާޟިލް|އަލްފާޟިލާ|ޖަނާބު|Mr\.?|Ms\.?|Mrs\.?)\s+/, ""); bare !== nm && bare.length > 3 && people.push([bare, k, i]); }); }));
+  people.sort((a, b) => b[0].length - a[0].length);
+  const RX = [
+    // Hijri dates: 1 ޖުމާދަލްއާޚިރާ 1448 ހ
+    ["hijri", new RegExp(`\\d{1,2}\\s+(?:${HM})\\s+\\d{4}\\s?ހ?`, "g")],
+    // Dhivehi dates both ways: 28 ޖަނަވަރީ 2026 / 2026 ޖަނަވަރީ 28
+    ["dvymd", new RegExp(`\\d{4}\\s+(?:${MON})\\s+\\d{1,2}(?!\\d)`, "g")],
+    ["dvdmy", new RegExp(`(?<!\\d)\\d{1,2}\\s+(?:${MON})\\s+\\d{4}`, "g")],
+    // Numeric dates: 19.01.2026, 19/01/2026, 19-01-2026
+    ["date", /(?<![\d.\/-])\d{1,2}[.\/-]\d{1,2}[.\/-]\d{4}(?![\d])/g],
+    // Money: MVR 12,500.00 / ރ. 12,500 / 12,500.00
+    ["money", /(?:MVR|Rf\.?|ރ\.)\s?\d[\d,]*(?:\.\d{1,2})?|(?<![\d.\/])\d{1,3}(?:,\d{3})+(?:\.\d{2})?(?![\d\/])/g],
+    // Reference / meeting / Iulaan numbers: IUL(2026)14, (IUL)351-PRO/2026/031, BC/284/2026-01, PC-284/2026/W-01
+    ["ref", /\(?[A-Za-z]{2,}\)?[A-Za-z0-9]*(?:[()\/\-]+[A-Za-z0-9]+)+\)?|\d+\/\d{4}(?:\/[A-Za-z0-9\-]+)?/g],
+    // Times: 12:00, 9:30
+    ["time", /(?<![\d:])(?:[01]?\d|2[0-3]):[0-5]\d(?![\d:])/g]
+  ];
+  chunks.forEach((ch, ci) => {
+    let text = ch; const before = (chunks[ci - 1] || "") + " ";
+    const taken = [];
+    const free = (a, b) => !taken.some(([x, y]) => x < b && a < y);
+    people.forEach(([nm, k, i]) => { let p = 0; while ((p = text.indexOf(nm, p)) >= 0) { const e = p + nm.length; if (free(p, e)) { taken.push([p, e, nm, t.perMember === k ? "member_name_dv" : `${k}_m${i + 1}_name_dv`, "name"]); } p = e; } });
+    RX.forEach(([kind, re]) => { for (const m of text.matchAll(re)) { const a = m.index, s = m[0].trim(), e = a + m[0].length; if (!free(a, e)) continue;
+      if (kind === "ref" && (!/\d/.test(s) || /^\d{1,2}[.\/-]\d{1,2}[.\/-]\d{4}$/.test(s) || s.length < 5)) continue;
+      taken.push([a, e, s, "", kind]); } });
+    taken.sort((x, y) => x[0] - y[0]).forEach(([a, e, s, field, kind]) => {
+      const ctx = before.slice(-30) + text.slice(0, a), after = text.slice(e, e + 40);
+      if (kind === "money") { const px = (/^(?:MVR|Rf\.?|ރ\.)\s?/.exec(s) || [""])[0]; px && (a += px.length, s = s.slice(px.length)); }
+      if (!field) {
+        if (kind === "hijri") field = "today_hijri";
+        else if (kind === "dvymd") field = adDateField(ctx, t, after) + "_dv_ymd";
+        else if (kind === "dvdmy") { const mon = (s.match(new RegExp(MON)) || [""])[0]; field = adDateField(ctx, t, after) + ((DVMON2.includes(mon) && !DVMON.includes(mon)) || /^0\d/.test(s) ? "_dv_dmy" : "_dv"); }
+        else if (kind === "date") field = adDateField(ctx, t, after);
+        else if (kind === "time") { const prev = (out[out.length - 1] || {}).field || ""; field = /_meeting_date/.test(prev) ? prev.replace(/_date.*$/, "_time") : /^evaluation_date/.test(prev) ? "evaluation_time" : adCtx(ctx) === "eval" ? "evaluation_time" : adKind(t) + "_meeting_time"; }
+        else if (kind === "money") field = adCtx(ctx) === "estimate" ? "estimated_cost" : "contract_value";
+        else if (kind === "ref") { const c = adCtx(ctx); field = c === "iulaan" || /^IUL|\(IUL\)/i.test(s) ? "iulaan_no" : /^[A-Z]{2,3}-\d+\/\d{4}\//.test(s) ? "ref_no" : /Letter|Memo/i.test(t.group || "") ? "letter_ref" : adKind(t) + "_meeting_no"; }
+      }
+      add(s, field, ctx, kind, text.slice(0, a));
+    });
+    prior += ch + "\n";
+  });
+  return out;
+}
+
+// Turn ticked detections into rules: one rule per text, or per occurrence when the same text
+// (e.g. one date used for bid opening and evaluation) should become different fields.
+function detectToRules(list) {
+  const by = {}, rules = [];
+  list.forEach(d => { (by[d.find] = by[d.find] || []).push(d); });
+  Object.entries(by).forEach(([find, L]) => {
+    const fields = [...new Set(L.map(d => d.field))];
+    if (fields.length === 1 && L.length === L[0].total) rules.push({ find, field: fields[0] });
+    else fields.forEach(f => rules.push({ find, field: f, at: L.filter(d => d.field === f).map(d => d.n) }));
+  });
+  return rules;
+}
+
+function detectPanel(t, chunks, onAdd) {
+  const list = autoDetect(chunks, t), box = o("div", {});
+  const KL = { name: "Name", hijri: "Hijri date", dvymd: "Date", dvdmy: "Date", date: "Date", money: "Amount", ref: "Number", time: "Time" };
+  const pn = DVI(""), pe = I("", { placeholder: "English name, if the file has one" });
+  if (!list.length) box.append(o("p", { class: "muted small" }, "No dates, numbers, times, amounts or member names were found in this file."));
+  const rows = list.map(d => {
+    const cb = o("input", { type: "checkbox", checked: true }), fl = o("input", { type: "text", list: "pcc-fields2", value: d.field, style: { width: "100%", minWidth: "150px" } }), lab = o("div", { class: "muted small" }, fieldLabel(d.field));
+    fl.oninput = () => { d.field = fl.value.trim(); lab.textContent = fieldLabel(d.field); };
+    d.cb = cb;
+    return o("tr", {}, o("td", {}, cb), o("td", {}, o("div", { dir: "auto", style: { fontWeight: 600, whiteSpace: "nowrap" } }, d.find), o("div", { class: "small muted" }, KL[d.kind] || "")), o("td", { dir: "rtl", class: "muted small", lang: "dv", style: { whiteSpace: "nowrap" } }, d.ctx + "…"), o("td", {}, fl, lab));
+  });
+  list.length && box.append(o("p", { class: "small" }, `${list.length} value${list.length === 1 ? "" : "s"} found. Check the field for each one — the guess comes from the words just before it — and untick anything that should stay as it is (e.g. a fixed date in a law reference).`),
+    o("div", { style: { overflowX: "auto" } }, tbl(["", "Text in the file", "Words before it", "Becomes"], rows)));
+  box.append(o("div", { class: "pcc-f", style: { marginTop: "10px" } }, o("label", {}, "Project name exactly as written in this file (copy it from the document)"), pn, pe));
+  box.append(o("div", { class: "row", style: { marginTop: "8px" } }, btn("Use the ticked values", () => {
+    const tick = list.filter(d => d.cb.checked && d.field), rules = detectToRules(tick);
+    pn.value.trim() && rules.push({ find: pn.value.trim(), field: "project_name_dv" });
+    pe.value.trim() && rules.push({ find: pe.value.trim(), field: "project_name" });
+    onAdd(rules); box.replaceChildren(o("p", { class: "pcc-ok small" }, `${rules.length} rule${rules.length === 1 ? "" : "s"} added below. Press Save, then Preview with a project to check.`));
+  }, "primary")));
+  return box;
 }
 
 // ===== 05-overview.js =====

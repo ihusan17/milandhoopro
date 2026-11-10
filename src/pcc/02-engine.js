@@ -45,22 +45,25 @@ function rewriteText(s, rules) {
   for (const r of cleanRules(rules)) s = s.split(r.find).join("{" + r.field + "}");
   return s;
 }
-function textMatches(full, rules) {
+// A rule with "at" replaces only those occurrences (1 = first in the document), so one date can
+// become the bid opening date in one place and the evaluation date in another.
+function textMatches(full, rules, seen = {}) {
   const M = [];
   M.push(...tagMatches(full));
-  for (const r of cleanRules(rules)) { let i = 0; while ((i = full.indexOf(r.find, i)) >= 0) { const e = i + r.find.length; if (!M.some(x => x[0] < e && i < x[1])) M.push([i, e, "{" + r.field + "}"]); i = e; } }
+  const R = cleanRules(rules), finds = [...new Set(R.map(r => r.find))];
+  for (const f of finds) { let i = 0; while ((i = full.indexOf(f, i)) >= 0) { const e = i + f.length, n = (seen[f] = (seen[f] || 0) + 1), r = R.find(x => x.find === f && x.at && x.at.includes(n)) || R.find(x => x.find === f && !(x.at && x.at.length)); if (r && !M.some(x => x[0] < e && i < x[1])) M.push([i, e, "{" + r.field + "}"]); i = e; } }
   return M.sort((a, b) => b[0] - a[0]);
 }
 // Apply text rules inside Word paragraphs, also when the text is split over several runs.
 function rulesDocx(u8, rules) {
-  const zip = new (LIB().PizZip)(u8); let changed = false;
+  const zip = new (LIB().PizZip)(u8), seen = {}; let changed = false;
   docxParts(zip).forEach(n => {
     const xml = zip.file(n).asText();
     const out = xml.replace(/<w:p[ >][\s\S]*?<\/w:p>/g, par => {
       const re = /(<w:t(?:\s[^>]*)?>)([^<]*)(<\/w:t>)/g, segs = []; let m;
       while ((m = re.exec(par))) segs.push({ start: m.index, len: m[0].length, open: m[1], text: decodeEnt(m[2]), close: m[3] });
       if (!segs.length) return par;
-      const texts = segs.map(s => s.text), M = textMatches(texts.join(""), rules);
+      const texts = segs.map(s => s.text), M = textMatches(texts.join(""), rules, seen);
       if (!M.length) return par;
       for (const [s, e, rep] of M) {
         let o0 = 0; const of = texts.map(t => { const x = o0; o0 += t.length; return x; });
@@ -82,7 +85,8 @@ function rulesDocx(u8, rules) {
 async function templateText(u8, type) {
   if (type === "xlsx") { const X = await xlsxOpen(u8), out = []; for (const sh of X.sheets) { const f = X.zip.file(sh.path); if (!f) continue; [...xparse(await f.async("string")).getElementsByTagName("c")].forEach(c => { const t = cellText(c, X.ss); t && isNaN(Number(t)) && out.push(t); }); } return out; }
   const zip = new (LIB().PizZip)(u8), out = [];
-  docxParts(zip).forEach(n => zip.file(n).asText().split(/<\/w:p>/).forEach(p => { const t = decodeEnt(p.replace(/<w:tab\/>/g, " ").replace(/<[^>]+>/g, "")); t.trim() && out.push(t); }));
+  // Only the text Word shows (w:t), in paragraph order, the same text the replace rules work on.
+  docxParts(zip).forEach(n => (zip.file(n).asText().match(/<w:p[ >][\s\S]*?<\/w:p>/g) || []).forEach(p => { const t = decodeEnt((p.match(/<w:t(?:\s[^>]*)?>[^<]*<\/w:t>/g) || []).map(x => x.replace(/<[^>]+>/g, "")).join("")); t.trim() && out.push(t); }));
   return out;
 }
 function scanDocx(u8, rules) {

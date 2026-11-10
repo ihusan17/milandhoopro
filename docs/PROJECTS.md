@@ -230,3 +230,12 @@ After editing, run `node tools/build-pcc.mjs`. It replaces the block between `<!
 - **Generate again from the project** (Bid / Evaluation tab › Generate pack). Documents made earlier keep their old values; the template Preview uses a sample project, not yours.
 - **Fonts and English text in filled values.** Values take the font your document's Dhivehi text uses (e.g. Faruma), never the MV Boli fallback, and English/number values such as `BC/284/2026-01` or `IUL(2026)14` are written left-to-right so they don't appear reversed.
 - **Leave boxes.** Put `{bid_mN_leave}` in any of the signature/time boxes: the grey leave cell covers all the empty boxes under the grouped headers (e.g. both "ސޮއި | ގަޑި" pairs) through to the end of the row.
+
+## Using your original documents without typing placeholders
+
+1. Projects › Templates › **Add template** (or **Upload new version**) and choose the document exactly as it was used for a past project.
+2. If the file has no `{placeholders}`, the **Replace text** window opens by itself and **Find values automatically** lists every date (19.01.2026, 28 ޖަނަވަރީ 2026, 2026 ޖަނަވަރީ 28), Hijri date, reference / meeting / Iulaan number, time, amount and committee member name, each with the field it should become. The guess comes from the words just before it (އިޢުލާން → Iulaan, ހުޅުވި → bid opening, އިވެލުއޭޓް → evaluation, a date followed by a time → meeting date and time).
+3. Change any field that's wrong, untick text that must stay as it is, copy the project's name from the document into **Project name exactly as written in this file**, press **Use the ticked values**, then **Save**. A preview opens filled with a project so you can check it.
+4. The same text can become different fields: if 28.01.2026 is both the bid opening and the evaluation date, each place gets its own field ("Only place 1 / 2 where this text appears").
+
+The original file is not changed; the rules are applied every time a document is generated. Open **Replace text** again at any time and press **Detect values in this file** to review.
