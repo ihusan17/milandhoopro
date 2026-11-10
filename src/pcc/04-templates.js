@@ -21,7 +21,7 @@ async function tplTags(t) {
   v.tags = r.tags; v.sheets = r.sheets; K.Qt();
   return v.tags;
 }
-const fieldLabel = k => { for (const g of FIELDS) for (const f of g[1]) if (f[0] === k) return f[1]; const m = /^(.*?)_(dv_ymd|dv_dmy|dv_both|dash|dv|en|hijri|iso|words_dv|words_en)$/.exec(k); const SUF = { dv_ymd: "2026 ނޮވެމްބަރ 09", dv_dmy: "09 ނޮވެމްބަރ 2026", dv_both: "both formats", dash: "10-11-2026", dv: "Dhivehi", en: "English", hijri: "Hijri", iso: "ISO", words_dv: "Dhivehi words", words_en: "English words" }; return m ? fieldLabel(m[1]) + " (" + SUF[m[2]] + ")" : k; };
+const fieldLabel = k => { for (const g of FIELDS) for (const f of g[1]) if (f[0] === k) return f[1]; const m = /^(.*?)_(dv_ymd|dv_dmy|dv_both|dash|dv|en|hijri|iso|words_dv|words_en)$/.exec(k); const SUF = { dv_ymd: "2026 ނޮވެމްބަރ 09", dv_dmy: "09 ނޮވެމްބަރ 2026", dv_both: "both formats", dash: "10-11-2026", dv: "Dhivehi", en: "English", hijri: "Hijri", iso: "ISO", words_dv: "Dhivehi words", words_en: "English words" }; return m ? fieldLabel(m[1]) + " (" + SUF[m[2]] + ")" : (typeof OWN === "function" && (ownOf(k) || {}).label) || k; };
 function knownTag(name, data) { const top = name.split(".")[0]; return Object.prototype.hasOwnProperty.call(data, top) || Object.prototype.hasOwnProperty.call(memberData({}, 0), top) || /^(bid|eval)_m\d+_(name|name_dv|short_dv|designation|designation_dv|role|role_dv|leave|absent_mark|leave_text)$/.test(top) || /^(.+_date|today)_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both|dash)$/.test(top) && Object.prototype.hasOwnProperty.call(data, top.replace(/_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both|dash)$/, "")); }
 
 // Placeholders in active templates that no program field fills (and that aren't mapped): they become
@@ -34,7 +34,22 @@ function extraTags() {
     if (t.code === "PLAN" || x.loop || x.inLoop || knownTag(x.name, sample) || progField(x.name) || (t.mapping || {})[x.name]) return;
     (out[x.name] = out[x.name] || []).includes(t.code) || out[x.name].push(t.code);
   }));
+  OWN().forEach(f => { out[f.key] = out[f.key] || []; });
   return out;
+}
+// Your own fields, added on the cheat-sheet: { key, label, kind: text | dv | date | time | number }.
+const OWN = () => Z().ownFields || [];
+const ownOf = k => OWN().find(f => f.key === k);
+async function ownEdit(f0) {
+  const x = f0 || {}, key = I(x.key || "", { placeholder: "e.g. psip_no", dir: "ltr" }), label = I(x.label || "", { placeholder: "e.g. PSIP number" }), kind = S([["text", "Text"], ["dv", "Dhivehi text"], ["date", "Date"], ["time", "Time"], ["number", "Number"]], x.kind || "text");
+  const ok = await form(f0 ? "Edit your field" : "Add your own field", [["Placeholder name (English letters, numbers and _)", key], ["Meaning", label], ["Kind of value", kind], o("p", { class: "muted small", style: { gridColumn: "1/-1" } }, "Type it in a template as {name}. Its value is typed on each project under Edit › Other template fields.")], { check: () => {
+    const k = key.value.trim().replace(/^\{|\}$/g, "");
+    if (!/^[a-z_][a-z0-9_]*$/i.test(k)) throw err("Use English letters, numbers and _ only, e.g. psip_no");
+    if (progField(k) || knownTag(k, dataFor(blankProject()))) throw err("{" + k + "} is already a program field — use it as it is");
+    if (OWN().some(f => f !== f0 && f.key === k)) throw err("You already have {" + k + "}");
+  } });
+  if (!ok) return;
+  save(() => { need("templates"); const k = key.value.trim().replace(/^\{|\}$/g, "").toLowerCase(), rec = { key: k, label: label.value.trim(), kind: kind.value }; Z().ownFields = OWN().filter(f => f !== f0).concat(rec); }, f0 ? "Field saved" : "Field added — type {" + key.value.trim().toLowerCase() + "} in your templates");
 }
 // Values for one template: mapping aliases and custom inputs applied on top of the data object.
 function applyMap(t, data, custom = {}) {
@@ -182,9 +197,17 @@ function CHEAT(n) {
     box.replaceChildren(...FIELDS.map(([g, fs]) => { const L2 = fs.filter(f => !s || (f[0] + " " + f[1]).toLowerCase().includes(s)); return L2.length ? o("div", { class: "card flush" }, o("h3", { class: "pcc-ch" }, g), tbl(["Placeholder", "Meaning", "Example" + (pr ? " (" + pr.name + ")" : "")], L2.map(row))) : null; }));
   };
   q.addEventListener("input", draw);
+  const own = o("div", {}), drawOwn = () => {
+    const X = extraTags(), keys = Object.keys(X).sort();
+    own.replaceChildren(o("div", { class: "card flush" }, o("div", { class: "row", style: { padding: "12px 16px 0" } }, o("h3", { class: "pcc-ch", style: { margin: 0, padding: 0 } }, "Your own fields"), o("div", { class: "grow right" }, can("templates") ? btn("Add a field", async () => { await ownEdit(); drawOwn(); }, "small primary") : null)),
+      o("p", { class: "muted small", style: { padding: "0 16px" } }, "Placeholders the program has no field for — added here, or found in your templates. Type the value on each project under Edit › Other template fields."),
+      keys.length ? tbl(["Placeholder", "Meaning", "Used in", ""], keys.map(k => { const f = ownOf(k); return o("tr", {}, o("td", {}, o("code", { class: "pcc-code", title: "Click to copy", onclick: () => { navigator.clipboard && navigator.clipboard.writeText("{" + k + "}"); xt("Copied {" + k + "}"); } }, "{" + k + "}")), o("td", {}, f ? f.label || "" : o("span", { class: "muted" }, "found in a template")), o("td", {}, X[k].join(", ") || o("span", { class: "muted" }, "not used yet")),
+        o("td", { class: "pcc-acts" }, can("templates") ? btn(f ? "Edit" : "Describe", async () => { await ownEdit(f || { key: k, kind: /_date$/.test(k) ? "date" : /_time$/.test(k) ? "time" : /_dv$/.test(k) ? "dv" : "text" }); drawOwn(); }, "small") : null, f && can("templates") && !X[k].length ? btn("Delete", () => { save(() => { Z().ownFields = OWN().filter(x => x !== f); }, "Field deleted"); drawOwn(); }, "small danger") : null)); })) : o("p", { class: "muted", style: { padding: "0 16px 12px" } }, "None yet.")));
+  };
+  drawOwn();
   const sample = tplByCode("SAMPLE");
   n.append(o("div", { class: "row" }, o("h1", { style: { margin: 0 } }, "Placeholder cheat-sheet"), o("div", { class: "grow right" }, sample ? btn("Download sample Word file", () => fdownload(curVer(sample).fileId, "placeholder-sample.docx").catch(e => xt(e.message, "err"))) : null)), PCNAV("templates"),
-    card(null, o("p", {}, "Type a placeholder in curly brackets anywhere in a Word or Excel template, e.g. ", o("code", {}, "{project_name_dv}"), ". For a table row that repeats, put ", o("code", {}, "{#bidders}"), " in the first cell and ", o("code", {}, "{/bidders}"), " in the last cell of the row; the cells in between use the loop fields such as ", o("code", {}, "{bidder_name}"), "."), o("p", { class: "muted small" }, "Dates: add _dv, _en or _hijri (e.g. {handover_date_dv}). Money: add _words_dv or _words_en (e.g. {contract_value_words_dv}). Check Dhivehi amount words on important documents; you can correct any value before generating."), q), box);
+    card(null, o("p", {}, "Type a placeholder in curly brackets anywhere in a Word or Excel template, e.g. ", o("code", {}, "{project_name_dv}"), ". For a table row that repeats, put ", o("code", {}, "{#bidders}"), " in the first cell and ", o("code", {}, "{/bidders}"), " in the last cell of the row; the cells in between use the loop fields such as ", o("code", {}, "{bidder_name}"), "."), o("p", { class: "muted small" }, "Dates: add _dv, _en or _hijri (e.g. {handover_date_dv}). Money: add _words_dv or _words_en (e.g. {contract_value_words_dv}). Check Dhivehi amount words on important documents; you can correct any value before generating."), q), own, box);
   draw();
 }
 

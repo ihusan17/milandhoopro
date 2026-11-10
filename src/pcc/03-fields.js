@@ -107,6 +107,10 @@ function dataFor(p, extra = {}) {
   d.evaluation_time = p.evaluationTime || "";
   d.award_year = /^\d{2}\.\d{2}\.(\d{4})$/.test(d.award_date || "") ? d.award_date.slice(6) : String(new Date().getFullYear());
   // Values typed on the project for template placeholders the program has no field for.
-  Object.entries(p.fields || {}).forEach(([k, val]) => { d[k] === undefined && (d[k] = /_date$/.test(k) && isISO(val) ? Xt(val) : val); });
+  Object.entries(p.fields || {}).forEach(([k, val]) => { d[k] === undefined && (d[k] = isISO(val) ? Xt(val) : val); });
+  // Own fields of kind "date" get the usual _dv, _dv_dmy, _dash… variants (addYMD below); numbers fill Excel as numbers.
+  (Z().ownFields || []).forEach(f => { const raw = (p.fields || {})[f.key]; f.kind === "date" && [["_dv", dvDate], ["_en", enDate], ["_hijri", hijri]].forEach(([x, fn]) => { d[f.key + x] === undefined && (d[f.key + x] = isISO(raw) ? fn(raw) : ""); }); f.kind === "date" && d[f.key + "_iso"] === undefined && (d[f.key + "_iso"] = isISO(raw) ? raw : "");
+  });
+  (Z().ownFields || []).forEach(f => { f.kind === "number" && d[f.key] !== "" && d[f.key] != null && !isNaN(Number(d[f.key])) && (d.__num[f.key] = Number(d[f.key])); d[f.key] === undefined && (d[f.key] = ""); });
   return addYMD(Object.assign(d, extra));
 }
