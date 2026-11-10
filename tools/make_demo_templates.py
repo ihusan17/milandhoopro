@@ -178,13 +178,13 @@ def save_doc(d, code, group, en, dv, order=0, per="", pack=False):
 
 # ---------------- Bid Committee pack ----------------
 d = new_doc(True); demo_note(d)
-ref_block(d, "{ref_no}", "{today_dv}")
-para(d, "ޖަނާބު/ އަލްފާޟިލާ {member_name_dv}", 13, True)
+ref_block(d, "{bid_meeting_no}", "{today_dv}")
+para(d, "{member_name_dv}", 13, True)
 para(d, "{member_designation_dv}", 12)
 para(d, "ބިޑް ކޮމިޓީ ބައްދަލުވުމަށް ދައުވަތު", 15, True, align=WD_ALIGN_PARAGRAPH.CENTER, after=10, color=TEAL)
-para(d, "{project_name_dv} ({ref_no}) ގެ ބީލަމާ ގުޅޭގޮތުން ބިޑް ކޮމިޓީގެ ބައްދަލުވުމެއް {bid_opening_date_dv} ވަނަ ދުވަހު ކައުންސިލްގެ އިދާރާގައި ބޭއްވުމަށް ނިންމާފައިވާތީ، މި ބައްދަލުވުމަށް ޙާޟިރުވެވަޑައިގަތުމަށް ދަންނަވަމެވެ.", 13, after=8)
+para(d, "{project_name_dv} ({ref_no}) ގެ ބީލަމާ ގުޅޭގޮތުން ބިޑް ކޮމިޓީގެ ބައްދަލުވުމެއް {bid_meeting_date_dv_dmy} ވަނަ ދުވަހުގެ {bid_meeting_time} ގައި ކައުންސިލްގެ އިދާރާގައި ބޭއްވުމަށް ނިންމާފައިވާތީ، މި ބައްދަލުވުމަށް ޙާޟިރުވެވަޑައިގަތުމަށް ދަންނަވަމެވެ.", 13, after=8)
+table(d, [["ބައްދަލުވުމުގެ ނަންބަރު", "{bid_meeting_no}"], ["ތާރީޚު", "{bid_meeting_date_dv_both}"], ["ގަޑި", "{bid_meeting_time}"], ["އިޢުލާން ނަންބަރު", "{advertisement_no}"], ["އިޢުލާން ކުރި ތާރީޚު", "{advertised_date_dv}"], ["ބީލަން ހުޅުވި ތާރީޚު", "{bid_opening_date_dv}"]], widths=[5, 12], header=False)
 para(d, "ކޮމިޓީގައި ތިޔަބޭފުޅާގެ މަޤާމު: {member_role_dv}", 13)
-para(d, "އިޢުލާން ނަންބަރު: {advertisement_no}", 12)
 sign_block(d, "{project_officer}", "{project_officer_designation}")
 save_doc(d, "BC-INV", "Bid Committee", "Invitation to Bid Committee member", "ބިޑް ކޮމިޓީ ބައްދަލުވުމަށް ދައުވަތު", 1, "bid", True)
 
@@ -234,7 +234,7 @@ meeting_minutes("EV-YAU-M", "Evaluation Committee", "Evaluation meeting minutes 
 
 d = new_doc(True); demo_note(d)
 ref_block(d, "{meeting_ref}", "{today_dv}")
-para(d, "ޖަނާބު/ އަލްފާޟިލާ {member_name_dv}", 13, True)
+para(d, "{member_name_dv}", 13, True)
 para(d, "{member_designation_dv}", 12)
 para(d, "ބިޑް ކޮމިޓީ ބައްދަލުވުމަށް ދައުވަތު", 15, True, align=WD_ALIGN_PARAGRAPH.CENTER, after=10, color=TEAL)
 para(d, "ތިރީގައިވާ މަޝްރޫޢުތަކުގެ ބީލަމާ ގުޅޭގޮތުން ބިޑް ކޮމިޓީގެ ބައްދަލުވުމެއް {meeting_date_dv} ވަނަ ދުވަހުގެ {meeting_time} ގައި {meeting_place} ގައި ބޭއްވުމަށް ނިންމާފައިވާތީ، މި ބައްދަލުވުމަށް ޙާޟިރުވެވަޑައިގަތުމަށް ދަންނަވަމެވެ.", 13, after=8)

@@ -221,3 +221,10 @@ The module source is readable and kept outside the minified bundle:
 - `src/pcc/demo/`: the demo templates. Rebuild them with `python3 tools/make_demo_templates.py` (needs python-docx and openpyxl).
 
 After editing, run `node tools/build-pcc.mjs`. It replaces the block between `<!--PCC:BEGIN-->` and `<!--PCC:END-->` in `index.html`. The app reaches the portal's helpers through `window.__app.K`. The bell, dashboard and search call into `window.__pcc`.
+
+## When your own template does not fill
+
+- **Typing slips are fixed for you.** Spaces inside the braces (`{ bid_meeting_no }`), hidden RTL marks or non-breaking spaces from a Dhivehi paragraph, capitals (`{BID_MEETING_NO}`), double braces (`{{bid_meeting_no}}`), full-width braces and braces reversed by an RTL keyboard (`}bid_meeting_no{`) are cleaned to `{bid_meeting_no}` when the file is scanned and filled.
+- **Check the Placeholders column** on Templates. A number means the file is read; open **Placeholders** and map anything shown as *Not recognised*. "0 — nothing fills" means no `{…}` was found.
+- **Upload new version on the template itself** (Projects › Templates). A file uploaded as a signed copy in a project's Documents is stored as it is and is never filled.
+- **Generate again from the project** (Bid / Evaluation tab › Generate pack). Documents made earlier keep their old values; the template Preview uses a sample project, not yours.

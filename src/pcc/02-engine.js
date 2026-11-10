@@ -27,16 +27,27 @@ function docxParts(zip) { return Object.keys(zip.files).filter(n => /^word\/(doc
 // Iulaan number or dates) with a {field}, so originals work without typing placeholders.
 // Also repairs tags typed with an RTL keyboard, which come out as }name{.
 const REVTAG = /\}\s*([#\/^]?)\s*([A-Za-z_][\w.]*)\s*\{/g;
+// Placeholders as people really type them in Word: spaces or hidden RTL/zero-width marks
+// inside the braces, non-breaking spaces, capitals, {{double}} or full-width ｛braces｝,
+// and }reversed{ or {mixed{ braces from an RTL keyboard. All become a clean {name}.
+const TJ = "[\\s\\u00A0\\u200B-\\u200F\\u202A-\\u202E\\u2066-\\u2069\\uFEFF]*";
+const TN = TJ + "([#\\/^]?)" + TJ + "([A-Za-z_][\\w.]*)" + TJ;
+const TAGFIX = [new RegExp("[{\\uFF5B]" + TJ + "[{\\uFF5B]" + TN + "[}\\uFF5D]" + TJ + "[}\\uFF5D]", "g"), new RegExp("[{\\uFF5B]" + TN + "[}\\uFF5D]", "g"), new RegExp("[}\\uFF5D{\\uFF5B]" + TN + "[}\\uFF5D{\\uFF5B]", "g")];
+function tagMatches(full) {
+  const M = [], free = (a, b) => !M.some(x => x[0] < b && a < x[1]);
+  TAGFIX.forEach(re => { for (const m of full.matchAll(re)) { const a = m.index, b = a + m[0].length, rep = "{" + m[1] + m[2].toLowerCase() + "}"; free(a, b) && M.push([a, b, rep]); } });
+  return M.filter(x => full.slice(x[0], x[1]) !== x[2]);
+}
 const xmlEsc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const cleanRules = rules => (rules || []).filter(r => r && r.find && r.field).sort((a, b) => b.find.length - a.find.length);
 function rewriteText(s, rules) {
-  s = String(s).replace(REVTAG, (m, k, n) => "{" + k + n + "}");
+  s = String(s); for (const [a, b, rep] of tagMatches(s).sort((x, y) => y[0] - x[0])) s = s.slice(0, a) + rep + s.slice(b);
   for (const r of cleanRules(rules)) s = s.split(r.find).join("{" + r.field + "}");
   return s;
 }
 function textMatches(full, rules) {
   const M = [];
-  for (const mm of full.matchAll(REVTAG)) M.push([mm.index, mm.index + mm[0].length, "{" + mm[1] + mm[2] + "}"]);
+  M.push(...tagMatches(full));
   for (const r of cleanRules(rules)) { let i = 0; while ((i = full.indexOf(r.find, i)) >= 0) { const e = i + r.find.length; if (!M.some(x => x[0] < e && i < x[1])) M.push([i, e, "{" + r.field + "}"]); i = e; } }
   return M.sort((a, b) => b[0] - a[0]);
 }
