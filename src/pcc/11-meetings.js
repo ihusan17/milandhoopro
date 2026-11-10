@@ -34,7 +34,7 @@ async function meetingEdit(m, k, p) {
     need("pdocs");
     const members = src.value === "@keep" ? v.members : JSON.parse(JSON.stringify(prj(src.value).committees[k]));
     const o2 = { kind: k, date: date.value, time: time.value.trim(), place: place.value.trim(), notes: notes.value.trim(), projectIds: [...chosen].filter(id => prj(id)), members };
-    if (m) Object.assign(m, o2); else { const nm = { id: uid(), ref: refNext("meeting"), ...o2, by: me(), at: Vt() }; MEETS().push(nm); }
+    if (m) Object.assign(m, o2); else { const nm = { id: uid(), ref: refNext(k === "eval" ? "evalmeeting" : "meeting"), ...o2, by: me(), at: Vt() }; MEETS().push(nm); }
     o2.projectIds.forEach(id => audit(prj(id), `${KLAB[k]} meeting ${m ? "changed" : "recorded"}`, `${fd(o2.date)} · ${o2.projectIds.length} projects`));
   }, m ? "Meeting saved" : "Meeting recorded");
 }
@@ -44,6 +44,7 @@ function meetingData(m) {
   const mem = m.members.map((x, i) => ({ no: i + 1, member_no: i + 1, member_name: x.name || "", member_name_dv: x.nameDv || "", member_designation: x.designation || "", member_designation_dv: x.designationDv || "", member_role: x.role || "Member", member_role_dv: ROLEDV[x.role || "Member"] || "" }));
   const d = dataFor(first, { meeting_ref: m.ref || "", meeting_date: Xt(m.date), meeting_date_dv: dvDate(m.date), meeting_date_en: enDate(m.date), meeting_date_hijri: hijri(m.date), meeting_time: m.time || "", meeting_place: m.place || "", meeting_notes: m.notes || "", project_count: P.length, letter_date: Xt(m.date), letter_date_dv: dvDate(m.date), letter_date_hijri: hijri(m.date) });
   d[m.kind + "_members"] = mem;
+  d[m.kind + "_meeting_no"] = m.ref || ""; d[m.kind + "_meeting_date"] = Xt(m.date); d[m.kind + "_meeting_date_dv"] = dvDate(m.date); d[m.kind + "_meeting_date_en"] = enDate(m.date); d[m.kind + "_meeting_date_hijri"] = hijri(m.date);
   d.projects = P.map((p, i) => { const x = dataFor(p); return { ...scalars(x), no: i + 1, bidders: x.bidders, bid_members: x.bid_members, eval_members: x.eval_members }; });
   return d;
 }

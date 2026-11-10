@@ -1472,7 +1472,8 @@ const REFKINDS = [
   ["memo", "Internal memos", "(IUL)351-PRO/{YYYY}/M{###}"],
   ["paymemo", "Payment memos", "(IUL)351-PRO/{YYYY}/PM{###}"],
   ["report", "Reports", "(IUL)351-PRO/{YYYY}/R{###}"],
-  ["meeting", "Committee meetings", "(IUL)351-PRO/{YYYY}/BM{###}"],
+  ["meeting", "Bid Committee meetings", "(IUL)351-PRO/{YYYY}/BM{###}"],
+  ["evalmeeting", "Evaluation Committee meetings", "(IUL)351-PRO/{YYYY}/EM{###}"],
 ];
 function refPattern(kind) { const z = Z(); z.refPatterns = z.refPatterns || {}; return z.refPatterns[kind] || (REFKINDS.find(k => k[0] === kind) || [0, 0, "{YYYY}/{###}"])[2]; }
 function refFormat(pat, n, yr, p) {
@@ -1991,7 +1992,7 @@ const FIELDS = [
   ["Money (MVR)", MONEYF.flatMap(([k, l]) => [[k, l, "250,000.00"], [k + "_words_dv", l + " in Dhivehi words", "ދެލައްކަ ފަންސާސް ހާސް ރުފިޔާ"], [k + "_words_en", l + " in English words", "Two Hundred Fifty Thousand Rufiyaa Only"]])],
   ["Contractor", [["contractor_name", "Contractor / supplier", "Island Builders Pvt Ltd"], ["contractor_name_dv", "Contractor name (Dhivehi)", ""], ["contractor_address", "Address", ""], ["contractor_phone", "Phone", ""], ["contractor_email", "E-mail", ""], ["contractor_reg_no", "Registration number", ""], ["contractor_contact", "Contact person", ""]]],
   ["Award", [["award_bidder", "Winning bidder", "Island Builders Pvt Ltd"], ["award_duration", "Winning bidder's duration (days)", "120"], ["bidder_count", "Number of bids", "3"], ["responsive_count", "Number of responsive bids", "2"]]],
-  ["Committees", [["bid_member_count", "Bid Committee members", "3"], ["eval_member_count", "Evaluation Committee members", "3"], ["bid_chair", "Bid Committee chair", ""], ["eval_chair", "Evaluation Committee chair", ""]]],
+  ["Committees", [["bid_meeting_no", "Bid Committee meeting number", "(IUL)351-PRO/2026/BM004"], ["bid_meeting_date", "Bid Committee meeting date", "12.11.2026"], ["bid_meeting_date_dv", "Bid Committee meeting date (Dhivehi)", "12 ނޮވެމްބަރު 2026"], ["eval_meeting_no", "Evaluation Committee meeting number", "(IUL)351-PRO/2026/EM002"], ["eval_meeting_date", "Evaluation Committee meeting date", "19.11.2026"], ["eval_meeting_date_dv", "Evaluation Committee meeting date (Dhivehi)", "19 ނޮވެމްބަރު 2026"], ["bid_member_count", "Bid Committee members", "3"], ["eval_member_count", "Evaluation Committee members", "3"], ["bid_chair", "Bid Committee chair", ""], ["eval_chair", "Evaluation Committee chair", ""]]],
   ["Per member (inside a member document)", [["member_no", "Member number", "1"], ["member_name", "Name", "Ahmed Ali"], ["member_name_dv", "Name (Dhivehi)", "އަޙްމަދު ޢަލީ"], ["member_designation", "Designation", "Council Officer"], ["member_designation_dv", "Designation (Dhivehi)", "ކައުންސިލް އޮފިސަރ"], ["member_role", "Role (Chair / Member / Secretary)", "Chair"], ["member_role_dv", "Role (Dhivehi)", "ރައީސް"]]],
   ["Committee meeting (several projects)", [["meeting_ref", "Meeting number", "(IUL)351-PRO/2026/BM001"], ["meeting_date", "Meeting date", "12.11.2026"], ["meeting_date_dv", "Meeting date (Dhivehi)", "12 ނޮވެމްބަރު 2026"], ["meeting_time", "Time", "10:00"], ["meeting_place", "Place", ""], ["project_count", "Number of projects", "2"], ["{#projects}…{/projects}", "Repeats a block for every project of the meeting; inside it all project fields work, including {#bidders}…{/bidders}", ""]]],
   ["Letters and memos", [["letter_ref", "Reference number", "(IUL)351-PRO/2026/031"], ["letter_date", "Date", "10.11.2026"], ["letter_date_dv", "Date (Dhivehi)", ""], ["letter_date_hijri", "Date (Hijri)", ""], ["recipient_name", "To (name)", ""], ["recipient_address", "To (address)", ""], ["subject", "Subject", ""], ["body", "Body text (line breaks kept)", ""], ["signatory_name", "Signed by", ""], ["signatory_designation", "Signatory designation", ""], ["eot_days", "Extension of time (days)", ""], ["eot_reason", "Extension reason", ""], ["new_due_date", "New due date", ""]]],
@@ -2045,6 +2046,12 @@ function dataFor(p, extra = {}) {
   };
   DATEF.forEach(([k, , prop]) => { const iso = prop ? p[prop] : t; d[k] = isISO(iso) ? Xt(iso) : ""; d[k + "_dv"] = dvDate(iso); d[k + "_en"] = enDate(iso); d[k + "_hijri"] = hijri(iso); d[k + "_iso"] = isISO(iso) ? iso : ""; });
   d.today_hijri_en = hijri(t, "en");
+  // Committee meeting numbers: typed on the project, else the latest recorded meeting that includes it
+  ["bid", "eval"].forEach(k => {
+    const m = (Z().meetings || []).filter(x => x.kind === k && x.projectIds.includes(p.id)).sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
+    const no = p[k + "MeetingNo"] || (m ? m.ref : ""), dt = p[k + "MeetingDate"] || (m ? m.date : "");
+    d[k + "_meeting_no"] = no || ""; d[k + "_meeting_date"] = isISO(dt) ? Xt(dt) : ""; d[k + "_meeting_date_dv"] = dvDate(dt); d[k + "_meeting_date_en"] = enDate(dt); d[k + "_meeting_date_hijri"] = hijri(dt);
+  });
   // Iulaan aliases
   d.iulaan_no = d.advertisement_no; ["", "_dv", "_en", "_hijri", "_iso"].forEach(x => { d["iulaan_date" + x] = d["advertised_date" + x]; });
   // letter defaults (a letter or memo overrides these with its own values)
@@ -2418,6 +2425,7 @@ async function PEDIT2(p, type, pre, ref) {
     nameEn: I(v.nameEn || (v.nameDv ? "" : v.name) || ""), nameDv: DVI(v.nameDv), type: S(PTYPES.map(x => x[1]), v.type || type || "Works"), category: I(v.category, { placeholder: "e.g. Construction, IT" }), status: S(PST, v.status || "Planned"), location: I(v.location || "", { placeholder: "e.g. Sh. Milandhoo harbour" }),
     unit: I(v.unit, { list: "pcc-units" }), officer: I(v.officer, { list: "pcc-staff" }), vendor: I(v.vendor, { list: "pcc-vendors", placeholder: "Pick from Vendors or type" }),
     budget: S([["", "— none —"], ...Z().budgets.map(b => [b.id, `${b.code} - ${b.description}`])], v.budgetId ?? ""), fund: I(v.fund, { placeholder: "Council budget, grant…" }), estimate: MI(v.estimate), contract: MI(v.contract),
+    bidMeetingNo: I(v.bidMeetingNo, { placeholder: "e.g. (IUL)351-PRO/2026/BM004" }), bidMeetingDate: D(v.bidMeetingDate), evalMeetingNo: I(v.evalMeetingNo, { placeholder: "e.g. (IUL)351-PRO/2026/EM002" }), evalMeetingDate: D(v.evalMeetingDate),
     prNumber: I(v.prNumber), advertNo: I(v.advertNo), advertised: D(v.advertised), bidOpening: D(v.bidOpening), evaluation: D(v.evaluation), award: D(v.award), agreement: D(v.agreement), handover: D(v.handover),
     duration: N(v.duration, { min: 0, placeholder: "days" }), due: D(v.dueOriginal || v.due), done: D(v.done), progress: N(v.progress ?? 0, { min: 0, max: 100, step: 1 }),
     retentionPct: N(v.retentionPct ?? "", { min: 0, max: 100, step: .5, placeholder: "e.g. 5" }), retentionDays: N(v.retentionDays ?? "", { min: 0, placeholder: "e.g. 365" }),
@@ -2436,6 +2444,7 @@ async function PEDIT2(p, type, pre, ref) {
     sec("Project"), o("div", { class: "grid2" }, L("Name in English", f.nameEn), L("Name in Dhivehi", f.nameDv), L("Type", f.type), L("Category", f.category), L("Status", f.status), L("Location / island", f.location), L("Unit / section", f.unit), L("Project officer", f.officer), L("Linked plan item", f.plan)),
     sec("Money"), o("div", { class: "grid2" }, L("Budget line", f.budget), L("Funding source", f.fund), L("Estimated cost (MVR)", f.estimate), L("Contract value (MVR)", f.contract), L("Contractor / supplier", f.vendor)),
     sec("Procurement"), o("div", { class: "grid2" }, L("PR number", f.prNumber), L("Iulaan number", f.advertNo), L("Iulaan date", f.advertised), L("Bid opening", f.bidOpening), L("Evaluation", f.evaluation), L("Award", f.award), L("Agreement signed", f.agreement)),
+    sec("Committee meetings"), o("div", { class: "grid2" }, ...[["bid", "Bid Committee", "meeting"], ["eval", "Evaluation Committee", "evalmeeting"]].flatMap(([k, l, kind]) => [o("div", { class: "pcc-f" }, o("label", {}, l + " meeting no."), o("div", { class: "row", style: { gap: "6px", alignItems: "center" } }, o("div", { class: "grow" }, f[k + "MeetingNo"]), btn("Take next number", () => { if (f[k + "MeetingNo"].value.trim() && !confirm("Replace the number already typed?")) return; f[k + "MeetingNo"].value = refNext(kind, v); K.Qt(); }, "small")), o("div", { class: "muted small" }, "Leave empty to use the latest meeting recorded for this project")), L(l + " meeting date", f[k + "MeetingDate"])])),
     sec("Contract period"), o("div", { class: "grid2" }, L("Site handover", f.handover), L("Duration (days)", f.duration), o("div", { class: "pcc-f" }, o("label", {}, "Due date"), f.due, hint), L("Actual completion", f.done), L("Physical progress (%)", f.progress)),
     sec("Retention"), o("div", { class: "grid2" }, L("Retention (%)", f.retentionPct), L("Retention period (days)", f.retentionDays)),
     sec("Scope"), L("Scope in Dhivehi", f.descDv), L("Scope in English", f.desc), L("Notes", f.notes)],
@@ -2445,7 +2454,7 @@ async function PEDIT2(p, type, pre, ref) {
       const pr = Number(f.progress.value || 0); if (!(pr >= 0 && pr <= 100)) throw err("Progress must be between 0 and 100");
       if (f.handover.value && f.due.value && f.due.value < f.handover.value) throw err("The due date is before the handover date");
       const nn = el => (el.value === "" ? null : Number(el.value));
-      out = { nameEn: f.nameEn.value.trim(), nameDv: f.nameDv.value.trim(), name: f.nameEn.value.trim() || f.nameDv.value.trim(), type: f.type.value, category: f.category.value.trim(), status: f.status.value, location: f.location.value.trim(), unit: f.unit.value.trim(), officer: f.officer.value.trim(), vendor: f.vendor.value.trim(), budgetId: f.budget.value ? Number(f.budget.value) : null, fund: f.fund.value.trim(), estimate: parseMoney(f.estimate, "Estimated cost"), contract: parseMoney(f.contract, "Contract value"), prNumber: f.prNumber.value.trim(), advertNo: f.advertNo.value.trim(), advertised: f.advertised.value, bidOpening: f.bidOpening.value, evaluation: f.evaluation.value, award: f.award.value, agreement: f.agreement.value, handover: f.handover.value, duration: nn(f.duration), dueOriginal: f.due.value, dueManual: manual, done: f.done.value, progress: pr, retentionPct: nn(f.retentionPct), retentionDays: nn(f.retentionDays), planId: f.plan.value ? Number(f.plan.value) : null, descDv: f.descDv.value.trim(), desc: f.desc.value.trim(), notes: f.notes.value.trim() };
+      out = { nameEn: f.nameEn.value.trim(), nameDv: f.nameDv.value.trim(), name: f.nameEn.value.trim() || f.nameDv.value.trim(), type: f.type.value, category: f.category.value.trim(), status: f.status.value, location: f.location.value.trim(), unit: f.unit.value.trim(), officer: f.officer.value.trim(), vendor: f.vendor.value.trim(), budgetId: f.budget.value ? Number(f.budget.value) : null, fund: f.fund.value.trim(), estimate: parseMoney(f.estimate, "Estimated cost"), contract: parseMoney(f.contract, "Contract value"), bidMeetingNo: f.bidMeetingNo.value.trim(), bidMeetingDate: f.bidMeetingDate.value, evalMeetingNo: f.evalMeetingNo.value.trim(), evalMeetingDate: f.evalMeetingDate.value, prNumber: f.prNumber.value.trim(), advertNo: f.advertNo.value.trim(), advertised: f.advertised.value, bidOpening: f.bidOpening.value, evaluation: f.evaluation.value, award: f.award.value, agreement: f.agreement.value, handover: f.handover.value, duration: nn(f.duration), dueOriginal: f.due.value, dueManual: manual, done: f.done.value, progress: pr, retentionPct: nn(f.retentionPct), retentionDays: nn(f.retentionDays), planId: f.plan.value ? Number(f.plan.value) : null, descDv: f.descDv.value.trim(), desc: f.desc.value.trim(), notes: f.notes.value.trim() };
       if (out.status === "Completed" || out.status === "In retention") { out.progress = 100; out.done = out.done || today(); }
     } catch (e) { xt(e.message, "err"); return !1; }
   } }]);
@@ -2752,7 +2761,7 @@ function printSummary(p) {
 
 const PACKS = { bid: { group: "Bid Committee", zip: "BidCommittee", title: "Bid Committee pack" }, eval: { group: "Evaluation Committee", zip: "Evaluation", title: "Evaluation Committee pack" } };
 // Fields that can be saved back to the project from the review panel.
-const BACK = { pr_number: ["prNumber", "text"], advertisement_no: ["advertNo", "text"], iulaan_no: ["advertNo", "text"], iulaan_date: ["advertised", "date"], location: ["location", "text"], project_name_dv: ["nameDv", "text"], project_name_en: ["nameEn", "text"], category: ["category", "text"], contract_value: ["contract", "money"], estimated_cost: ["estimate", "money"], duration_days: ["duration", "int"], retention_percent: ["retentionPct", "num"], retention_period_days: ["retentionDays", "int"], advertised_date: ["advertised", "date"], bid_opening_date: ["bidOpening", "date"], evaluation_date: ["evaluation", "date"], award_date: ["award", "date"], agreement_date: ["agreement", "date"], handover_date: ["handover", "date"], description_dv: ["descDv", "text"], description: ["desc", "text"] };
+const BACK = { pr_number: ["prNumber", "text"], advertisement_no: ["advertNo", "text"], iulaan_no: ["advertNo", "text"], bid_meeting_no: ["bidMeetingNo", "text"], eval_meeting_no: ["evalMeetingNo", "text"], bid_meeting_date: ["bidMeetingDate", "date"], eval_meeting_date: ["evalMeetingDate", "date"], iulaan_date: ["advertised", "date"], location: ["location", "text"], project_name_dv: ["nameDv", "text"], project_name_en: ["nameEn", "text"], category: ["category", "text"], contract_value: ["contract", "money"], estimated_cost: ["estimate", "money"], duration_days: ["duration", "int"], retention_percent: ["retentionPct", "num"], retention_period_days: ["retentionDays", "int"], advertised_date: ["advertised", "date"], bid_opening_date: ["bidOpening", "date"], evaluation_date: ["evaluation", "date"], award_date: ["award", "date"], agreement_date: ["agreement", "date"], handover_date: ["handover", "date"], description_dv: ["descDv", "text"], description: ["desc", "text"] };
 const dmy2iso = s => { const m = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(String(s).trim()); return m ? `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}` : isISO(s) ? s : null; };
 
 function packTemplates(k) { return TPL().filter(t => t.group === PACKS[k].group && t.active !== false).sort((a, b) => (a.order || 0) - (b.order || 0)); }
@@ -3205,7 +3214,7 @@ async function meetingEdit(m, k, p) {
     need("pdocs");
     const members = src.value === "@keep" ? v.members : JSON.parse(JSON.stringify(prj(src.value).committees[k]));
     const o2 = { kind: k, date: date.value, time: time.value.trim(), place: place.value.trim(), notes: notes.value.trim(), projectIds: [...chosen].filter(id => prj(id)), members };
-    if (m) Object.assign(m, o2); else { const nm = { id: uid(), ref: refNext("meeting"), ...o2, by: me(), at: Vt() }; MEETS().push(nm); }
+    if (m) Object.assign(m, o2); else { const nm = { id: uid(), ref: refNext(k === "eval" ? "evalmeeting" : "meeting"), ...o2, by: me(), at: Vt() }; MEETS().push(nm); }
     o2.projectIds.forEach(id => audit(prj(id), `${KLAB[k]} meeting ${m ? "changed" : "recorded"}`, `${fd(o2.date)} · ${o2.projectIds.length} projects`));
   }, m ? "Meeting saved" : "Meeting recorded");
 }
@@ -3215,6 +3224,7 @@ function meetingData(m) {
   const mem = m.members.map((x, i) => ({ no: i + 1, member_no: i + 1, member_name: x.name || "", member_name_dv: x.nameDv || "", member_designation: x.designation || "", member_designation_dv: x.designationDv || "", member_role: x.role || "Member", member_role_dv: ROLEDV[x.role || "Member"] || "" }));
   const d = dataFor(first, { meeting_ref: m.ref || "", meeting_date: Xt(m.date), meeting_date_dv: dvDate(m.date), meeting_date_en: enDate(m.date), meeting_date_hijri: hijri(m.date), meeting_time: m.time || "", meeting_place: m.place || "", meeting_notes: m.notes || "", project_count: P.length, letter_date: Xt(m.date), letter_date_dv: dvDate(m.date), letter_date_hijri: hijri(m.date) });
   d[m.kind + "_members"] = mem;
+  d[m.kind + "_meeting_no"] = m.ref || ""; d[m.kind + "_meeting_date"] = Xt(m.date); d[m.kind + "_meeting_date_dv"] = dvDate(m.date); d[m.kind + "_meeting_date_en"] = enDate(m.date); d[m.kind + "_meeting_date_hijri"] = hijri(m.date);
   d.projects = P.map((p, i) => { const x = dataFor(p); return { ...scalars(x), no: i + 1, bidders: x.bidders, bid_members: x.bid_members, eval_members: x.eval_members }; });
   return d;
 }

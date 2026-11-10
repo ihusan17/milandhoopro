@@ -81,7 +81,8 @@ const REFKINDS = [
   ["memo", "Internal memos", "(IUL)351-PRO/{YYYY}/M{###}"],
   ["paymemo", "Payment memos", "(IUL)351-PRO/{YYYY}/PM{###}"],
   ["report", "Reports", "(IUL)351-PRO/{YYYY}/R{###}"],
-  ["meeting", "Committee meetings", "(IUL)351-PRO/{YYYY}/BM{###}"],
+  ["meeting", "Bid Committee meetings", "(IUL)351-PRO/{YYYY}/BM{###}"],
+  ["evalmeeting", "Evaluation Committee meetings", "(IUL)351-PRO/{YYYY}/EM{###}"],
 ];
 function refPattern(kind) { const z = Z(); z.refPatterns = z.refPatterns || {}; return z.refPatterns[kind] || (REFKINDS.find(k => k[0] === kind) || [0, 0, "{YYYY}/{###}"])[2]; }
 function refFormat(pat, n, yr, p) {

@@ -81,6 +81,12 @@ Documents marked "one per member" (BC-INV and PR-02) make one file for each comm
 
 Generating again creates v2, v3 and so on; nothing is overwritten. After signing, use **Upload signed** to attach the scanned PDF. The document then shows as *Signed*.
 
+### Meeting numbers in documents
+
+The placeholders `{bid_meeting_no}` and `{eval_meeting_no}` give the meeting numbers. Add `_date`, `_date_dv`, `_date_en` or `_date_hijri` for the meeting dates, for example `{eval_meeting_date_dv}`.
+
+Each value comes from the number typed on the project (Edit › Committee meetings, where **Take next number** issues one). If none is typed, the program uses the latest meeting recorded for that project.
+
 ### One meeting for several projects
 
 When the Bid Committee or Evaluation Committee decides on two or more projects in one meeting:
@@ -91,7 +97,7 @@ When the Bid Committee or Evaluation Committee decides on two or more projects i
    - **one Yaumiyya** with a section for every project: its name, reference, Iulaan number, bid opening date, estimated cost and bidders table;
    - **one invitation per member** that lists all the projects.
 
-The meeting gets its own number (pattern under Templates › Reference numbers). The files are saved in every project of the meeting.
+The meeting gets its own number. Bid Committee and Evaluation Committee meetings are numbered separately, for example `…/BM001` and `…/EM001`; the patterns are under Templates › Reference numbers. The files are saved in every project of the meeting.
 
 Meeting templates repeat a block per project between `{#projects}` and `{/projects}`. Inside the block every project field works, including the `{#bidders}` table. The demo meeting templates are BC-YAU-M, BC-INV-M and EV-YAU-M; replace them with the council's originals the same way as the other templates.
 
