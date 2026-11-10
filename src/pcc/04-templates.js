@@ -8,7 +8,7 @@ const curVer = t => (t.versions || []).find(v => v.v === t.version) || (t.versio
 function seedDemoTemplates() {
   const meta = window.__PCC_DEMO_META || [], z = Z(); let ch = false;
   meta.forEach(m => {
-    if (z.ptemplates.some(t => t.code === m.code)) return;
+    if (z.ptemplates.some(t => t.code === m.code) || (z.removedTemplates || []).includes(m.code)) return;
     z.ptemplates.push({ id: uid(), code: m.code, nameEn: m.nameEn, nameDv: m.nameDv || "", group: m.group, type: m.type, perMember: m.perMember || "", inPack: !!m.inPack, order: m.order || 0, active: true, version: 1, versions: [{ v: 1, fileId: "demo:" + m.code, name: m.file, size: m.size || 0, at: Vt(), by: "Built-in demo", tags: m.tags || null, sheets: m.sheets || [] }], mapping: {}, custom: {}, cellMap: [], demo: !m.official, meeting: !!m.meeting });
     ch = true;
   });
@@ -117,7 +117,7 @@ function TPLPAGE(n) {
         o("td", {}, o("span", { class: "pcc-fmt f-" + t.type }, t.type === "xlsx" ? "Excel" : "Word")), o("td", {}, "v" + t.version, t.demo && v.fileId && String(v.fileId).startsWith("demo:") ? o("span", { class: "pcc-tag demo" }, "Demo") : null),
         o("td", {}, tags ? (tags.length ? [String(tags.length), (t.replace || []).length ? o("div", { class: "muted small" }, `${t.replace.length} replace rule${t.replace.length === 1 ? "" : "s"}`) : null] : o("span", { class: "pcc-bad small", title: "Nothing in this file will change. Use Replace text, or type {placeholders} into the file." }, "0 — nothing fills")) : o("button", { class: "btn small", onclick: async () => { try { await tplTags(t); K.le(); } catch (e) { xt(e.message, "err"); } } }, "Scan")),
         o("td", {}, t.group.includes("Committee") ? (t.inPack ? "Yes" : "No") : "—"), o("td", {}, t.active === false ? stChip("Inactive") : stChip("Active")),
-        o("td", { class: "pcc-acts wrap" }, btn("Preview", () => tplPreview(t), "small"), admin ? btn("Edit", () => tplEdit(t), "small") : null, admin ? btn("Placeholders", () => tplMap(t), "small") : null, admin ? btn("Replace text", () => tplRules(t), "small") : null, admin ? btn("Upload new version", () => tplUpload(t), "small") : null, btn("Versions", () => tplVersions(t), "small")));
+        o("td", { class: "pcc-acts wrap" }, btn("Preview", () => tplPreview(t), "small"), admin ? btn("Edit", () => tplEdit(t), "small") : null, admin ? btn("Placeholders", () => tplMap(t), "small") : null, admin ? btn("Replace text", () => tplRules(t), "small") : null, admin ? btn("Upload new version", () => tplUpload(t), "small") : null, btn("Versions", () => tplVersions(t), "small"), admin ? btn("Delete", () => tplDelete(t), "small danger") : null));
     }))));
   });
 }
@@ -137,7 +137,7 @@ async function tplAdd() {
     const ok = await form("Add template — " + f.name, [["Code", code], ["Group", grp], ["Name (English)", en], ["Name (Dhivehi)", dv], ["Copies", pm], ["Order in pack", ord], o("label", { class: "pcc-chk" }, pack, " Include in the committee pack by default"), o("p", { class: "muted small", style: { gridColumn: "1/-1" } }, `${f.tags.length} placeholder${f.tags.length === 1 ? "" : "s"} found.`)], { check: () => { if (!code.value.trim()) throw err("Type a code"); if (TPL().some(t => t.code === code.value.trim())) throw err("That code is already used — use Upload new version on it instead"); } });
     if (!ok) return;
     const fileId = await fput(f.u8, { name: f.name, mime: MIME[f.ext] });
-    save(() => { TPL().push({ id: uid(), code: code.value.trim(), nameEn: en.value.trim(), nameDv: dv.value.trim(), group: grp.value, type: f.ext, perMember: pm.value, inPack: pack.checked, order: Number(ord.value) || 0, active: true, version: 1, versions: [{ v: 1, fileId, name: f.name, size: f.size, at: Vt(), by: me(), tags: f.tags, sheets: f.sheets }], mapping: {}, custom: {}, cellMap: [] }); }, "Template added");
+    save(() => { Z().removedTemplates = (Z().removedTemplates || []).filter(c => c !== code.value.trim()); TPL().push({ id: uid(), code: code.value.trim(), nameEn: en.value.trim(), nameDv: dv.value.trim(), group: grp.value, type: f.ext, perMember: pm.value, inPack: pack.checked, order: Number(ord.value) || 0, active: true, version: 1, versions: [{ v: 1, fileId, name: f.name, size: f.size, at: Vt(), by: me(), tags: f.tags, sheets: f.sheets }], mapping: {}, custom: {}, cellMap: [] }); }, "Template added");
     if (!f.tags.length) { const nt = TPL().find(x => x.code === code.value.trim()); nt && setTimeout(() => tplRules(nt, true), 400); }
   } catch (e) { xt(e.message, "err"); }
 }
@@ -158,6 +158,25 @@ async function tplEdit(t) {
   const ok = await form("Template " + t.code, [["Code", code], ["Group", grp], ["Name (English)", en], ["Name (Dhivehi)", dv], ["Copies", pm], ["Order in pack", ord], o("label", { class: "pcc-chk" }, pack, " Include in the committee pack by default"), o("label", { class: "pcc-chk" }, act, " Active")], { top: kbToggle(), check: () => { if (!code.value.trim()) throw err("Type a code"); if (TPL().some(x => x !== t && x.code === code.value.trim())) throw err("Code already used"); } });
   if (!ok) return;
   save(() => { need("templates"); Object.assign(t, { code: code.value.trim(), nameEn: en.value.trim(), nameDv: dv.value.trim(), group: grp.value, perMember: pm.value, inPack: pack.checked, active: act.checked, order: Number(ord.value) || 0 }); }, "Template saved");
+}
+// Built-in demo templates the council asked to remove (only while still the untouched demo).
+function dropDemo(z, codes) {
+  let ch = false; const rm = z.removedTemplates = z.removedTemplates || [];
+  codes.forEach(c => { const t = z.ptemplates.find(x => x.code === c); if (t && t.version === 1 && String((curVer(t) || {}).fileId).startsWith("demo:")) { z.ptemplates = z.ptemplates.filter(x => x !== t); ch = true; } if (!rm.includes(c) && !z.ptemplates.some(x => x.code === c)) { rm.push(c); ch = true; } });
+  return ch;
+}
+// Delete a template. Documents already generated from it stay; a built-in demo template is not added back.
+async function tplDelete(t) {
+  const used = Z().pdocs.filter(d => d.templateId === t.id).length;
+  if (!(await jt(`Delete the template ${t.code} — ${t.nameEn}? It will no longer be offered in packs or letters.${used ? ` ${used} document${used === 1 ? "" : "s"} already generated from it stay${used === 1 ? "s" : ""} in the projects.` : ""} To keep it but stop using it, press Edit and untick Active instead.`, "Delete"))) return;
+  try {
+    need("templates");
+    const files = (t.versions || []).map(v => v.fileId).filter(f => f && !String(f).startsWith("demo:"));
+    Z().ptemplates = Z().ptemplates.filter(x => x !== t);
+    const rm = Z().removedTemplates = Z().removedTemplates || []; rm.includes(t.code) || rm.push(t.code);
+    K.Qt(); for (const f of files) { try { await fdrop(f); } catch (e) { console.warn(e); } } K.Qt();
+    xt(t.code + " deleted"); K.le();
+  } catch (e) { xt(e.message, "err"); }
 }
 async function tplVersions(t) {
   await Mt(`${t.code} — versions`, [tbl(["Version", "File", "Size", "Uploaded", "By", ""], t.versions.slice().reverse().map(v => o("tr", {}, o("td", {}, "v" + v.v + (v.v === t.version ? " (current)" : "")), o("td", {}, v.name), o("td", {}, v.size ? kb(v.size) : ""), o("td", {}, fd(String(v.at).slice(0, 10))), o("td", {}, v.by || ""), o("td", {}, btn("Download original", () => fdownload(v.fileId, v.name).catch(e => xt(e.message, "err")), "small"), can("templates") && v.v !== t.version ? btn("Delete", async () => { const used = Z().pdocs.filter(d => d.templateId === t.id && d.templateVersion === v.v).length; if (!(await jt(`Delete version ${v.v} of ${t.code} (${v.name})?${used ? ` ${used} generated document${used === 1 ? " was" : "s were"} made with it; ${used === 1 ? "it stays" : "they stay"} as ${used === 1 ? "it is" : "they are"}.` : ""} This cannot be undone.`, "Delete"))) return; try { need("templates"); t.versions = t.versions.filter(x => x !== v); K.Qt(); await fdrop(v.fileId); K.Qt(); xt("Version " + v.v + " deleted"); document.querySelector(".modal-back") && document.querySelector(".modal-back").click(); setTimeout(() => tplVersions(t), 50); } catch (e) { xt(e.message, "err"); } }, "small danger") : null, can("templates") && v.v !== t.version ? btn("Make current", () => { save(() => { t.version = v.v; }, "Version " + v.v + " is now current"); document.querySelector(".modal-back") && document.querySelector(".modal-back").click(); }, "small") : null)))), o("p", { class: "muted small" }, "Documents keep a link to the version they were made with.")], [{ label: "Close", primary: !0, value: !1 }]);

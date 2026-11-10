@@ -125,6 +125,7 @@ function migrate() {
   });
   if (!Array.isArray(z.ptemplates)) { z.ptemplates = []; ch = true; }
   if (seedDemoTemplates()) ch = true;
+  if (dropDemo(z, ["EV-YAU-M"])) ch = true;
   for (const k of ["pdocs", "pfiles", "planImports"]) if (!Array.isArray(z[k])) { z[k] = []; ch = true; }
   if (!z.blobs || typeof z.blobs !== "object") { z.blobs = {}; ch = true; }
   if (loadPR09(z)) ch = true;

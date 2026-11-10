@@ -264,3 +264,7 @@ Any placeholder the program has no field for (e.g. `{meeting_venue_dv}`, `{secre
 - PR-02 declaration is one template, one copy per Evaluation Committee member: `{member_short_dv}`, `{member_id_card}`, `{member_office_dv}`, `{member_designation_dv}`, `{evaluation_date_dv_dmy}`. Type each member's ID card number and office on the committee member (or the standing committee) — ID numbers are kept only in the portal's database.
 - PR-03 summary sheet: `{plan_year1..3}` and `{plan_budget_y1..3}` come from the linked PR-09 plan item; `{scope_dv}` is the Dhivehi scope (or the project name); `{bidder_count}` and the `{#bidders}` list come from Bidders.
 - Your own fields added for these forms (Placeholder cheat-sheet › Your own fields, typed on each project): `{agenda_no}`, `{iulaan_count}` (empty → 01), `{interest_count}`, `{prev_meeting_no}`, `{prev_meeting_date}`, `{prev_decision_dv}` (empty → -), `{psip_no}`.
+
+## Deleting a template
+
+Templates › **Delete** on the template's row (administrators). Documents already generated from it stay in the projects; a built-in demo template that is deleted is not added back. To stop using a template but keep it, press **Edit** and untick **Active** instead. The demo EV-YAU-M (evaluation minutes for several projects) has been removed.
