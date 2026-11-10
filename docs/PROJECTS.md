@@ -256,3 +256,4 @@ The original file is not changed; the rules are applied every time a document is
 ## Your own placeholders
 
 Any placeholder the program has no field for (e.g. `{meeting_venue_dv}`, `{secretary_name_dv}`, `{site_visit_date}`) is kept as **your own field**: it appears on every project's **Edit** form under **Other template fields**, where you type the value once per project, and it fills every template that uses it. Names ending in `_date` get a date picker (and the usual `_dv`, `_dv_dmy`, `_dash`… variants), `_time` a time picker, `_dv` a Dhivehi box. To fill it from a program field instead, map it under **Placeholders**.
+- Excel: a date placeholder alone in a cell formatted as a date (e.g. `{award_date}`) is written as a real Excel date, so the workbook's own date format shows; amounts alone in a cell are written as numbers. `{award_year}` is the award date's year.

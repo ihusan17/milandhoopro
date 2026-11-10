@@ -256,8 +256,19 @@ async function scanXlsx(u8, rules) {
   return { tags: scanText(chunks), sheets: X.sheets.map(s => s.name) };
 }
 
+// Cells formatted as dates get a real Excel date (so the workbook's own date format shows), not text.
+async function dateStyles(zip) {
+  const f = zip.file("xl/styles.xml"); if (!f) return () => false;
+  const st = xparse(await f.async("string")), codes = {};
+  [...st.getElementsByTagName("numFmt")].forEach(n => { codes[n.getAttribute("numFmtId")] = n.getAttribute("formatCode") || ""; });
+  const xfs = st.getElementsByTagName("cellXfs")[0], list = xfs ? kids(xfs, "xf").map(x => Number(x.getAttribute("numFmtId") || 0)) : [];
+  const isD = id => (id >= 14 && id <= 22) || (id >= 45 && id <= 47) || (codes[id] != null && /[dmy]/i.test(codes[id].replace(/"[^"]*"|\[[^\]]*\]/g, "")));
+  return c => isD(list[Number(c.getAttribute("s") || 0)] || 0);
+}
+const dmySerial = v => { const [d, m, y] = v.split(".").map(Number); return (Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 86400000; };
 async function fillXlsx(u8, data, cellMap = [], rules) {
-  const X = await xlsxOpen(u8), ct = c => rewriteText(cellText(c, X.ss), rules);
+  const X = await xlsxOpen(u8), ct = c => rewriteText(cellText(c, X.ss), rules), DS = await dateStyles(X.zip);
+  const put = (doc, c, v) => setCell(doc, c, typeof v === "string" && /^\d{2}\.\d{2}\.\d{4}$/.test(v) && DS(c) ? dmySerial(v) : v);
   for (const sh of X.sheets) {
     const f = X.zip.file(sh.path); if (!f) continue;
     const doc = xparse(await f.async("string")), sd = doc.getElementsByTagName("sheetData")[0]; if (!sd) continue;
@@ -285,19 +296,19 @@ async function fillXlsx(u8, data, cellMap = [], rules) {
           // copy a formula from the template row, moving its relative references to this row
           if (c.f && i > 0 && !kid(cell, "f")) { const nf = doc.createElementNS(XNS, "f"); nf.textContent = c.f.textContent.replace(/(\$?[A-Z]{1,3})(\$?)(\d+)(?![\d(])/g, (m, a, b, d) => (b || Number(d) !== R ? m : a + r)); cell.appendChild(nf); continue; }
           if (c.f) continue;
-          setCell(doc, cell, it ? valueFor(c.text, { ...it, __num: it.__num }, data) : "");
+          put(doc, cell, it ? valueFor(c.text, { ...it, __num: it.__num }, data) : "");
         }
         if (i > 0) merges.forEach(ref => addMerge(doc, ref.split(":").map(x => { const [cn] = splitRef(x); return colStr(cn) + r; }).join(":")));
       }
     }
     // 2. plain placeholders
-    [...doc.getElementsByTagName("c")].forEach(c => { if (kid(c, "f")) return; const t = ct(c); if (/\{\s*[A-Za-z_][\w.]*\s*\}/.test(t)) setCell(doc, c, valueFor(t, data, data)); });
+    [...doc.getElementsByTagName("c")].forEach(c => { if (kid(c, "f")) return; const t = ct(c); if (/\{\s*[A-Za-z_][\w.]*\s*\}/.test(t)) put(doc, c, valueFor(t, data, data)); });
     // 3. cell map
     cellMap.filter(m => m.sheet === sh.name && m.cell && m.field).forEach(m => {
       const ref = splitRef(String(m.cell).toUpperCase()); if (!ref) return;
       const row = getRow(doc, sd, ref[1], true), c = getCell(doc, row, ref[0], true);
       if (kid(c, "f")) return; // keep formulas live
-      setCell(doc, c, valueFor("{" + m.field + "}", data, data));
+      put(doc, c, valueFor("{" + m.field + "}", data, data));
     });
     X.zip.file(sh.path, xser(doc));
   }

@@ -1969,8 +1969,19 @@ async function scanXlsx(u8, rules) {
   return { tags: scanText(chunks), sheets: X.sheets.map(s => s.name) };
 }
 
+// Cells formatted as dates get a real Excel date (so the workbook's own date format shows), not text.
+async function dateStyles(zip) {
+  const f = zip.file("xl/styles.xml"); if (!f) return () => false;
+  const st = xparse(await f.async("string")), codes = {};
+  [...st.getElementsByTagName("numFmt")].forEach(n => { codes[n.getAttribute("numFmtId")] = n.getAttribute("formatCode") || ""; });
+  const xfs = st.getElementsByTagName("cellXfs")[0], list = xfs ? kids(xfs, "xf").map(x => Number(x.getAttribute("numFmtId") || 0)) : [];
+  const isD = id => (id >= 14 && id <= 22) || (id >= 45 && id <= 47) || (codes[id] != null && /[dmy]/i.test(codes[id].replace(/"[^"]*"|\[[^\]]*\]/g, "")));
+  return c => isD(list[Number(c.getAttribute("s") || 0)] || 0);
+}
+const dmySerial = v => { const [d, m, y] = v.split(".").map(Number); return (Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 86400000; };
 async function fillXlsx(u8, data, cellMap = [], rules) {
-  const X = await xlsxOpen(u8), ct = c => rewriteText(cellText(c, X.ss), rules);
+  const X = await xlsxOpen(u8), ct = c => rewriteText(cellText(c, X.ss), rules), DS = await dateStyles(X.zip);
+  const put = (doc, c, v) => setCell(doc, c, typeof v === "string" && /^\d{2}\.\d{2}\.\d{4}$/.test(v) && DS(c) ? dmySerial(v) : v);
   for (const sh of X.sheets) {
     const f = X.zip.file(sh.path); if (!f) continue;
     const doc = xparse(await f.async("string")), sd = doc.getElementsByTagName("sheetData")[0]; if (!sd) continue;
@@ -1998,19 +2009,19 @@ async function fillXlsx(u8, data, cellMap = [], rules) {
           // copy a formula from the template row, moving its relative references to this row
           if (c.f && i > 0 && !kid(cell, "f")) { const nf = doc.createElementNS(XNS, "f"); nf.textContent = c.f.textContent.replace(/(\$?[A-Z]{1,3})(\$?)(\d+)(?![\d(])/g, (m, a, b, d) => (b || Number(d) !== R ? m : a + r)); cell.appendChild(nf); continue; }
           if (c.f) continue;
-          setCell(doc, cell, it ? valueFor(c.text, { ...it, __num: it.__num }, data) : "");
+          put(doc, cell, it ? valueFor(c.text, { ...it, __num: it.__num }, data) : "");
         }
         if (i > 0) merges.forEach(ref => addMerge(doc, ref.split(":").map(x => { const [cn] = splitRef(x); return colStr(cn) + r; }).join(":")));
       }
     }
     // 2. plain placeholders
-    [...doc.getElementsByTagName("c")].forEach(c => { if (kid(c, "f")) return; const t = ct(c); if (/\{\s*[A-Za-z_][\w.]*\s*\}/.test(t)) setCell(doc, c, valueFor(t, data, data)); });
+    [...doc.getElementsByTagName("c")].forEach(c => { if (kid(c, "f")) return; const t = ct(c); if (/\{\s*[A-Za-z_][\w.]*\s*\}/.test(t)) put(doc, c, valueFor(t, data, data)); });
     // 3. cell map
     cellMap.filter(m => m.sheet === sh.name && m.cell && m.field).forEach(m => {
       const ref = splitRef(String(m.cell).toUpperCase()); if (!ref) return;
       const row = getRow(doc, sd, ref[1], true), c = getCell(doc, row, ref[0], true);
       if (kid(c, "f")) return; // keep formulas live
-      setCell(doc, c, valueFor("{" + m.field + "}", data, data));
+      put(doc, c, valueFor("{" + m.field + "}", data, data));
     });
     X.zip.file(sh.path, xser(doc));
   }
@@ -2096,7 +2107,7 @@ const FIELDS = [
   ["Dates", DATEF.map(([k, l]) => [k, l, "10.11.2026"]).concat([["evaluation_time", "Evaluation time", "10:00"], ["evaluation_date_dv_ymd", "Any date + _dv_ymd: year · month · day in Dhivehi", "2026 ނޮވެމްބަރ 09"], ["evaluation_date_dv_dmy", "Any date + _dv_dmy: day · month · year in Dhivehi", "09 ނޮވެމްބަރ 2026"], ["evaluation_date_dash", "Any date + _dash: day-month-year with dashes", "10-11-2026"], ["evaluation_date_dv_both", "Any date + _dv_both: both formats with /", "09 ނޮވެމްބަރ 2026 / 2026 ނޮވެމްބަރ 09"], ["today_dv", "Today in Dhivehi", "10 ނޮވެމްބަރު 2026"], ["today_en", "Today in English", "10 November 2026"], ["today_hijri", "Today, Hijri (Dhivehi)", "19 ޖުމާދަލްއޫލާ 1448ހ"], ["today_hijri_en", "Today, Hijri (numbers)", "19/5/1448 AH"]])],
   ["Money (MVR)", MONEYF.flatMap(([k, l]) => [[k, l, "250,000.00"], [k + "_words_dv", l + " in Dhivehi words", "ދެލައްކަ ފަންސާސް ހާސް ރުފިޔާ"], [k + "_words_en", l + " in English words", "Two Hundred Fifty Thousand Rufiyaa Only"]])],
   ["Contractor", [["contractor_name", "Contractor / supplier", "Island Builders Pvt Ltd"], ["contractor_name_dv", "Contractor name (Dhivehi)", ""], ["contractor_address", "Address", ""], ["contractor_phone", "Phone", ""], ["contractor_email", "E-mail", ""], ["contractor_reg_no", "Registration number", ""], ["contractor_contact", "Contact person", ""]]],
-  ["Award", [["award_bidder", "Winning bidder", "Island Builders Pvt Ltd"], ["award_duration", "Winning bidder's duration (days)", "120"], ["bidder_count", "Number of bids", "3"], ["responsive_count", "Number of responsive bids", "2"]]],
+  ["Award", [["award_bidder", "Winning bidder", "Island Builders Pvt Ltd"], ["award_duration", "Winning bidder's duration (days)", "120"], ["award_year", "Year of the award date (else this year)", "2026"], ["bidder_count", "Number of bids", "3"], ["responsive_count", "Number of responsive bids", "2"]]],
   ["Committees", [["bid_meeting_no", "Bid Committee meeting number", "(IUL)351-PRO/2026/BM004"], ["bid_meeting_date", "Bid Committee meeting date", "12.11.2026"], ["bid_meeting_date_dv", "Bid Committee meeting date (Dhivehi)", "12 ނޮވެމްބަރު 2026"], ["bid_meeting_date_dv_ymd", "Bid Committee meeting date (year month day)", "2026 ނޮވެމްބަރ 09"], ["bid_meeting_date_dv_dmy", "Bid Committee meeting date (day month year)", "09 ނޮވެމްބަރ 2026"], ["bid_meeting_date_dv_both", "Bid Committee meeting date, both formats", "09 ނޮވެމްބަރ 2026 / 2026 ނޮވެމްބަރ 09"], ["bid_meeting_year", "Bid Committee meeting year", "2026"], ["bid_meeting_seq", "Bid Committee meeting number only (last number of the meeting no.)", "18"], ["bid_meeting_start_time", "Bid Committee meeting started at", "10:00"], ["bid_meeting_end_time", "Bid Committee meeting ended at", "10:25"], ["bid_meeting_date_hijri", "Bid Committee meeting date (Hijri)", "30 ޖުމާދަލްއޫލާ 1448ހ"], ["bid_present_count", "Bid Committee members present", "4"], ["bid_absent_count", "Bid Committee members on leave", "1"], ["bid_chair_short_dv", "Bid Committee chair, name without title", "މުޙައްމަދު ރަޝީދު"], ["eval_meeting_year", "Evaluation Committee meeting year", "2026"], ["eval_meeting_seq", "Evaluation Committee meeting number only", "3"], ["eval_meeting_start_time", "Evaluation Committee meeting started at", "10:00"], ["eval_meeting_end_time", "Evaluation Committee meeting ended at", "11:00"], ["eval_chair_short_dv", "Evaluation Committee chair, name without title", ""], ["bid_meeting_time", "Bid Committee meeting time", "10:00"], ["eval_meeting_no", "Evaluation Committee meeting number", "(IUL)351-PRO/2026/EM002"], ["eval_meeting_date", "Evaluation Committee meeting date", "19.11.2026"], ["eval_meeting_date_dv", "Evaluation Committee meeting date (Dhivehi)", "19 ނޮވެމްބަރު 2026"], ["eval_meeting_date_dv_ymd", "Evaluation Committee meeting date (year month day)", "2026 ނޮވެމްބަރ 19"], ["eval_meeting_date_dv_dmy", "Evaluation Committee meeting date (day month year)", "19 ނޮވެމްބަރ 2026"], ["eval_meeting_time", "Evaluation Committee meeting time", "10:00"], ["bid_member_count", "Bid Committee members", "3"], ["eval_member_count", "Evaluation Committee members", "3"], ["bid_chair", "Bid Committee chair", ""], ["eval_chair", "Evaluation Committee chair", ""]]],
   ...[["bid", "Bid Committee"], ["eval", "Evaluation Committee"]].map(([k, l]) => [`${l} members by number (tables with fixed rows)`, [1, 2, 3, 4, 5].flatMap(n => [
     [`${k}_m${n}_name_dv`, `Member ${n} — name (Dhivehi)`, ""], [`${k}_m${n}_designation_dv`, `Member ${n} — designation (Dhivehi)`, ""], [`${k}_m${n}_role_dv`, `Member ${n} — role (Dhivehi)`, ""], [`${k}_m${n}_name`, `Member ${n} — name (English)`, ""],
@@ -2184,6 +2195,7 @@ function dataFor(p, extra = {}) {
   d.checklist = (p.checklist || []).map((x, i) => ({ no: i + 1, item: x.text, done: x.done ? "✓" : "", date: x.date ? Xt(x.date) : "", by: x.by || "" }));
   d.logs = (p.logs || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).map(x => ({ date: Xt(x.date), activity: x.text || "", workers: x.workers ?? "", materials: x.materials || "", weather: x.weather || "", issues: x.issues || "", by: x.by || "" }));
   d.evaluation_time = p.evaluationTime || "";
+  d.award_year = /^\d{2}\.\d{2}\.(\d{4})$/.test(d.award_date || "") ? d.award_date.slice(6) : String(new Date().getFullYear());
   // Values typed on the project for template placeholders the program has no field for.
   Object.entries(p.fields || {}).forEach(([k, val]) => { d[k] === undefined && (d[k] = /_date$/.test(k) && isISO(val) ? Xt(val) : val); });
   return addYMD(Object.assign(d, extra));
