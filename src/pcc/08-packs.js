@@ -53,6 +53,8 @@ async function packPanel(p, k) {
   await drawForm(); await drawRight();
   const ok = await Mt(`${P.title} — ${p.ref}`, [o("div", { class: "pcc-ppanel" }, form1, right)], [{ label: "Cancel", value: !1 }, { label: "Generate & download ZIP", primary: !0, value: !0, onClick: async () => {
     if (!tplsOn().length) { xt("Tick at least one document", "err"); return !1; }
+    const blank = []; for (const t of tplsOn()) if (!(await tplTags(t)).length) blank.push(t.code);
+    if (blank.length && !(await jt(`${blank.join(", ")}: no placeholders or replace rules — these files will be unchanged copies of the template. Set them up under Projects › Templates › Replace text. Continue?`, "Continue"))) return !1;
     const bad = tplsOn().filter(t => t.perMember && !(p.committees[t.perMember] || []).length);
     if (bad.length) { xt(`${bad.map(t => t.code).join(", ")}: add the committee members first`, "err"); return !1; }
     let miss = []; for (const t of tplsOn()) { const m = await missingFor(t, current(t)); m.length && miss.push(`${t.code}: ${m.slice(0, 4).map(fieldLabel).join(", ")}`); }

@@ -23,7 +23,59 @@ function scanText(chunks) {
 
 // ----- Word -----
 function docxParts(zip) { return Object.keys(zip.files).filter(n => /^word\/(document|header\d*|footer\d*|footnotes|endnotes)\.xml$/.test(n)).sort((a, b) => (a === "word/document.xml" ? -1 : b === "word/document.xml" ? 1 : a.localeCompare(b))); }
-function scanDocx(u8) {
+// Text rules: replace text that is in the council's original document (e.g. last project's name,
+// Iulaan number or dates) with a {field}, so originals work without typing placeholders.
+// Also repairs tags typed with an RTL keyboard, which come out as }name{.
+const REVTAG = /\}\s*([#\/^]?)\s*([A-Za-z_][\w.]*)\s*\{/g;
+const xmlEsc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const cleanRules = rules => (rules || []).filter(r => r && r.find && r.field).sort((a, b) => b.find.length - a.find.length);
+function rewriteText(s, rules) {
+  s = String(s).replace(REVTAG, (m, k, n) => "{" + k + n + "}");
+  for (const r of cleanRules(rules)) s = s.split(r.find).join("{" + r.field + "}");
+  return s;
+}
+function textMatches(full, rules) {
+  const M = [];
+  for (const mm of full.matchAll(REVTAG)) M.push([mm.index, mm.index + mm[0].length, "{" + mm[1] + mm[2] + "}"]);
+  for (const r of cleanRules(rules)) { let i = 0; while ((i = full.indexOf(r.find, i)) >= 0) { const e = i + r.find.length; if (!M.some(x => x[0] < e && i < x[1])) M.push([i, e, "{" + r.field + "}"]); i = e; } }
+  return M.sort((a, b) => b[0] - a[0]);
+}
+// Apply text rules inside Word paragraphs, also when the text is split over several runs.
+function rulesDocx(u8, rules) {
+  const zip = new (LIB().PizZip)(u8); let changed = false;
+  docxParts(zip).forEach(n => {
+    const xml = zip.file(n).asText();
+    const out = xml.replace(/<w:p[ >][\s\S]*?<\/w:p>/g, par => {
+      const re = /(<w:t(?:\s[^>]*)?>)([^<]*)(<\/w:t>)/g, segs = []; let m;
+      while ((m = re.exec(par))) segs.push({ start: m.index, len: m[0].length, open: m[1], text: decodeEnt(m[2]), close: m[3] });
+      if (!segs.length) return par;
+      const texts = segs.map(s => s.text), M = textMatches(texts.join(""), rules);
+      if (!M.length) return par;
+      for (const [s, e, rep] of M) {
+        let o0 = 0; const of = texts.map(t => { const x = o0; o0 += t.length; return x; });
+        const i = of.findIndex((x, k) => s >= x && s < x + texts[k].length), j = of.findIndex((x, k) => e - 1 >= x && e - 1 < x + texts[k].length);
+        if (i < 0 || j < 0) continue;
+        if (i === j) texts[i] = texts[i].slice(0, s - of[i]) + rep + texts[i].slice(e - of[i]);
+        else { texts[i] = texts[i].slice(0, s - of[i]) + rep; for (let k = i + 1; k < j; k++) texts[k] = ""; texts[j] = texts[j].slice(e - of[j]); }
+      }
+      changed = true;
+      let res = "", last = 0;
+      segs.forEach((s, k) => { res += par.slice(last, s.start) + (/xml:space/.test(s.open) ? s.open : s.open.replace(/^<w:t/, '<w:t xml:space="preserve"')) + xmlEsc(texts[k]) + s.close; last = s.start + s.len; });
+      return res + par.slice(last);
+    });
+    if (out !== xml) zip.file(n, out);
+  });
+  return changed ? zip.generate({ type: "uint8array", compression: "DEFLATE" }) : u8;
+}
+// Plain text of a template, for suggesting rules.
+async function templateText(u8, type) {
+  if (type === "xlsx") { const X = await xlsxOpen(u8), out = []; for (const sh of X.sheets) { const f = X.zip.file(sh.path); if (!f) continue; [...xparse(await f.async("string")).getElementsByTagName("c")].forEach(c => { const t = cellText(c, X.ss); t && isNaN(Number(t)) && out.push(t); }); } return out; }
+  const zip = new (LIB().PizZip)(u8), out = [];
+  docxParts(zip).forEach(n => zip.file(n).asText().split(/<\/w:p>/).forEach(p => { const t = decodeEnt(p.replace(/<w:tab\/>/g, " ").replace(/<[^>]+>/g, "")); t.trim() && out.push(t); }));
+  return out;
+}
+function scanDocx(u8, rules) {
+  u8 = rulesDocx(u8, rules);
   const zip = new (LIB().PizZip)(u8), chunks = [];
   docxParts(zip).forEach(n => zip.file(n).asText().split(/<\/w:p>/).forEach(p => chunks.push(decodeEnt(p.replace(/<w:tab\/>/g, " ").replace(/<[^>]+>/g, "")))));
   return { tags: scanText(chunks), sheets: [] };
@@ -32,8 +84,9 @@ function docxError(e) {
   const es = (e.properties && e.properties.errors) || [e];
   return err("The Word template has a problem: " + es.slice(0, 4).map(x => (x.properties && (x.properties.explanation || x.properties.id)) || x.message).join("; "));
 }
-function fillDocx(u8, data) {
+function fillDocx(u8, data, rules) {
   const { PizZip, Docxtemplater } = LIB();
+  u8 = rulesDocx(u8, rules);
   let doc;
   try {
     doc = new Docxtemplater(new PizZip(u8), { paragraphLoop: true, linebreaks: true, nullGetter: () => "" });
@@ -143,14 +196,14 @@ function valueFor(text, scope, root) {
   return render(text, scope, root);
 }
 
-async function scanXlsx(u8) {
+async function scanXlsx(u8, rules) {
   const X = await xlsxOpen(u8), chunks = [];
-  for (const sh of X.sheets) { const f = X.zip.file(sh.path); if (!f) continue; const d = xparse(await f.async("string")); [...d.getElementsByTagName("c")].forEach(c => { const t = cellText(c, X.ss); t.includes("{") && chunks.push(t); }); }
+  for (const sh of X.sheets) { const f = X.zip.file(sh.path); if (!f) continue; const d = xparse(await f.async("string")); [...d.getElementsByTagName("c")].forEach(c => { const t = rewriteText(cellText(c, X.ss), rules); t.includes("{") && chunks.push(t); }); }
   return { tags: scanText(chunks), sheets: X.sheets.map(s => s.name) };
 }
 
-async function fillXlsx(u8, data, cellMap = []) {
-  const X = await xlsxOpen(u8);
+async function fillXlsx(u8, data, cellMap = [], rules) {
+  const X = await xlsxOpen(u8), ct = c => rewriteText(cellText(c, X.ss), rules);
   for (const sh of X.sheets) {
     const f = X.zip.file(sh.path); if (!f) continue;
     const doc = xparse(await f.async("string")), sd = doc.getElementsByTagName("sheetData")[0]; if (!sd) continue;
@@ -158,9 +211,9 @@ async function fillXlsx(u8, data, cellMap = []) {
     let guard = 0;
     for (;;) {
       if (++guard > 200) break;
-      const loopRow = kids(sd, "row").find(row => kids(row, "c").some(c => /\{\s*#\s*[A-Za-z_]/.test(cellText(c, X.ss))));
+      const loopRow = kids(sd, "row").find(row => kids(row, "c").some(c => /\{\s*#\s*[A-Za-z_]/.test(ct(c))));
       if (!loopRow) break;
-      const R = Number(loopRow.getAttribute("r")), cells = kids(loopRow, "c").map(c => ({ col: splitRef(c.getAttribute("r"))[0], s: c.getAttribute("s"), text: cellText(c, X.ss), f: kid(c, "f") }));
+      const R = Number(loopRow.getAttribute("r")), cells = kids(loopRow, "c").map(c => ({ col: splitRef(c.getAttribute("r"))[0], s: c.getAttribute("s"), text: ct(c), f: kid(c, "f") }));
       const name = (cells.map(c => /\{\s*#\s*([A-Za-z_][\w.]*)\s*\}/.exec(c.text)).find(Boolean) || [])[1];
       const items = Array.isArray(getPath(data, name)) ? getPath(data, name) : [];
       const tpl = cells.map(c => ({ ...c, text: c.text.replace(new RegExp(`\\{\\s*[#/^]\\s*${name}\\s*\\}`, "g"), "") }));
@@ -184,7 +237,7 @@ async function fillXlsx(u8, data, cellMap = []) {
       }
     }
     // 2. plain placeholders
-    [...doc.getElementsByTagName("c")].forEach(c => { if (kid(c, "f")) return; const t = cellText(c, X.ss); if (/\{\s*[A-Za-z_][\w.]*\s*\}/.test(t)) setCell(doc, c, valueFor(t, data, data)); });
+    [...doc.getElementsByTagName("c")].forEach(c => { if (kid(c, "f")) return; const t = ct(c); if (/\{\s*[A-Za-z_][\w.]*\s*\}/.test(t)) setCell(doc, c, valueFor(t, data, data)); });
     // 3. cell map
     cellMap.filter(m => m.sheet === sh.name && m.cell && m.field).forEach(m => {
       const ref = splitRef(String(m.cell).toUpperCase()); if (!ref) return;

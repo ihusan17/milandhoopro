@@ -17,7 +17,7 @@ function seedDemoTemplates() {
 async function tplTags(t) {
   const v = curVer(t);
   if (v.tags) return v.tags;
-  const u8 = await fget(v.fileId), r = t.type === "xlsx" ? await scanXlsx(u8) : scanDocx(u8);
+  const u8 = await fget(v.fileId), r = t.type === "xlsx" ? await scanXlsx(u8, t.replace) : scanDocx(u8, t.replace);
   v.tags = r.tags; v.sheets = r.sheets; K.Qt();
   return v.tags;
 }
@@ -46,7 +46,7 @@ async function generateDocs(p, t, data, opts = {}) {
   if (t.perMember && !runs.length) throw err(`${t.code}: add the ${t.perMember === "bid" ? "Bid" : "Evaluation"} Committee members first`);
   const out = [];
   for (const r of runs) {
-    const bytes = t.type === "xlsx" ? await fillXlsx(u8, r.d, t.cellMap || []) : fillDocx(u8, r.d);
+    const bytes = t.type === "xlsx" ? await fillXlsx(u8, r.d, t.cellMap || [], t.replace) : fillDocx(u8, r.d, t.replace);
     const version = nextVersion(p.id, t.code, r.key);
     const fileName = `${safeName(p.ref)}_${t.code}${r.label ? "_" + safeName(r.label) : ""}_v${version}.${t.type}`;
     const fileId = await fput(bytes, { name: fileName, mime: MIME[t.type] });
@@ -67,6 +67,7 @@ function TPLPAGE(n) {
   const head = o("div", { class: "row" }, o("h1", { style: { margin: 0 } }, "Document templates"), o("div", { class: "grow right" }, o("a", { class: "btn", href: "#/projects/cheatsheet", style: { textDecoration: "none" } }, "Placeholder cheat-sheet"), admin ? btn("Add template", () => tplAdd(), "primary") : null));
   n.append(head, PCNAV("templates"));
   if (!admin) n.append(o("div", { class: "alert warn" }, "Only administrators can add or change templates. You can still preview them."));
+  n.append(o("div", { class: "alert warn pcc-note" }, o("b", {}, "Using your original documents as they are? "), "The program only changes text it is told about. Either type placeholders such as {project_name_dv} into the file, or press ", o("b", {}, "Replace text"), " on the template: pick the project the document was made for and the program finds that project's name, Iulaan number, dates and amounts in the file and swaps them for every new project."));
   n.append(o("div", { class: "alert info pcc-note" }, "Upload the council's original Word (.docx) and Excel (.xlsx) files once. Put placeholders such as {project_name_dv} or {contract_value_words_dv} where values go; the program fills them and keeps everything else — letterhead, fonts, borders, RTL text and signature blocks — exactly as in your file. Built-in demo templates are marked Demo: replace each with your original using Upload new version."));
   TGROUPS.forEach(g => {
     const L2 = TPL().filter(t => t.group === g).sort((a, b) => (a.order || 0) - (b.order || 0) || a.code.localeCompare(b.code));
@@ -75,9 +76,9 @@ function TPLPAGE(n) {
       const v = curVer(t) || {}, tags = v.tags;
       return o("tr", {}, o("td", {}, t.order || i + 1), o("td", { class: "nowrap" }, o("b", {}, t.code)), o("td", { style: { minWidth: "230px" } }, o("div", {}, t.nameEn), t.nameDv ? o("div", { class: "muted small", dir: "rtl", lang: "dv" }, t.nameDv) : null, t.perMember ? o("div", { class: "small pcc-tag" }, "One file per " + (t.perMember === "bid" ? "Bid" : "Evaluation") + " Committee member") : null),
         o("td", {}, o("span", { class: "pcc-fmt f-" + t.type }, t.type === "xlsx" ? "Excel" : "Word")), o("td", {}, "v" + t.version, t.demo && v.fileId && String(v.fileId).startsWith("demo:") ? o("span", { class: "pcc-tag demo" }, "Demo") : null),
-        o("td", {}, tags ? String(tags.length) : o("button", { class: "btn small", onclick: async () => { try { await tplTags(t); K.le(); } catch (e) { xt(e.message, "err"); } } }, "Scan")),
+        o("td", {}, tags ? (tags.length ? [String(tags.length), (t.replace || []).length ? o("div", { class: "muted small" }, `${t.replace.length} replace rule${t.replace.length === 1 ? "" : "s"}`) : null] : o("span", { class: "pcc-bad small", title: "Nothing in this file will change. Use Replace text, or type {placeholders} into the file." }, "0 — nothing fills")) : o("button", { class: "btn small", onclick: async () => { try { await tplTags(t); K.le(); } catch (e) { xt(e.message, "err"); } } }, "Scan")),
         o("td", {}, t.group.includes("Committee") ? (t.inPack ? "Yes" : "No") : "—"), o("td", {}, t.active === false ? stChip("Inactive") : stChip("Active")),
-        o("td", { class: "pcc-acts wrap" }, btn("Preview", () => tplPreview(t), "small"), admin ? btn("Edit", () => tplEdit(t), "small") : null, admin ? btn("Placeholders", () => tplMap(t), "small") : null, admin ? btn("Upload new version", () => tplUpload(t), "small") : null, btn("Versions", () => tplVersions(t), "small")));
+        o("td", { class: "pcc-acts wrap" }, btn("Preview", () => tplPreview(t), "small"), admin ? btn("Edit", () => tplEdit(t), "small") : null, admin ? btn("Placeholders", () => tplMap(t), "small") : null, admin ? btn("Replace text", () => tplRules(t), "small") : null, admin ? btn("Upload new version", () => tplUpload(t), "small") : null, btn("Versions", () => tplVersions(t), "small")));
     }))));
   });
 }
@@ -109,7 +110,7 @@ async function tplUpload(t) {
     if (!(await jt(`Upload ${f.name} as version ${t.version + 1} of ${t.code}? ${f.tags.length} placeholders found${unknown.length ? `, ${unknown.length} not recognised (${unknown.slice(0, 5).map(x => x.name).join(", ")}) — map them next` : ""}. Documents made earlier keep using the version they were made with.`, "Upload"))) return;
     const fileId = await fput(f.u8, { name: f.name, mime: MIME[f.ext] });
     save(() => { const v = t.version + 1; t.versions.push({ v, fileId, name: f.name, size: f.size, at: Vt(), by: me(), tags: f.tags, sheets: f.sheets }); t.version = v; t.demo = false; }, `${t.code} updated to version ${t.version + 1}`);
-    unknown.length && setTimeout(() => tplMap(t), 400);
+    unknown.length ? setTimeout(() => tplMap(t), 400) : !f.tags.length && setTimeout(() => tplRules(t, true), 400);
   } catch (e) { xt(e.message, "err"); }
 }
 async function tplEdit(t) {
@@ -127,7 +128,7 @@ async function tplPreview(t, p) {
     const pr = p || PRJ().find(x => (x.bidders || []).length) || PRJ()[0] || blankProject();
     let data = applyMap(t, dataFor(pr, { letter_ref: refPeek("letter", pr), letter_date: Xt(today()), letter_date_dv: dvDate(today()), subject: "(subject)", body: "(letter text)", signatory_name: me() }), t.custom || {});
     if (t.perMember) { const m = (data[t.perMember + "_members"] || [])[0]; m && (data = Object.assign({}, data, m)); }
-    const u8 = await fget(curVer(t).fileId), out = t.type === "xlsx" ? await fillXlsx(u8, data, t.cellMap || []) : fillDocx(u8, data);
+    const u8 = await fget(curVer(t).fileId), out = t.type === "xlsx" ? await fillXlsx(u8, data, t.cellMap || [], t.replace) : fillDocx(u8, data, t.replace);
     await previewFile(out, `${t.code}-preview.${t.type}`, `${t.code} filled with “${pr.name}”`);
   } catch (e) { xt(e.message, "err"); }
 }
@@ -171,4 +172,40 @@ function CHEAT(n) {
   n.append(o("div", { class: "row" }, o("h1", { style: { margin: 0 } }, "Placeholder cheat-sheet"), o("div", { class: "grow right" }, sample ? btn("Download sample Word file", () => fdownload(curVer(sample).fileId, "placeholder-sample.docx").catch(e => xt(e.message, "err"))) : null)), PCNAV("templates"),
     card(null, o("p", {}, "Type a placeholder in curly brackets anywhere in a Word or Excel template, e.g. ", o("code", {}, "{project_name_dv}"), ". For a table row that repeats, put ", o("code", {}, "{#bidders}"), " in the first cell and ", o("code", {}, "{/bidders}"), " in the last cell of the row; the cells in between use the loop fields such as ", o("code", {}, "{bidder_name}"), "."), o("p", { class: "muted small" }, "Dates: add _dv, _en or _hijri (e.g. {handover_date_dv}). Money: add _words_dv or _words_en (e.g. {contract_value_words_dv}). Check Dhivehi amount words on important documents; you can correct any value before generating."), q), box);
   draw();
+}
+
+// ---------- Replace text: turn text in an original document into fields ----------
+const SUGGEST_KEYS = ["project_name_dv", "project_name_en", "project_name", "advertisement_no", "ref_no", "pr_number", "contractor_name", "contractor_name_dv", "contractor_address", "location", "description_dv", "award_bidder",
+  "contract_value_words_dv", "contract_value_words_en", "contract_value", "estimated_cost_words_dv", "estimated_cost_words_en", "estimated_cost", "award_amount_words_dv", "award_amount", "retention_amount",
+  ...DATEF.filter(d => d[2]).flatMap(([k]) => [k + "_dv", k + "_en", k + "_hijri", k]), "duration_days", "budget_code", "project_officer"];
+function suggestRules(chunks, p) {
+  const d = dataFor(p), cand = [];
+  SUGGEST_KEYS.forEach(k => { const v = d[k]; if (v == null || v === "") return; const s = String(v).trim(); if (s.length < 4 && !/[\u0780-\u07BF]/.test(s)) return; if (/^\d{1,4}$/.test(s)) return; cand.push([s, k]); });
+  DATEF.filter(x => x[2] && isISO(p[x[2]])).forEach(([k, , prop]) => { const [y, m, dd] = p[prop].split("-"); [`${Number(dd)}.${Number(m)}.${y}`, `${dd}/${m}/${y}`, `${Number(dd)}/${Number(m)}/${y}`, `${dd}-${m}-${y}`].forEach(s => cand.push([s, k])); });
+  const seen = new Set(), list = cand.filter(([s]) => (seen.has(s) ? false : seen.add(s))).sort((a, b) => b[0].length - a[0].length);
+  let text = chunks.join("\n"); const out = [];
+  list.forEach(([s, k]) => { const n = text.split(s).length - 1; if (n > 0) { out.push({ find: s, field: k, count: n }); text = text.split(s).join("\u0000"); } });
+  return out;
+}
+async function tplRules(t, fresh) {
+  const rules = (t.replace || []).map(r => ({ ...r })), box = o("div", {}), keys = FIELDKEYS();
+  const dl = o("datalist", { id: "pcc-fields2" }, keys.flatMap(k => [k, ...(DATEF.some(d => d[0] === k) ? [k + "_dv", k + "_en", k + "_hijri"] : []), ...(MONEYF.some(m => m[0] === k) ? [k + "_words_dv", k + "_words_en"] : [])]).map(k => o("option", { value: k }, fieldLabel(k))));
+  const draw = () => box.replaceChildren(rules.length ? tbl(["Text in the original document", "Replace with field", ""], rules.map((r, i) => { const f = o("textarea", { rows: 1, dir: "auto" }), fl = o("input", { type: "text", list: "pcc-fields2", value: r.field || "" }); f.value = r.find || ""; f.oninput = () => { r.find = f.value; }; fl.oninput = () => { r.field = fl.value.trim(); }; return o("tr", {}, o("td", { style: { minWidth: "260px" } }, f), o("td", {}, fl, o("div", { class: "muted small" }, fieldLabel(r.field || ""))), o("td", {}, btn("Remove", () => { rules.splice(i, 1); draw(); }, "small"))); })) : o("p", { class: "muted" }, "No rules yet."), btn("Add a rule", () => { rules.push({ find: "", field: "" }); draw(); }, "small"));
+  draw();
+  const pick = S([["", "Choose the project this document was made for…"], ...PRJ().map(p => [p.id, `${p.ref} — ${p.nameDv || p.name}`])], ""), sbox = o("div", {});
+  const suggest = async () => {
+    const p = prj(pick.value); if (!p) return xt("Choose the project", "err");
+    try {
+      const chunks = await templateText(await fget(curVer(t).fileId), t.type), S2 = suggestRules(chunks, p).filter(s => !rules.some(r => r.find === s.find));
+      if (!S2.length) { sbox.replaceChildren(o("p", { class: "muted small" }, `None of ${p.ref}'s values (name, Iulaan number, dates, amounts…) were found in this file. Check that the project's details match the document, or add rules by hand.`)); return; }
+      const cbs = S2.map(() => o("input", { type: "checkbox", checked: true }));
+      sbox.replaceChildren(o("p", { class: "small" }, `Found in the file — tick the ones to replace:`), tbl(["", "Text found", "Field", "Times"], S2.map((s, i) => o("tr", {}, o("td", {}, cbs[i]), o("td", { dir: "auto" }, s.find), o("td", {}, fieldLabel(s.field), o("div", { class: "muted small" }, "{" + s.field + "}")), o("td", {}, s.count)))), btn("Add the ticked ones", () => { S2.forEach((s, i) => cbs[i].checked && rules.push({ find: s.find, field: s.field })); sbox.replaceChildren(); draw(); }, "small primary"));
+    } catch (e) { xt(e.message, "err"); }
+  };
+  const ok = await Mt(`${t.code} — replace text`, [dl, fresh ? o("div", { class: "alert warn" }, "This file has no {placeholders}, so nothing in it would change. Pick the project it was made for and the program will find the text to replace.") : null,
+    o("p", { class: "muted small" }, "Each time a document is generated, the text on the left is replaced with the current project's value. Use this for your original files: last project's name, Iulaan number, dates and amounts become fields. Rules apply to every version of this template."),
+    o("div", { class: "card", style: { margin: "8px 0" } }, o("h4", { style: { marginTop: 0 } }, "Suggest from a project"), o("div", { class: "row", style: { alignItems: "center", gap: "8px" } }, o("div", { class: "grow" }, pick), btn("Find its values in the file", suggest)), sbox),
+    o("h4", {}, "Rules"), box], [{ label: "Cancel", value: !1 }, { label: "Save", primary: !0, value: !0 }]);
+  if (!ok) return;
+  save(() => { need("templates"); t.replace = rules.filter(r => r.find && r.find.trim() && r.field).map(r => ({ find: r.find, field: r.field })); (t.versions || []).forEach(v => { v.tags = null; }); }, "Replace rules saved — " + rules.filter(r => r.find && r.field).length + " rule(s)");
 }

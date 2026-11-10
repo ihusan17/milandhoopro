@@ -15,6 +15,7 @@ async function genOne(p, code, extra = {}, opts = {}) {
       const c = Object.fromEntries(ins.map(([k, e]) => [k, e.value.trim()]));
       data = applyMap(t, dataFor(p, extra), Object.assign({}, t.custom, c));
     }
+    if (!(await tplTags(t)).length && !(await jt(`${t.code} has no placeholders or replace rules, so the document will be an unchanged copy of the template. Set it up under Projects › Templates › Replace text. Generate anyway?`, "Generate anyway"))) return null;
     const miss = await missingFor(t, data);
     if (miss.length && !opts.quiet && !(await jt(`${t.code} has empty fields: ${miss.slice(0, 8).map(fieldLabel).join(", ")}${miss.length > 8 ? "…" : ""}. Generate anyway?`, "Generate"))) return null;
     const out = await generateDocs(p, t, data, opts);
