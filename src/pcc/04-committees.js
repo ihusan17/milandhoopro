@@ -71,6 +71,7 @@ async function standEdit(k, m) {
 // Leave toggles used in the member and meeting forms.
 function leaveFields(m) {
   const cb = o("input", { type: "checkbox", checked: !!m.onLeave }), txt = o("input", { type: "text", dir: "rtl", lang: "dv", class: "dv", list: "pcc-leave", value: m.onLeave ? m.leaveText || LEAVE_TEXTS[0] : LEAVE_TEXTS[0], style: { maxWidth: "180px" } });
+  const sync = () => { txt.style.display = cb.checked ? "" : "none"; }; cb.addEventListener("change", sync); sync();
   return { cb, txt, el: o("span", { class: "pcc-leave" }, o("datalist", { id: "pcc-leave" }, LEAVE_TEXTS.map(t => o("option", { value: t }))), o("label", { class: "pcc-chk" }, cb, " On leave"), txt), read: () => ({ onLeave: cb.checked, leaveText: cb.checked ? txt.value.trim() || LEAVE_TEXTS[0] : "" }) };
 }
 // First run: set the standing Bid Committee and give it to every project that has no Bid Committee yet.

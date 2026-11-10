@@ -60,7 +60,11 @@ async function meetingGen(m) {
     for (const t of TPL().filter(x => x.active !== false && x.group === group)) if (await meetingTpl(t)) cands.push(t);
     if (!cands.length) throw err(`No meeting template in the ${group} group. A meeting template repeats a block per project between {#projects} and {/projects}.`);
     const cbs = cands.map(() => o("input", { type: "checkbox", checked: true }));
-    if (!(await Mt(`Documents for the ${group} meeting of ${fd(m.date)}`, [o("p", {}, `${P.length} projects: ${P.map(p => p.ref).join(", ")}`), ...cands.map((t, i) => o("label", { class: "pcc-chk", style: { display: "flex", margin: "6px 0" } }, cbs[i], o("span", { class: "pcc-fmt f-" + t.type }, t.type === "xlsx" ? "XLSX" : "DOCX"), o("span", {}, o("b", {}, t.code), " ", t.nameEn, t.perMember ? o("span", { class: "muted small" }, ` · one per member (${m.members.length})`) : null)))], [{ label: "Cancel", value: !1 }, { label: "Generate", primary: !0, value: !0 }]))) return;
+    // Members with their leave status: leave marked on any of the meeting's projects is picked up here too.
+    const same = (a, b) => (a.nameDv && a.nameDv === b.nameDv) || (a.name && a.name === b.name);
+    const mrows = m.members.map(x => { const src = P.map(p => (p.committees[m.kind] || []).find(y => same(x, y))).find(y => y && y.onLeave); return { x, lf: leaveFields(src && !x.onLeave ? { onLeave: true, leaveText: src.leaveText } : x) }; });
+    if (!(await Mt(`Documents for the ${group} meeting of ${fd(m.date)}`, [o("p", {}, `${P.length} projects: ${P.map(p => p.ref).join(", ")}`), o("h4", {}, "Members at this meeting"), o("div", { class: "pcc-mmem" }, mrows.map(({ x, lf }) => o("div", { class: "pcc-mrow2" }, o("span", { dir: "auto", lang: x.nameDv ? "dv" : null }, (x.nameDv || x.name) + " · " + (x.role || "Member")), lf.el))), o("h4", {}, "Documents"), ...cands.map((t, i) => o("label", { class: "pcc-chk", style: { display: "flex", margin: "6px 0" } }, cbs[i], o("span", { class: "pcc-fmt f-" + t.type }, t.type === "xlsx" ? "XLSX" : "DOCX"), o("span", {}, o("b", {}, t.code), " ", t.nameEn, t.perMember ? o("span", { class: "muted small" }, " · one per member present") : null)))], [{ label: "Cancel", value: !1 }, { label: "Generate", primary: !0, value: !0 }]))) return;
+    m.members = mrows.map(({ x, lf }) => Object.assign(x, lf.read()));
     const data = meetingData(m), all = [];
     for (const [i, t] of cands.entries()) {
       if (!cbs[i].checked) continue;
