@@ -33,8 +33,11 @@ async function packPanel(p, k) {
     form1.replaceChildren(o("div", { class: "row", style: { alignItems: "center" } }, o("h4", { style: { margin: 0 } }, "Values used in the documents"), o("span", { class: "grow" }), kbToggle()), o("p", { class: "muted small" }, "Pre-filled from the project. Change any value for this pack only, or tick the box below to save the changes to the project. Member names come from the committee list."),
       rows.length ? o("div", { class: "pcc-pf-grid" }, rows.map(([name, codes]) => {
         const t0 = TPL().find(t => t.code === codes[0]), d = current(t0), val = d[name] == null ? "" : String(d[name]), dv = /_dv$/.test(name) || /[ހ-޿]/.test(val), lab = (t0.custom || {})["@label:" + name] || fieldLabel(name);
-        const inp = dv ? DVI(val) : I(val); inp.addEventListener("input", () => { edits[name] = inp.value; drawRight(); });
-        return o("div", { class: "pcc-f" + (val === "" ? " miss" : "") }, o("label", {}, lab, " ", o("code", { class: "muted small" }, "{" + name + "}")), inp, o("div", { class: "muted small" }, codes.join(", "), BACK[name] ? " · saved to project if ticked" : ""));
+        if (/^\u27E6/.test(val)) return o("div", { class: "pcc-f" }, o("label", {}, lab, " ", o("code", { class: "muted small" }, "{" + name + "}")), o("div", { class: "muted small" }, "Filled automatically (picture, page number or stamp) · " + codes.join(", ")));
+        const inp = dv ? DVI(val) : I(val), money = MONEYF.some(m => m[0] === name), words = money ? o("div", { class: "small", dir: "rtl", lang: "dv" }) : null;
+        const sayWords = () => { if (!words) return; const x = yn(inp.value); words.textContent = x != null && !Number.isNaN(x) && inp.value.trim() ? dvMoneyWords(x) : ""; };
+        sayWords(); inp.addEventListener("input", () => { edits[name] = inp.value; sayWords(); drawRight(); });
+        return o("div", { class: "pcc-f" + (val === "" ? " miss" : "") }, o("label", {}, lab, " ", o("code", { class: "muted small" }, "{" + name + "}")), inp, words, o("div", { class: "muted small" }, codes.join(", "), BACK[name] ? " · saved to project if ticked" : ""));
       })) : o("p", { class: "muted" }, "These templates have no simple placeholders."),
       o("label", { class: "pcc-chk", style: { marginTop: "12px" } }, save2, " Save changed values back to the project"));
   }

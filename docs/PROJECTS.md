@@ -281,3 +281,14 @@ Templates › **Delete** on the template's row (administrators). Documents alrea
 - WCR / WCL: `{handover_date_dv_dmy}`, `{due_date_dv_dmy}`, `{completion_date_dv_dmy}` / `{completion_date_dash}`, `{duration_days}`, `{contract_value}` with `{contract_value_words_dv}`, and `{last_invoice_no}` (latest invoice on the Payments tab). A template that uses `{letter_ref}` takes the next letter number automatically when it is generated.
 - WPR: the progress report form has **Bill number**, **Invoice number**, **Inspected on** and **Work items done** (one per line) → `{report_bill_no}`, `{report_invoice_no}`, `{report_inspect_date_dash}`, and the table loop `{#report_items}{inspect_date_dash} | {status_dv} | {item_dv}{/report_items}`.
 - Dhivehi amount words now use އެކާވީސް … ނަވާވީސް for 21–29 (128,000 → އެއްލައްކަ އަށާވީސްހާސް). Day-month-year dates use އޮގަސްޓް and އޮކްޓޯބަރ.
+
+## Advanced report features
+
+- **Progress summary**: `{days_used}`, `{days_total}`, `{time_percent}`, `{days_remaining}`, `{delay_status_dv}`; `{progress_bar}` draws work done vs time used as a picture.
+- **Payment position**: `{contract_value}`, `{report_bill_amount}` (+ `_words_dv`), `{total_paid}`, `{paid_percent}`, `{balance}`, `{retention_held}`.
+- **Extensions / delay**: `{#extensions}` table; `{days_late}`, `{penalty_per_day}` (Edit › Delay penalty per day), `{penalty_amount}`.
+- **Completion tab**: Inspection team (`{#inspectors}`, `{inspector_name_dv}`) and Defects found at inspection (`{#snags}`, `{snag_open_count}`).
+- **Retention**: `{retention_start_date_dv_dmy}`, `{retention_end_date_dv_dmy}`, `{retention_amount}`.
+- **Pictures and Word features**: `{report_photos}` / `{project_photos}` (alone in a paragraph) make a 2×2 photo grid; `{qr_code}` links to the project in the portal; `{status_stamp}` is a coloured ނިމިފައި / ކުރިއަށް ދަނީ / ލަސްވެފައި badge; `{page_no}` / `{page_count}` are Word page fields.
+- **Show-if switches**: put `{#has_extensions}` and `{/has_extensions}` in their own paragraphs around a section to show it only when there is something to list (also `has_inspectors`, `has_snags`, `has_project_photos`, `has_report_photos`).
+- **Checks before generating**: warns when completion is before handover, the completion date is missing, a report has no work items, the work finished late without a penalty rate, no inspection team is set, defects are still open, or the contract value looks wrong. The pack window shows Dhivehi amount words under each amount as you type.

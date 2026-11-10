@@ -182,7 +182,7 @@ function cellText(c, ss) {
   return v ? v.textContent : "";
 }
 function setCell(doc, c, val) {
-  if (typeof val === "string") val = val.replace(/\u27E6[LG]\u27E7/g, "");
+  if (typeof val === "string") val = val.replace(/\u27E6[LG]\u27E7/g, "").replace(/\u27E6(IMG|PHOTOS|FIELD|STAMP):[^\u27E7]*\u27E7/g, "");
   [...c.childNodes].forEach(n => { if (n.nodeType === 1 && (n.localName === "v" || n.localName === "is")) c.removeChild(n); });
   if (val === "" || val == null) { c.removeAttribute("t"); return; }
   if (typeof val === "number" && isFinite(val)) {
@@ -380,3 +380,82 @@ async function previewFile(u8, name, title) {
   if ((await p) === "dl") ii(new Blob([u8], { type: MIME[ext] || "application/octet-stream" }), name);
 }
 async function zipFiles(files) { const z = new (LIB().JSZip)(); files.forEach(f => z.file(f.name, f.data)); return z.generateAsync({ type: "uint8array", compression: "DEFLATE" }); }
+
+// ----- Pictures and Word features after filling: ⟦IMG:key⟧, ⟦PHOTOS:key⟧, ⟦FIELD:PAGE⟧, ⟦STAMP:color:text⟧ -----
+const EMU = 360000; // per cm
+function imgSize(u8) {
+  if (u8[0] === 0x89 && u8[1] === 0x50) return { w: (u8[16] << 24) | (u8[17] << 16) | (u8[18] << 8) | u8[19], h: (u8[20] << 24) | (u8[21] << 16) | (u8[22] << 8) | u8[23], ext: "png" };
+  for (let i = 2; i < u8.length - 9;) { if (u8[i] !== 0xFF) { i++; continue; } const m = u8[i + 1], len = (u8[i + 2] << 8) | u8[i + 3]; if (m >= 0xC0 && m <= 0xCF && m !== 0xC4 && m !== 0xC8 && m !== 0xCC) return { h: (u8[i + 5] << 8) | u8[i + 6], w: (u8[i + 7] << 8) | u8[i + 8], ext: "jpeg" }; i += 2 + len; }
+  return { w: 4, h: 3, ext: "jpeg" };
+}
+const canvasPng = c => new Promise(res => c.toBlob(b => b.arrayBuffer().then(a => res(new Uint8Array(a))), "image/png"));
+async function progressPng(work, time) {
+  const c = document.createElement("canvas"); c.width = 1200; c.height = 170; const g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.font = "bold 30px Arial, sans-serif"; g.textBaseline = "middle";
+  const bar = (y, pct, col, label) => { g.fillStyle = "#E8ECEF"; g.fillRect(260, y, 900, 46); g.fillStyle = col; g.fillRect(260, y, 900 * Math.max(0, Math.min(100, pct || 0)) / 100, 46); g.fillStyle = "#1F2933"; g.textAlign = "right"; g.fillText(label, 245, y + 24); g.textAlign = "left"; g.fillStyle = (pct || 0) > 12 ? "#fff" : "#1F2933"; g.fillText((pct == null ? "—" : Math.round(pct) + "%"), (pct || 0) > 12 ? 275 : 270 + 900 * (pct || 0) / 100, y + 24); };
+  bar(20, work, work + 10 < (time ?? 0) ? "#C62828" : "#2E7D32", "Work done"); bar(100, time, "#1565C0", "Time used");
+  return canvasPng(c);
+}
+async function qrPng(text) {
+  const q = LIB().qrcode(0, "M"); q.addData(text); q.make(); const n = q.getModuleCount(), s = 8, pad = 4, c = document.createElement("canvas"); c.width = c.height = (n + pad * 2) * s; const g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.fillStyle = "#000"; for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) q.isDark(r, k) && g.fillRect((k + pad) * s, (r + pad) * s, s, s);
+  return canvasPng(c);
+}
+function drawingXml(rid, id, cx, cy, name) {
+  return `<w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${id}" name="${name}"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${id}" name="${name}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing>`;
+}
+async function decorateDocx(u8, data) {
+  const zip = new (LIB().PizZip)(u8), parts = docxParts(zip).filter(n => /⟦(IMG|PHOTOS|FIELD|STAMP):/.test(zip.file(n).asText()));
+  if (!parts.length) return u8;
+  let seq = 900; const P = data.__proj || {};
+  const ct = () => zip.file("[Content_Types].xml").asText(), addType = ext => { const x = ct(); if (!new RegExp(`Extension="${ext}"`, "i").test(x)) zip.file("[Content_Types].xml", x.replace("<Types ", "<Types ").replace(/(<Types[^>]*>)/, `$1<Default Extension="${ext}" ContentType="image/${ext === "jpg" ? "jpeg" : ext}"/>`)); };
+  const cache = {};
+  const imageFor = async key => {
+    if (cache[key]) return cache[key];
+    let bytes = null;
+    if (key === "progress_bar") bytes = await progressPng(P.progress, P.time);
+    else if (key === "qr") bytes = await qrPng(`${location.origin}${location.pathname}#/project/${P.id}/files`);
+    return (cache[key] = bytes);
+  };
+  for (const n of parts) {
+    let x = zip.file(n).asText();
+    const relPath = n.replace(/^word\//, "word/_rels/") + ".rels";
+    let rels = zip.file(relPath) ? zip.file(relPath).asText() : '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
+    const addRel = (bytes, ext) => { seq++; const rid = "rIdPcc" + seq, file = `pcc${seq}.${ext}`; zip.file("word/media/" + file, bytes); addType(ext); rels = rels.replace("</Relationships>", `<Relationship Id="${rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${file}"/></Relationships>`); return rid; };
+    // namespaces used by pictures
+    x = x.replace(/<(w:document|w:hdr|w:ftr)\b([^>]*)>/, (m, tag, at) => `<${tag}${at}${/xmlns:wp=/.test(at) ? "" : ' xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"'}${/xmlns:r=/.test(at) ? "" : ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'}>`);
+    // 1. photo grids: the whole paragraph holding ⟦PHOTOS:key⟧ becomes a 2-column table of pictures
+    const photoParas = [...x.matchAll(/<w:p[ >](?:(?!<\/w:p>)[\s\S])*?⟦PHOTOS:(\w+)⟧(?:(?!<\/w:p>)[\s\S])*?<\/w:p>/g)];
+    for (const m of photoParas.reverse()) {
+      const list = (m[1] === "report" ? data.__reportPhotos : (data.__photos || {})[m[1]]) || [];
+      let tbl = "";
+      if (list.length) {
+        const cells = [];
+        for (const ph of list.slice(0, 8)) { try { const b = await fget(ph.fileId), sz = imgSize(b), cx = Math.round(7.6 * EMU), cy = Math.round(cx * sz.h / sz.w), rid = addRel(b, sz.ext === "png" ? "png" : "jpeg"); seq++; cells.push(`<w:tc><w:tcPr><w:tcW w:w="4800" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r>${drawingXml(rid, seq, cx, cy, "Photo " + seq)}</w:r></w:p><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:sz w:val="16"/></w:rPr><w:t xml:space="preserve">${xmlEsc(ph.caption || "")}</w:t></w:r></w:p></w:tc>`); } catch (e) { console.warn(e); } }
+        const rowsX = []; for (let i = 0; i < cells.length; i += 2) rowsX.push(`<w:tr>${cells[i]}${cells[i + 1] || '<w:tc><w:tcPr><w:tcW w:w="4800" w:type="dxa"/></w:tcPr><w:p/></w:tc>'}</w:tr>`);
+        const B = '<w:top w:val="single" w:sz="4" w:color="BFBFBF"/><w:left w:val="single" w:sz="4" w:color="BFBFBF"/><w:bottom w:val="single" w:sz="4" w:color="BFBFBF"/><w:right w:val="single" w:sz="4" w:color="BFBFBF"/><w:insideH w:val="single" w:sz="4" w:color="BFBFBF"/><w:insideV w:val="single" w:sz="4" w:color="BFBFBF"/>';
+        tbl = rowsX.length ? `<w:tbl><w:tblPr><w:jc w:val="center"/><w:tblW w:w="9600" w:type="dxa"/><w:tblBorders>${B}</w:tblBorders><w:tblCellMar><w:top w:w="80" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid><w:gridCol w:w="4800"/><w:gridCol w:w="4800"/></w:tblGrid>${rowsX.join("")}</w:tbl>` : "";
+      }
+      x = x.slice(0, m.index) + tbl + "<w:p/>" + x.slice(m.index + m[0].length);
+    }
+    // 2. run-level markers
+    const runs = [...x.matchAll(/<w:r(\s[^>]*)?>((?:(?!<\/w:r>)[\s\S])*?)<\/w:r>/g)].filter(m => /⟦(IMG|FIELD|STAMP):/.test(m[2]));
+    for (const m of runs.reverse()) {
+      const at = m[1] || "", body = m[2], rPr = (/<w:rPr>[\s\S]*?<\/w:rPr>/.exec(body) || [""])[0], text = decodeEnt((body.match(/<w:t(?:\s[^>]*)?>[^<]*<\/w:t>/g) || []).map(t => t.replace(/<[^>]+>/g, "")).join(""));
+      const plain = s => (s ? `<w:r${at}>${rPr}<w:t xml:space="preserve">${xmlEsc(s)}</w:t></w:r>` : "");
+      let out = "";
+      for (const piece of text.split(/(⟦(?:IMG|FIELD|STAMP):[^⟧]*⟧)/)) {
+        const mm = /^⟦(IMG|FIELD|STAMP):([^⟧]*)⟧$/.exec(piece);
+        if (!mm) { out += plain(piece); continue; }
+        if (mm[1] === "FIELD") { const f = mm[2] === "NUMPAGES" ? "NUMPAGES" : "PAGE"; out += `<w:r${at}>${rPr}<w:fldChar w:fldCharType="begin"/></w:r><w:r${at}>${rPr}<w:instrText xml:space="preserve"> ${f} </w:instrText></w:r><w:r${at}>${rPr}<w:fldChar w:fldCharType="separate"/></w:r><w:r${at}>${rPr}<w:t>1</w:t></w:r><w:r${at}>${rPr}<w:fldChar w:fldCharType="end"/></w:r>`; continue; }
+        if (mm[1] === "STAMP") { const [col, ...tx] = mm[2].split(":"), r2 = (rPr || "<w:rPr></w:rPr>").replace(/<w:color [^>]*\/>|<w:shd [^>]*\/>|<w:b\/>|<w:bCs\/>/g, "").replace("<w:rPr>", `<w:rPr><w:b/><w:bCs/><w:color w:val="FFFFFF"/><w:shd w:val="clear" w:color="auto" w:fill="${/^[0-9A-F]{6}$/i.test(col) ? col : "1565C0"}"/>`); out += `<w:r${at}>${r2}<w:t xml:space="preserve"> ${xmlEsc(tx.join(":"))} </w:t></w:r>`; continue; }
+        const bytes = await imageFor(mm[2]); if (!bytes) continue;
+        const sz = imgSize(bytes), cx = mm[2] === "qr" ? Math.round(2.6 * EMU) : Math.round(12 * EMU), cy = Math.round(cx * sz.h / sz.w), rid = addRel(bytes, "png"); seq++;
+        out += `<w:r${at}>${rPr}${drawingXml(rid, seq, cx, cy, mm[2] + " " + seq)}</w:r>`;
+      }
+      x = x.slice(0, m.index) + out + x.slice(m.index + m[0].length);
+    }
+    zip.file(n, x); zip.file(relPath, rels);
+  }
+  return zip.generate({ type: "uint8array", compression: "DEFLATE" });
+}

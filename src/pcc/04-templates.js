@@ -85,7 +85,7 @@ async function generateDocs(p, t, data, opts = {}) {
   if (t.perMember && !runs.length) throw err(`${t.code}: add the ${t.perMember === "bid" ? "Bid" : "Evaluation"} Committee members first`);
   const out = [];
   for (const r of runs) {
-    const bytes = t.type === "xlsx" ? await fillXlsx(u8, r.d, t.cellMap || [], t.replace) : fillDocx(u8, r.d, t.replace);
+    const bytes = t.type === "xlsx" ? await fillXlsx(u8, r.d, t.cellMap || [], t.replace) : await decorateDocx(fillDocx(u8, r.d, t.replace), r.d);
     const version = nextVersion(p.id, t.code, r.key);
     const fileName = `${safeName(p.ref)}_${t.code}${r.label ? "_" + safeName(r.label) : ""}_v${version}.${t.type}`;
     const fileId = await fput(bytes, { name: fileName, mime: MIME[t.type] });
@@ -187,7 +187,7 @@ async function tplPreview(t, p) {
     const pr = p || PRJ().find(x => (x.bidders || []).length) || PRJ()[0] || blankProject();
     let data = applyMap(t, dataFor(pr, { letter_ref: refPeek("letter", pr), letter_date: Xt(today()), letter_date_dv: dvDate(today()), subject: "(subject)", body: "(letter text)", signatory_name: me() }), t.custom || {});
     if (t.perMember) { const m = (data[t.perMember + "_members"] || [])[0]; m && (data = Object.assign({}, data, m)); }
-    const u8 = await fget(curVer(t).fileId), out = t.type === "xlsx" ? await fillXlsx(u8, data, t.cellMap || [], t.replace) : fillDocx(u8, data, t.replace);
+    const u8 = await fget(curVer(t).fileId), out = t.type === "xlsx" ? await fillXlsx(u8, data, t.cellMap || [], t.replace) : await decorateDocx(fillDocx(u8, data, t.replace), data);
     await previewFile(out, `${t.code}-preview.${t.type}`, `${t.code} filled with “${pr.name}”`);
   } catch (e) { xt(e.message, "err"); }
 }
