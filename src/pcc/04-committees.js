@@ -19,7 +19,7 @@ const copyMembers = L2 => (L2 || []).map(m => ({ ...JSON.parse(JSON.stringify(m)
 const noTitle = s => String(s || "").replace(/^\s*(?:(?:އަލްފާޟިލް|އަލްފާޟިލާ|ޖަނާބު|ފަޟީލަތުލް|Mr\.?|Ms\.?|Mrs\.?)\s+)+/, "");
 function memberData(m, i) {
   const leave = !!m.onLeave, lt = m.leaveText || LEAVE_TEXTS[0];
-  return { no: i + 1, member_no: i + 1, member_name: m.name || m.nameDv || "", member_name_dv: m.nameDv || m.name || "", member_short_dv: noTitle(m.nameDv || m.name || ""), member_designation: m.designation || "", member_designation_dv: m.designationDv || m.designation || "", member_role: m.role || "Member", member_role_dv: ROLEDV[m.role || "Member"] || "",
+  return { no: i + 1, member_no: i + 1, member_name: m.name || m.nameDv || "", member_name_dv: m.nameDv || m.name || "", member_short_dv: noTitle(m.nameDv || m.name || ""), member_id_card: m.idCard || "", member_office_dv: m.officeDv || "ށ. މިލަންދޫ ކައުންސިލް އިދާރާ", member_designation: m.designation || "", member_designation_dv: m.designationDv || m.designation || "", member_role: m.role || "Member", member_role_dv: ROLEDV[m.role || "Member"] || "",
     on_leave: leave ? "Yes" : "", leave_text: leave ? lt : "", leave: leave ? "⟦L⟧" + lt : "", absent_mark: leave ? "⟦G⟧-" : "", present: leave ? "" : "✓", __leave: leave };
 }
 
@@ -30,7 +30,7 @@ function numberedMembers(d, k, list) {
   const chair = L.find(m => m.member_role === "Chair") || {};
   Object.assign(d, { [k + "_present"]: pres, [k + "_absent"]: abs, [k + "_present_count"]: pres.length, [k + "_absent_count"]: abs.length, [k + "_chair_dv"]: chair.member_name_dv || "", [k + "_chair_short_dv"]: chair.member_short_dv || "",
     [k + "_attendance"]: Array.from({ length: Math.max(pres.length, abs.length) }, (_, i) => ({ no: i + 1, present_name_dv: (pres[i] || {}).member_short_dv || "", present_full_dv: (pres[i] || {}).member_name_dv || "", absent_name_dv: (abs[i] || {}).member_short_dv || "", absent_full_dv: (abs[i] || {}).member_name_dv || "", absent_reason: (abs[i] || {}).leave_text || "" })) });
-  L.forEach((m, i) => { const p = `${k}_m${i + 1}_`; Object.assign(d, { [p + "short_dv"]: m.member_short_dv, [p + "name"]: m.member_name, [p + "name_dv"]: m.member_name_dv, [p + "designation"]: m.member_designation, [p + "designation_dv"]: m.member_designation_dv, [p + "role"]: m.member_role, [p + "role_dv"]: m.member_role_dv, [p + "leave"]: m.leave, [p + "absent_mark"]: m.absent_mark, [p + "leave_text"]: m.leave_text }); });
+  L.forEach((m, i) => { const p = `${k}_m${i + 1}_`; Object.assign(d, { [p + "short_dv"]: m.member_short_dv, [p + "name"]: m.member_name, [p + "name_dv"]: m.member_name_dv, [p + "id_card"]: m.member_id_card, [p + "office_dv"]: m.member_office_dv, [p + "designation"]: m.member_designation, [p + "designation_dv"]: m.member_designation_dv, [p + "role"]: m.member_role, [p + "role_dv"]: m.member_role_dv, [p + "leave"]: m.leave, [p + "absent_mark"]: m.absent_mark, [p + "leave_text"]: m.leave_text }); });
   return d;
 }
 // Word post-processing for leave rows: merge from the {leave} cell to the end of the row, shade, centre.
@@ -113,9 +113,9 @@ function STANDCARD(n) {
       o("div", { class: "row", style: { gap: "8px", marginTop: "8px" } }, btn("Add member", () => standEdit(k, null), "small"), btn(`Copy into every project without ${l} members`, () => save(() => { let c = 0; PRJ().forEach(p => { if (!(p.committees[k] || []).length && (st[k] || []).length) { p.committees[k] = copyMembers(st[k]); audit(p, l + " set from the standing committee"); c++; } }); xt(c + " project" + (c === 1 ? "" : "s") + " updated"); }), "small"))))));
 }
 async function standEdit(k, m) {
-  const x = m || {}, nameDv = DVI(x.nameDv), name = I(x.name), desDv = DVI(x.designationDv), des = I(x.designation), role = S(["Chair", "Member", "Secretary"], x.role || "Member");
-  if (!(await form((m ? "Edit" : "Add") + " standing " + (k === "bid" ? "Bid" : "Evaluation") + " Committee member", [["Name (Dhivehi)", nameDv], ["Name (English)", name], ["Designation (Dhivehi)", desDv], ["Designation (English)", des], ["Role", role]], { top: kbToggle(), check: () => { if (!nameDv.value.trim() && !name.value.trim()) throw err("Type the name"); } }))) return;
-  save(() => { need("templates"); const st = STAND(), v = { nameDv: nameDv.value.trim(), name: name.value.trim(), designationDv: desDv.value.trim(), designation: des.value.trim(), role: role.value }; if (v.role === "Chair") (st[k] || []).forEach(y => { y !== m && y.role === "Chair" && (y.role = "Member"); }); if (m) Object.assign(m, v); else (st[k] = st[k] || []).push(v); }, "Saved");
+  const x = m || {}, nameDv = DVI(x.nameDv), name = I(x.name), desDv = DVI(x.designationDv), des = I(x.designation), idc = I(x.idCard || "", { placeholder: "e.g. A123456" }), off = DVI(x.officeDv || ""), role = S(["Chair", "Member", "Secretary"], x.role || "Member");
+  if (!(await form((m ? "Edit" : "Add") + " standing " + (k === "bid" ? "Bid" : "Evaluation") + " Committee member", [["Name (Dhivehi)", nameDv], ["Name (English)", name], ["Designation (Dhivehi)", desDv], ["Designation (English)", des], ["ID card number", idc], ["Office (Dhivehi) — empty: ށ. މިލަންދޫ ކައުންސިލް އިދާރާ", off], ["Role", role]], { top: kbToggle(), check: () => { if (!nameDv.value.trim() && !name.value.trim()) throw err("Type the name"); } }))) return;
+  save(() => { need("templates"); const st = STAND(), v = { nameDv: nameDv.value.trim(), name: name.value.trim(), designationDv: desDv.value.trim(), designation: des.value.trim(), idCard: idc.value.trim(), officeDv: off.value.trim(), role: role.value }; if (v.role === "Chair") (st[k] || []).forEach(y => { y !== m && y.role === "Chair" && (y.role = "Member"); }); if (m) Object.assign(m, v); else (st[k] = st[k] || []).push(v); }, "Saved");
 }
 // Leave toggles used in the member and meeting forms.
 function leaveFields(m) {
@@ -124,9 +124,16 @@ function leaveFields(m) {
   return { cb, txt, el: o("span", { class: "pcc-leave" }, o("datalist", { id: "pcc-leave" }, LEAVE_TEXTS.map(t => o("option", { value: t }))), o("label", { class: "pcc-chk" }, cb, " On leave"), txt), read: () => ({ onLeave: cb.checked, leaveText: cb.checked ? txt.value.trim() || LEAVE_TEXTS[0] : "" }) };
 }
 // First run: set the standing Bid Committee and give it to every project that has no Bid Committee yet.
+// Evaluation Committee members as in the council's PR-02 declarations; ID card numbers are typed in the portal.
+const STANDING_EVAL = [
+  { nameDv: "އަލްފާޟިލް އަޙްމަދު ނަޖީބު", designationDv: "ކައުންސިލް އެގްޒެކެޓިވް", role: "Member" },
+  { nameDv: "އަލްފާޟިލް އަޙްމަދު އަތީޤް", designationDv: "ކައުންސިލް އޮފިސަރ", role: "Member" },
+  { nameDv: "އަލްފާޟިލް މުޙައްމަދު އިޙުސާން", designationDv: "ސ.ކައުންސިލް އޮފިސަރ", role: "Member" }
+];
 function seedStanding(z) {
-  if (z.standingV) return false;
-  const st = STAND(); if (!(st.bid || []).length) st.bid = JSON.parse(JSON.stringify(STANDING_BID));
-  PRJ().forEach(p => { if (!p.seed && !(p.committees.bid || []).length) { p.committees.bid = copyMembers(st.bid); audit(p, "Bid Committee set from the standing committee"); } });
-  z.standingV = 1; return true;
+  const v = z.standingV || 0; if (v >= 2) return false;
+  const st = STAND(), fill = (k, list, label) => { if (!(st[k] || []).length) st[k] = JSON.parse(JSON.stringify(list)); PRJ().forEach(p => { if (!p.seed && !(p.committees[k] || []).length) { p.committees[k] = copyMembers(st[k]); audit(p, label + " set from the standing committee"); } }); };
+  v < 1 && fill("bid", STANDING_BID, "Bid Committee");
+  fill("eval", STANDING_EVAL, "Evaluation Committee");
+  z.standingV = 2; return true;
 }

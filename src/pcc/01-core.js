@@ -129,6 +129,7 @@ function migrate() {
   if (!z.blobs || typeof z.blobs !== "object") { z.blobs = {}; ch = true; }
   if (loadPR09(z)) ch = true;
   if (seedStanding(z)) ch = true;
+  if (seedOwn(z)) ch = true;
   if (ch) K.Qt();
 }
 

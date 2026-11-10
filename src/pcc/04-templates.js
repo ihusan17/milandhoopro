@@ -22,7 +22,7 @@ async function tplTags(t) {
   return v.tags;
 }
 const fieldLabel = k => { for (const g of FIELDS) for (const f of g[1]) if (f[0] === k) return f[1]; const m = /^(.*?)_(dv_ymd|dv_dmy|dv_both|dash|dv|en|hijri|iso|words_dv|words_en)$/.exec(k); const SUF = { dv_ymd: "2026 ނޮވެމްބަރ 09", dv_dmy: "09 ނޮވެމްބަރ 2026", dv_both: "both formats", dash: "10-11-2026", dv: "Dhivehi", en: "English", hijri: "Hijri", iso: "ISO", words_dv: "Dhivehi words", words_en: "English words" }; return m ? fieldLabel(m[1]) + " (" + SUF[m[2]] + ")" : (typeof OWN === "function" && (ownOf(k) || {}).label) || k; };
-function knownTag(name, data) { const top = name.split(".")[0]; return Object.prototype.hasOwnProperty.call(data, top) || Object.prototype.hasOwnProperty.call(memberData({}, 0), top) || /^(bid|eval)_m\d+_(name|name_dv|short_dv|designation|designation_dv|role|role_dv|leave|absent_mark|leave_text)$/.test(top) || /^(.+_date|today)_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both|dash)$/.test(top) && Object.prototype.hasOwnProperty.call(data, top.replace(/_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both|dash)$/, "")); }
+function knownTag(name, data) { const top = name.split(".")[0]; return Object.prototype.hasOwnProperty.call(data, top) || Object.prototype.hasOwnProperty.call(memberData({}, 0), top) || /^(bid|eval)_m\d+_(name|name_dv|short_dv|id_card|office_dv|designation|designation_dv|role|role_dv|leave|absent_mark|leave_text)$/.test(top) || /^(.+_date|today)_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both|dash)$/.test(top) && Object.prototype.hasOwnProperty.call(data, top.replace(/_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both|dash)$/, "")); }
 
 // Placeholders in active templates that no program field fills (and that aren't mapped): they become
 // "Other template fields" on the project form. Returns { tag: [template codes] }.
@@ -39,17 +39,28 @@ function extraTags() {
 }
 // Your own fields, added on the cheat-sheet: { key, label, kind: text | dv | date | time | number }.
 const OWN = () => Z().ownFields || [];
+// Own fields the council's PR-03 / PR-12 forms use; added once, editable on the cheat-sheet.
+const OWN_DEFAULTS = [
+  { key: "psip_no", label: "PSIP number", kind: "text" },
+  { key: "agenda_no", label: "Agenda number (in the Bid Committee meeting)", kind: "text" },
+  { key: "iulaan_count", label: "How many times the Iulaan was announced", kind: "text", def: "01" },
+  { key: "interest_count", label: "Number of parties who expressed interest", kind: "number" },
+  { key: "prev_meeting_no", label: "If presented to the Bid Committee before: meeting number", kind: "text", def: "-" },
+  { key: "prev_meeting_date", label: "If presented before: date", kind: "text", def: "-" },
+  { key: "prev_decision_dv", label: "If presented before: what was decided", kind: "dv", def: "-" }
+];
+function seedOwn(z) { if ((z.ownV || 0) >= 1) return false; z.ownFields = z.ownFields || []; OWN_DEFAULTS.forEach(f => { z.ownFields.some(x => x.key === f.key) || z.ownFields.push({ ...f }); }); z.ownV = 1; return true; }
 const ownOf = k => OWN().find(f => f.key === k);
 async function ownEdit(f0) {
-  const x = f0 || {}, key = I(x.key || "", { placeholder: "e.g. psip_no", dir: "ltr" }), label = I(x.label || "", { placeholder: "e.g. PSIP number" }), kind = S([["text", "Text"], ["dv", "Dhivehi text"], ["date", "Date"], ["time", "Time"], ["number", "Number"]], x.kind || "text");
-  const ok = await form(f0 ? "Edit your field" : "Add your own field", [["Placeholder name (English letters, numbers and _)", key], ["Meaning", label], ["Kind of value", kind], o("p", { class: "muted small", style: { gridColumn: "1/-1" } }, "Type it in a template as {name}. Its value is typed on each project under Edit › Other template fields.")], { check: () => {
+  const x = f0 || {}, key = I(x.key || "", { placeholder: "e.g. psip_no", dir: "ltr" }), label = I(x.label || "", { placeholder: "e.g. PSIP number" }), kind = S([["text", "Text"], ["dv", "Dhivehi text"], ["date", "Date"], ["time", "Time"], ["number", "Number"]], x.kind || "text"); const def = I(x.def || "", { placeholder: "e.g. -" });
+  const ok = await form(f0 ? "Edit your field" : "Add your own field", [["Placeholder name (English letters, numbers and _)", key], ["Meaning", label], ["Kind of value", kind], ["When left empty on a project, write", def], o("p", { class: "muted small", style: { gridColumn: "1/-1" } }, "Type it in a template as {name}. Its value is typed on each project under Edit › Other template fields.")], { check: () => {
     const k = key.value.trim().replace(/^\{|\}$/g, "");
     if (!/^[a-z_][a-z0-9_]*$/i.test(k)) throw err("Use English letters, numbers and _ only, e.g. psip_no");
     if (progField(k) || knownTag(k, dataFor(blankProject()))) throw err("{" + k + "} is already a program field — use it as it is");
     if (OWN().some(f => f !== f0 && f.key === k)) throw err("You already have {" + k + "}");
   } });
   if (!ok) return;
-  save(() => { need("templates"); const k = key.value.trim().replace(/^\{|\}$/g, "").toLowerCase(), rec = { key: k, label: label.value.trim(), kind: kind.value }; Z().ownFields = OWN().filter(f => f !== f0).concat(rec); }, f0 ? "Field saved" : "Field added — type {" + key.value.trim().toLowerCase() + "} in your templates");
+  save(() => { need("templates"); const k = key.value.trim().replace(/^\{|\}$/g, "").toLowerCase(), rec = { key: k, label: label.value.trim(), kind: kind.value, def: def.value.trim() }; Z().ownFields = OWN().filter(f => f !== f0).concat(rec); }, f0 ? "Field saved" : "Field added — type {" + key.value.trim().toLowerCase() + "} in your templates");
 }
 // Values for one template: mapping aliases and custom inputs applied on top of the data object.
 function applyMap(t, data, custom = {}) {
