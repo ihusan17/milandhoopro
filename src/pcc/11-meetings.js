@@ -45,8 +45,10 @@ function meetingData(m) {
   const d = dataFor(first, { meeting_ref: m.ref || "", meeting_date: Xt(m.date), meeting_date_dv: dvDate(m.date), meeting_date_en: enDate(m.date), meeting_date_hijri: hijri(m.date), meeting_time: m.time || "", meeting_place: m.place || "", meeting_notes: m.notes || "", project_count: P.length, letter_date: Xt(m.date), letter_date_dv: dvDate(m.date), letter_date_hijri: hijri(m.date) });
   d[m.kind + "_members"] = mem;
   d[m.kind + "_meeting_no"] = m.ref || ""; d[m.kind + "_meeting_date"] = Xt(m.date); d[m.kind + "_meeting_date_dv"] = dvDate(m.date); d[m.kind + "_meeting_date_en"] = enDate(m.date); d[m.kind + "_meeting_date_hijri"] = hijri(m.date);
+  d[m.kind + "_meeting_time"] = m.time || "";
   d.projects = P.map((p, i) => { const x = dataFor(p); return { ...scalars(x), no: i + 1, bidders: x.bidders, bid_members: x.bid_members, eval_members: x.eval_members }; });
-  return d;
+  d.meeting_date_dv_ymd = dvYMD(m.date); d[m.kind + "_meeting_date_dv_ymd"] = dvYMD(m.date);
+  return addYMD(d);
 }
 
 async function meetingGen(m) {
