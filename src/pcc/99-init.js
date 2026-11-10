@@ -102,7 +102,7 @@ window.__pcc = {
 function ROUTE_PROJECTS(n, [sub]) {
   migrate();
   if (sub === "documents") return DOCSPAGE(n);
-  if (sub === "templates") { if (!can("templates")) return K.Fa.projects && OVERVIEW(n, ""); TPLPAGE(n); REFSET(n); return; }
+  if (sub === "templates") { if (!can("templates")) return K.Fa.projects && OVERVIEW(n, ""); TPLPAGE(n); REFSET(n); STANDCARD(n); return; }
   if (sub === "cheatsheet") return CHEAT(n);
   OVERVIEW(n, sub);
   if (can("projects")) n.append(o("div", { class: "pcc-seed muted small" }, PRJ().some(p => p.seed) ? ["Sample projects are loaded. ", btn("Remove sample data", seedRemove, "small")] : K.LV5() ? ["Trying the module? ", btn("Load sample projects", seedLoad, "small"), " (3 ongoing works, 1 in retention, 5 plan items — removable)"] : null));

@@ -128,6 +128,7 @@ function migrate() {
   for (const k of ["pdocs", "pfiles", "planImports"]) if (!Array.isArray(z[k])) { z[k] = []; ch = true; }
   if (!z.blobs || typeof z.blobs !== "object") { z.blobs = {}; ch = true; }
   if (loadPR09(z)) ch = true;
+  if (seedStanding(z)) ch = true;
   if (ch) K.Qt();
 }
 

@@ -21,9 +21,9 @@ async function meetingEdit(m, k, p) {
   const chosen = new Set(v.projectIds || [p.id]), q = o("input", { type: "search", placeholder: "Search projects" }), list = o("div", { class: "pcc-mlist" });
   const drawList = () => { const s = q.value.trim().toLowerCase(); list.replaceChildren(...PRJ().filter(x => x.status !== "Cancelled" && (!s || `${x.ref} ${x.name} ${x.nameDv || ""}`.toLowerCase().includes(s) || chosen.has(x.id))).sort((a, b) => (chosen.has(b.id) - chosen.has(a.id)) || String(a.ref).localeCompare(String(b.ref), undefined, { numeric: true })).map(x => o("label", { class: "pcc-chk pcc-mrow" }, o("input", { type: "checkbox", checked: chosen.has(x.id), onchange: e => { e.target.checked ? chosen.add(x.id) : chosen.delete(x.id); drawSrc(); } }), o("span", { class: "nowrap" }, x.ref), o("span", { dir: "auto" }, x.nameDv || x.name), (x.committees[k] || []).length ? o("span", { class: "pcc-tag" }, (x.committees[k] || []).length + " members") : null))); };
   q.addEventListener("input", drawList);
-  const src = o("select", {}), mprev = o("div", { class: "muted small" });
+  const src = o("select", {}), mprev = o("div", { class: "pcc-mmem" }); let mrows = [];
   const drawSrc = () => { const opts = [...chosen].map(id => prj(id)).filter(x => x && (x.committees[k] || []).length); src.replaceChildren(...(m ? [bt("@keep", "Keep this meeting's members (" + v.members.length + ")", true)] : []), ...opts.map(x => bt(x.id, `Committee of ${x.ref} (${x.committees[k].length})`, !m && x.id === p.id))); showPrev(); };
-  const showPrev = () => { const L2 = src.value === "@keep" ? v.members : ((prj(src.value) || {}).committees || {})[k] || []; mprev.textContent = L2.length ? "Members: " + L2.map(x => `${x.name} (${x.role || "Member"})`).join(", ") : `None of the chosen projects has ${KLAB[k]} members yet — add them on a project first.`; };
+  const showPrev = () => { const L2 = src.value === "@keep" ? v.members : ((prj(src.value) || {}).committees || {})[k] || []; mrows = L2.map(x => ({ x, lf: leaveFields(x) })); mprev.replaceChildren(...(L2.length ? mrows.map(({ x, lf }) => o("div", { class: "pcc-mrow2" }, o("span", { dir: "auto" }, (x.nameDv || x.name) + " · " + (x.role || "Member")), lf.el)) : [o("p", { class: "muted small" }, `None of the chosen projects has ${KLAB[k]} members yet — add them on a project first.`)])); };
   src.addEventListener("change", showPrev);
   drawList(); drawSrc();
   const ok = await form((m ? "Edit " : "New ") + KLAB[k] + " meeting", [["Meeting date", date], ["Time", time], o("div", { style: { gridColumn: "1/-1" } }, L("Place", place), o("label", { style: { marginTop: "10px" } }, "Projects decided at this meeting"), q, list, L("Committee members", src), mprev, L("Notes", notes))], {
@@ -32,7 +32,7 @@ async function meetingEdit(m, k, p) {
   if (!ok) return;
   save(() => {
     need("pdocs");
-    const members = src.value === "@keep" ? v.members : JSON.parse(JSON.stringify(prj(src.value).committees[k]));
+    const members = mrows.map(({ x, lf }) => ({ ...JSON.parse(JSON.stringify(x)), ...lf.read() }));
     const o2 = { kind: k, date: date.value, time: time.value.trim(), place: place.value.trim(), notes: notes.value.trim(), projectIds: [...chosen].filter(id => prj(id)), members };
     if (m) Object.assign(m, o2); else { const nm = { id: uid(), ref: refNext(k === "eval" ? "evalmeeting" : "meeting"), ...o2, by: me(), at: Vt() }; MEETS().push(nm); }
     o2.projectIds.forEach(id => audit(prj(id), `${KLAB[k]} meeting ${m ? "changed" : "recorded"}`, `${fd(o2.date)} · ${o2.projectIds.length} projects`));
@@ -41,7 +41,7 @@ async function meetingEdit(m, k, p) {
 
 function meetingData(m) {
   const P = m.projectIds.map(id => prj(id)).filter(Boolean), first = P[0];
-  const mem = m.members.map((x, i) => ({ no: i + 1, member_no: i + 1, member_name: x.name || "", member_name_dv: x.nameDv || "", member_designation: x.designation || "", member_designation_dv: x.designationDv || "", member_role: x.role || "Member", member_role_dv: ROLEDV[x.role || "Member"] || "" }));
+  const mem = m.members.map(memberData);
   const d = dataFor(first, { meeting_ref: m.ref || "", meeting_date: Xt(m.date), meeting_date_dv: dvDate(m.date), meeting_date_en: enDate(m.date), meeting_date_hijri: hijri(m.date), meeting_time: m.time || "", meeting_place: m.place || "", meeting_notes: m.notes || "", project_count: P.length, letter_date: Xt(m.date), letter_date_dv: dvDate(m.date), letter_date_hijri: hijri(m.date) });
   d[m.kind + "_members"] = mem;
   d[m.kind + "_meeting_no"] = m.ref || ""; d[m.kind + "_meeting_date"] = Xt(m.date); d[m.kind + "_meeting_date_dv"] = dvDate(m.date); d[m.kind + "_meeting_date_en"] = enDate(m.date); d[m.kind + "_meeting_date_hijri"] = hijri(m.date);

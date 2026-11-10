@@ -92,7 +92,7 @@ function fillDocx(u8, data, rules) {
     doc = new Docxtemplater(new PizZip(u8), { paragraphLoop: true, linebreaks: true, nullGetter: () => "" });
     doc.render(data);
   } catch (e) { throw docxError(e); }
-  return doc.getZip().generate({ type: "uint8array", compression: "DEFLATE" });
+  return leaveCells(doc.getZip().generate({ type: "uint8array", compression: "DEFLATE" }));
 }
 
 // ----- Excel helpers -----
@@ -125,6 +125,7 @@ function cellText(c, ss) {
   return v ? v.textContent : "";
 }
 function setCell(doc, c, val) {
+  if (typeof val === "string") val = val.replace(/\u27E6[LG]\u27E7/g, "");
   [...c.childNodes].forEach(n => { if (n.nodeType === 1 && (n.localName === "v" || n.localName === "is")) c.removeChild(n); });
   if (val === "" || val == null) { c.removeAttribute("t"); return; }
   if (typeof val === "number" && isFinite(val)) {

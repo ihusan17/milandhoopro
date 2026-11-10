@@ -134,6 +134,30 @@ def committee_signatures(d, loop):
     table(d, [["#", "ނަން", "މަޤާމު", "ކޮމިޓީގެ މަޤާމު", "ސޮއި"], ["{#" + loop + "}{no}", "{member_name_dv}", "{member_designation_dv}", "{member_role_dv}", "{/" + loop + "}"]], widths=[1, 5, 4.5, 3, 3.5])
 
 
+def attendance(d, loop):
+    """Attendance table like the council's: arrival / leaving sign and time; a member on leave becomes one grey merged cell."""
+    t = d.add_table(rows=3, cols=8)
+    t.style = "Table Grid"; t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    t._tbl.tblPr.append(OxmlElement("w:bidiVisual"))
+    widths = [0.9, 4.2, 3.6, 1.6, 2.2, 1.4, 2.2, 1.4]
+    head1 = ["#", "ނަން", "މަޤާމު", "ހާޒިރީ", "ޖަލްސާއަށް ވަދެވުނު", "", "ޖަލްސާއިން ނިކުމެވުނު", ""]
+    head2 = ["", "", "", "", "ސޮއި", "ގަޑި", "ސޮއި", "ގަޑި"]
+    for j in range(8):
+        cell_text(t.cell(0, j), head1[j], 11, True, shade="D9EEE8", align=WD_ALIGN_PARAGRAPH.CENTER)
+        cell_text(t.cell(1, j), head2[j], 11, True, shade="D9EEE8", align=WD_ALIGN_PARAGRAPH.CENTER)
+    row = ["{#" + loop + "}{no}", "{member_name_dv}", "{member_designation_dv}", "{absent_mark}", "{leave}", "", "", "{/" + loop + "}"]
+    for j, v in enumerate(row):
+        cell_text(t.cell(2, j), v, 11.5, align=WD_ALIGN_PARAGRAPH.CENTER if j in (0, 3) else None)
+    for r in range(3):
+        for j in range(8):
+            t.cell(r, j).width = Cm(widths[j])
+    for j in range(4):
+        a = t.cell(0, j); a.merge(t.cell(1, j)); cell_text(a, head1[j], 11, True, shade="D9EEE8", align=WD_ALIGN_PARAGRAPH.CENTER)
+    for j in (4, 6):
+        a = t.cell(0, j); a.merge(t.cell(0, j + 1)); cell_text(a, head1[j], 11, True, shade="D9EEE8", align=WD_ALIGN_PARAGRAPH.CENTER)
+    d.add_paragraph()
+
+
 def save_doc(d, code, group, en, dv, order=0, per="", pack=False):
     fn = code + ".docx"
     d.core_properties.title = en
@@ -158,7 +182,7 @@ d = new_doc(); demo_note(d)
 para(d, "ބިޑް ކޮމިޓީގެ ބައްދަލުވުމުގެ ޔައުމިއްޔާ", 16, True, align=WD_ALIGN_PARAGRAPH.CENTER, color=TEAL)
 table(d, [["މަޝްރޫޢު", "{project_name_dv}"], ["ރެފަރެންސް", "{ref_no}"], ["އިޢުލާން ނަންބަރު", "{advertisement_no}"], ["ބައްދަލުވި ތާރީޚު", "{bid_opening_date_dv}"], ["ތަން", "މިލަންދޫ ކައުންސިލްގެ އިދާރާ"]], widths=[5, 12], header=False)
 para(d, "ޙާޟިރުވި މެމްބަރުން", 13, True)
-committee_signatures(d, "bid_members")
+attendance(d, "bid_members")
 para(d, "ބީލަން ހުށަހެޅި ފަރާތްތައް", 13, True)
 table(d, [["#", "ބީލަން ހުށަހެޅި ފަރާތް", "އަގު (ރ)", "މުއްދަތު (ދުވަސް)", "ރޭންކް"], ["{#bidders}{no}", "{bidder_name}", "{bid_amount}", "{duration_offered}", "{rank}{/bidders}"]], widths=[1, 6, 4, 3, 2])
 para(d, "ބައްދަލުވުމުގައި ނިންމި ކަންތައްތައް", 13, True)
@@ -183,7 +207,7 @@ def meeting_minutes(code, group, en, dv, title, members):
     para(d, title, 16, True, align=WD_ALIGN_PARAGRAPH.CENTER, color=TEAL)
     table(d, [["ބައްދަލުވުމުގެ ނަންބަރު", "{meeting_ref}"], ["ތާރީޚު", "{meeting_date_dv}"], ["ވަގުތު", "{meeting_time}"], ["ތަން", "{meeting_place}"], ["މަޝްރޫޢުތަކުގެ އަދަދު", "{project_count}"]], widths=[5, 12], header=False)
     para(d, "ޙާޟިރުވި މެމްބަރުން", 13, True)
-    table(d, [["#", "ނަން", "މަޤާމު", "ކޮމިޓީގެ މަޤާމު"], ["{#" + members + "}{no}", "{member_name_dv}", "{member_designation_dv}", "{member_role_dv}{/" + members + "}"]], widths=[1, 6, 6, 4])
+    attendance(d, members)
     para(d, "{#projects}", 11)
     para(d, "{no}. {project_name_dv}", 14, True, color=TEAL)
     table(d, [["ރެފަރެންސް", "{ref_no}"], ["އިޢުލާން ނަންބަރު", "{advertisement_no}"], ["ބީލަން ހުޅުވި ތާރީޚު", "{bid_opening_date_dv}"], ["ލަފާކުރި އަގު", "{estimated_cost} ރ"]], widths=[5, 12], header=False)

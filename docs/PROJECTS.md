@@ -99,6 +99,17 @@ The placeholders `{bid_meeting_no}` and `{eval_meeting_no}` give the meeting num
 
 Each value comes from the number typed on the project (Edit › Committee meetings, where **Take next number** issues one). If none is typed, the program uses the latest meeting recorded for that project.
 
+### Standing committees and members on leave
+
+**Projects › Templates › Standing committees** holds the council's usual Bid Committee (and Evaluation Committee). New projects start with these members; on a project, **Use the standing committee** copies them in.
+
+To mark someone **on leave** for a project, use **Edit** on that member; for a meeting, use the member list when recording it. Pick the reason, e.g. ޗުއްޓީ or ސަފަރު. In the attendance table of the Yaumiyya:
+- the `{absent_mark}` column shows "-",
+- the cells from `{leave}` to the end of the row merge into one cell showing the reason,
+- both are shaded light grey.
+
+Members on leave do not get a per-member invitation or declaration.
+
 ### One meeting for several projects
 
 When the Bid Committee or Evaluation Committee decides on two or more projects in one meeting:
@@ -193,7 +204,7 @@ The Firestore rules already cover this collection, so nothing needs to change in
 
 The module source is readable and kept outside the minified bundle:
 
-- `src/pcc/01-core.js` … `10-init.js`: the module, concatenated in name order into one IIFE.
+- `src/pcc/01-core.js` … `99-init.js`: the module, concatenated in name order into one IIFE.
 - `src/pcc/pcc.css`: the module's styles.
 - `src/pcc/doclibs.min.js`: docxtemplater, pizzip, jszip and docx-preview. Rebuild it with `tools/build-doclibs.sh`.
 - `src/pcc/demo/`: the demo templates. Rebuild them with `python3 tools/make_demo_templates.py` (needs python-docx and openpyxl).

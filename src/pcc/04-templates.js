@@ -42,7 +42,7 @@ function nextVersion(projectId, code, key) { return 1 + Math.max(0, ...Z().pdocs
 // Fill one template for one project (one file per committee member when the template says so).
 async function generateDocs(p, t, data, opts = {}) {
   const ver = curVer(t), u8 = await fget(ver.fileId), tags = await tplTags(t), tops = new Set(tags.map(x => x.name.split(".")[0]));
-  const runs = t.perMember ? (data[t.perMember + "_members"] || []).map(m => ({ key: "m" + m.no, label: m.member_name || "Member " + m.no, d: Object.assign({}, data, m) })) : [{ key: opts.key || "", label: "", d: data }];
+  const runs = t.perMember ? (data[t.perMember + "_members"] || []).filter(m => !m.__leave).map(m => ({ key: "m" + m.no, label: safeName(m.member_name) !== "file" ? m.member_name : "Member_" + m.no, d: Object.assign({}, data, m) })) : [{ key: opts.key || "", label: "", d: data }];
   if (t.perMember && !runs.length) throw err(`${t.code}: add the ${t.perMember === "bid" ? "Bid" : "Evaluation"} Committee members first`);
   const out = [];
   for (const r of runs) {

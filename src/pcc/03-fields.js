@@ -50,7 +50,7 @@ function payTotals(p) {
 }
 const winner = p => (p.bidders || []).find(b => b.awarded) || (p.bidders || []).slice().sort((a, b) => (a.rank || 99) - (b.rank || 99))[0];
 function members(p, k) {
-  return (p.committees[k] || []).map((m, i) => ({ no: i + 1, member_no: i + 1, member_name: m.name || "", member_name_dv: m.nameDv || "", member_designation: m.designation || "", member_designation_dv: m.designationDv || "", member_role: m.role || "Member", member_role_dv: ROLEDV[m.role || "Member"] || "" }));
+  return (p.committees[k] || []).map(memberData);
 }
 
 // Build the data object for a project. extra = per-document values (letter, payment, member…)
