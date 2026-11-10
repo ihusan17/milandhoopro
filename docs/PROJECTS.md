@@ -239,3 +239,10 @@ After editing, run `node tools/build-pcc.mjs`. It replaces the block between `<!
 4. The same text can become different fields: if 28.01.2026 is both the bid opening and the evaluation date, each place gets its own field ("Only place 1 / 2 where this text appears").
 
 The original file is not changed; the rules are applied every time a document is generated. Open **Replace text** again at any time and press **Detect values in this file** to review.
+
+## Minutes (Yaumiyya) fields
+
+- `{bid_meeting_year}`, `{bid_meeting_seq}`: the meeting's year and its number only ("BC/2026/18" → 18).
+- `{bid_meeting_time}` (scheduled), `{bid_meeting_start_time}`, `{bid_meeting_end_time}`: typed on the project (Edit › Committee meetings › Meeting started at / ended at).
+- `{bid_meeting_date_hijri}`, `{bid_chair_short_dv}` (chair without އަލްފާޟިލް).
+- Table loops: `{#bid_attendance}{present_name_dv}` | `{absent_name_dv}{/bid_attendance}` puts present and on-leave members side by side; `{#bid_present}{no}` | `{member_short_dv}` | `{/bid_present}` lists the members who attended, numbered 1, 2, 3…; `{#bid_absent}` lists those on leave. All exist for `eval_` too.

@@ -22,7 +22,7 @@ async function tplTags(t) {
   return v.tags;
 }
 const fieldLabel = k => { for (const g of FIELDS) for (const f of g[1]) if (f[0] === k) return f[1]; const m = /^(.*?)_(dv_ymd|dv_dmy|dv_both|dv|en|hijri|iso|words_dv|words_en)$/.exec(k); const SUF = { dv_ymd: "2026 ނޮވެމްބަރ 09", dv_dmy: "09 ނޮވެމްބަރ 2026", dv_both: "both formats", dv: "Dhivehi", en: "English", hijri: "Hijri", iso: "ISO", words_dv: "Dhivehi words", words_en: "English words" }; return m ? fieldLabel(m[1]) + " (" + SUF[m[2]] + ")" : k; };
-function knownTag(name, data) { const top = name.split(".")[0]; return Object.prototype.hasOwnProperty.call(data, top) || Object.prototype.hasOwnProperty.call(memberData({}, 0), top) || /^(bid|eval)_m\d+_(name|name_dv|designation|designation_dv|role|role_dv|leave|absent_mark|leave_text)$/.test(top) || /^(.+_date|today)_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both)$/.test(top) && Object.prototype.hasOwnProperty.call(data, top.replace(/_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both)$/, "")); }
+function knownTag(name, data) { const top = name.split(".")[0]; return Object.prototype.hasOwnProperty.call(data, top) || Object.prototype.hasOwnProperty.call(memberData({}, 0), top) || /^(bid|eval)_m\d+_(name|name_dv|short_dv|designation|designation_dv|role|role_dv|leave|absent_mark|leave_text)$/.test(top) || /^(.+_date|today)_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both)$/.test(top) && Object.prototype.hasOwnProperty.call(data, top.replace(/_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both)$/, "")); }
 
 // Values for one template: mapping aliases and custom inputs applied on top of the data object.
 function applyMap(t, data, custom = {}) {

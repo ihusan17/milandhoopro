@@ -15,15 +15,22 @@ const STAND = () => (Z().standing = Z().standing && typeof Z().standing === "obj
 const copyMembers = L2 => (L2 || []).map(m => ({ ...JSON.parse(JSON.stringify(m)), id: uid() + Math.random(), onLeave: false, leaveText: "" }));
 
 // One member as template data (used by projects and meetings).
+// Name without the honorific (އަލްފާޟިލް / އަލްފާޟިލާ / ޖަނާބު) for minutes and lists.
+const noTitle = s => String(s || "").replace(/^\s*(?:(?:އަލްފާޟިލް|އަލްފާޟިލާ|ޖަނާބު|ފަޟީލަތުލް|Mr\.?|Ms\.?|Mrs\.?)\s+)+/, "");
 function memberData(m, i) {
   const leave = !!m.onLeave, lt = m.leaveText || LEAVE_TEXTS[0];
-  return { no: i + 1, member_no: i + 1, member_name: m.name || m.nameDv || "", member_name_dv: m.nameDv || m.name || "", member_designation: m.designation || "", member_designation_dv: m.designationDv || m.designation || "", member_role: m.role || "Member", member_role_dv: ROLEDV[m.role || "Member"] || "",
+  return { no: i + 1, member_no: i + 1, member_name: m.name || m.nameDv || "", member_name_dv: m.nameDv || m.name || "", member_short_dv: noTitle(m.nameDv || m.name || ""), member_designation: m.designation || "", member_designation_dv: m.designationDv || m.designation || "", member_role: m.role || "Member", member_role_dv: ROLEDV[m.role || "Member"] || "",
     on_leave: leave ? "Yes" : "", leave_text: leave ? lt : "", leave: leave ? "⟦L⟧" + lt : "", absent_mark: leave ? "⟦G⟧-" : "", present: leave ? "" : "✓", __leave: leave };
 }
 
 // Numbered placeholders for tables with fixed rows: {bid_m1_name_dv}, {bid_m3_designation_dv}, {eval_m2_leave}…
 function numberedMembers(d, k, list) {
-  (list || []).forEach((m, i) => { const p = `${k}_m${i + 1}_`; Object.assign(d, { [p + "name"]: m.member_name, [p + "name_dv"]: m.member_name_dv, [p + "designation"]: m.member_designation, [p + "designation_dv"]: m.member_designation_dv, [p + "role"]: m.member_role, [p + "role_dv"]: m.member_role_dv, [p + "leave"]: m.leave, [p + "absent_mark"]: m.absent_mark, [p + "leave_text"]: m.leave_text }); });
+  // Present / absent lists (numbered within each list) and side-by-side attendance rows.
+  const L = list || [], pres = L.filter(m => !m.__leave).map((m, i) => Object.assign({}, m, { no: i + 1 })), abs = L.filter(m => m.__leave).map((m, i) => Object.assign({}, m, { no: i + 1 }));
+  const chair = L.find(m => m.member_role === "Chair") || {};
+  Object.assign(d, { [k + "_present"]: pres, [k + "_absent"]: abs, [k + "_present_count"]: pres.length, [k + "_absent_count"]: abs.length, [k + "_chair_dv"]: chair.member_name_dv || "", [k + "_chair_short_dv"]: chair.member_short_dv || "",
+    [k + "_attendance"]: Array.from({ length: Math.max(pres.length, abs.length) }, (_, i) => ({ no: i + 1, present_name_dv: (pres[i] || {}).member_short_dv || "", present_full_dv: (pres[i] || {}).member_name_dv || "", absent_name_dv: (abs[i] || {}).member_short_dv || "", absent_full_dv: (abs[i] || {}).member_name_dv || "", absent_reason: (abs[i] || {}).leave_text || "" })) });
+  L.forEach((m, i) => { const p = `${k}_m${i + 1}_`; Object.assign(d, { [p + "short_dv"]: m.member_short_dv, [p + "name"]: m.member_name, [p + "name_dv"]: m.member_name_dv, [p + "designation"]: m.member_designation, [p + "designation_dv"]: m.member_designation_dv, [p + "role"]: m.member_role, [p + "role_dv"]: m.member_role_dv, [p + "leave"]: m.leave, [p + "absent_mark"]: m.absent_mark, [p + "leave_text"]: m.leave_text }); });
   return d;
 }
 // Word post-processing for leave rows: merge from the {leave} cell to the end of the row, shade, centre.
