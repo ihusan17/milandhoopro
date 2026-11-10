@@ -27,7 +27,7 @@ function knownTag(name, data) { const top = name.split(".")[0]; return Object.pr
 // Placeholders in active templates that no program field fills (and that aren't mapped): they become
 // "Other template fields" on the project form. Returns { tag: [template codes] }.
 // Fields the program fills itself, also those filled only while generating (letters, payments, meetings, reports).
-function progField(n) { const FK = new Set(FIELDKEYS().concat(["y1", "y2", "y3", "year", "bid", "eval"])), base = n.replace(/_(dv_ymd|dv_dmy|dv_both|dash|dv|en|hijri|iso|words_dv|words_en)$/, ""); return FK.has(n) || FK.has(base); }
+function progField(n) { const FK = new Set(FIELDKEYS().concat(["y1", "y2", "y3", "year", "bid", "eval", "report_items"])), base = n.replace(/_(dv_ymd|dv_dmy|dv_both|dash|dv|en|hijri|iso|words_dv|words_en)$/, ""); return FK.has(n) || FK.has(base); }
 function extraTags() {
   const sample = dataFor(blankProject()), out = {};
   TPL().filter(t => t.active !== false).forEach(t => ((curVer(t) || {}).tags || []).forEach(x => {
@@ -146,7 +146,7 @@ async function tplUpload(t) {
     need("templates");
     const f = await readTemplateFile(await pickFile("." + t.type)); if (!f) return;
     if (f.ext !== t.type) throw err(`This template is ${t.type === "xlsx" ? "an Excel" : "a Word"} file; upload a .${t.type}`);
-    const sample = dataFor(PRJ()[0] || blankProject()), unknown = f.tags.filter(x => !x.loop && !knownTag(x.name, sample) && !(t.mapping || {})[x.name] && !x.inLoop);
+    const sample = dataFor(PRJ()[0] || blankProject()), unknown = f.tags.filter(x => !x.loop && !knownTag(x.name, sample) && !progField(x.name) && !(t.mapping || {})[x.name] && !x.inLoop);
     if (!(await jt(`Upload ${f.name} as version ${t.version + 1} of ${t.code}? ${f.tags.length} placeholders found${unknown.length ? `, ${unknown.length} the program has no field for (${unknown.slice(0, 5).map(x => x.name).join(", ")}) — these become your own fields, typed on each project under Edit › Other template fields (or map them to a program field next)` : ""}. Documents made earlier keep using the version they were made with.`, "Upload"))) return;
     const fileId = await fput(f.u8, { name: f.name, mime: MIME[f.ext] });
     save(() => { const v = t.version + 1; t.versions.push({ v, fileId, name: f.name, size: f.size, at: Vt(), by: me(), tags: f.tags, sheets: f.sheets }); t.version = v; t.demo = false; }, `${t.code} updated to version ${t.version + 1}`);

@@ -274,3 +274,10 @@ Templates › **Delete** on the template's row (administrators). Documents alrea
 - EV-FORM: sheet "AB" lists every bidder (`{#bidders}`), sheet "Table 01" only bidders marked Responsive (`{#responsive_bidders}`). Each row takes `{bidder_name}`, `{bid_amount}`, `{duration_offered}`, `{experience}` from the Bidders tab; the points are Excel formulas (lowest price and shortest duration taken with MIN over the column), so they recalculate when the file opens.
 - EV-RPT: the rejected bids are listed from `{#rejected_bidders}` — type the reason sentence in each rejected bidder's **Remarks** and set it to Not responsive. `{award_bidder}` and `{award_score}` (winner's total points) fill the conclusion; the signature table lists the Evaluation Committee members present.
 - Bidder form: new **Experience (number of similar works)** box.
+
+## Completion and progress documents (WCR, WCL, WPR)
+
+- Project Edit form: new **Agreement number** (`{agreement_no}`). Contractor: `{contractor_name_dv}` (the Dhivehi name on the vendor, else the contractor name typed on the project) and `{contractor_reg_no}` (vendor registration number).
+- WCR / WCL: `{handover_date_dv_dmy}`, `{due_date_dv_dmy}`, `{completion_date_dv_dmy}` / `{completion_date_dash}`, `{duration_days}`, `{contract_value}` with `{contract_value_words_dv}`, and `{last_invoice_no}` (latest invoice on the Payments tab). A template that uses `{letter_ref}` takes the next letter number automatically when it is generated.
+- WPR: the progress report form has **Bill number**, **Invoice number**, **Inspected on** and **Work items done** (one per line) → `{report_bill_no}`, `{report_invoice_no}`, `{report_inspect_date_dash}`, and the table loop `{#report_items}{inspect_date_dash} | {status_dv} | {item_dv}{/report_items}`.
+- Dhivehi amount words now use އެކާވީސް … ނަވާވީސް for 21–29 (128,000 → އެއްލައްކަ އަށާވީސްހާސް). Day-month-year dates use އޮގަސްޓް and އޮކްޓޯބަރ.

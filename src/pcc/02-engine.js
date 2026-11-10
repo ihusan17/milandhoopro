@@ -138,6 +138,10 @@ function fixRuns(u8) {
         /<w:rtl\/>/.test(b) || (b = b.replace("</w:rPr>", "<w:rtl/></w:rPr>"));
       } else if (/[A-Za-z]/.test(t) && !/[\u0590-\u08FF]/.test(t)) {
         b = b.replace(/<w:rtl\/>/g, "");
+        // Keep values such as (AGR)284-A/PRIV/2026/22 in one piece inside a Dhivehi line: brackets at the
+        // start or end would otherwise jump to the other side.
+        if (/[()\[\]]/.test(t) && !/^\u202A/.test(t)) { let first = true; const ts = b.match(/<w:t(?:\s[^>]*)?>[^<]*<\/w:t>/g) || [], lastT = ts[ts.length - 1];
+          b = b.replace(/(<w:t(?:\s[^>]*)?>)([^<]*)(<\/w:t>)/g, (m, o1, x, c1) => { const isFirst = first; first = false; return o1.replace(/^<w:t(?!\s+xml:space)/, '<w:t xml:space="preserve"') + (isFirst ? "\u202A" : "") + x + (m === lastT ? "\u202C" : "") + c1; }); }
         /<w:rFonts /.test(b) || (b = /<w:rPr>/.test(b) ? b.replace("<w:rPr>", `<w:rPr><w:rFonts w:ascii="${font}" w:hAnsi="${font}"/>`) : `<w:rPr><w:rFonts w:ascii="${font}" w:hAnsi="${font}"/></w:rPr>` + b);
       }
       if (b === body) return r;

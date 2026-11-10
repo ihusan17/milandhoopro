@@ -32,7 +32,7 @@ function adDateField(ctx, t, after = "") {
 
 // Find candidates in the paragraphs (and table cells) of a template, in reading order.
 function autoDetect(chunks, t) {
-  const out = [], seen = {}, MON = [...DVMON, ...DVMON2].map(adEsc).join("|"), HM = HJMON.map(adEsc).join("|");
+  const out = [], seen = {}, MON = [...DVMON, ...DVMON2, "އޮކްޓޫބަރ", "އޯގަސްޓް", "އޮކްޓޯބަރު", "އޮގަސްޓު"].map(adEsc).join("|"), HM = HJMON.map(adEsc).join("|");
   // n = which occurrence of this text in the whole document (the engine counts the same way).
   const occ = (str, f) => str.split(f).length - 1, all = chunks.join("\n");
   let prior = "";

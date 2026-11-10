@@ -210,7 +210,7 @@ const DVMON = ["ޖަނަވަރީ", "ފެބުރުއަރީ", "މާރިޗު", "އޭ
 const ENMON = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const HJMON = ["މުޙައްރަމް", "ޞަފަރު", "ރަބީޢުލްއައްވަލް", "ރަބީޢުލްއާޚިރު", "ޖުމާދަލްއޫލާ", "ޖުމާދަލްއާޚިރާ", "ރަޖަބު", "ޝަޢުބާން", "ރަމަޟާން", "ޝައްވާލް", "ޛުލްޤަޢިދާ", "ޛުލްޙިއްޖާ"];
 // Year–month–day style used in council letters, e.g. "2026 ނޮވެމްބަރ 09" (placeholder suffix _dv_ymd).
-const DVMON2 = ["ޖަނަވަރީ", "ފެބްރުއަރީ", "މާރިޗް", "އޭޕްރިލް", "މެއި", "ޖޫން", "ޖުލައި", "އޯގަސްޓް", "ސެޕްޓެމްބަރ", "އޮކްޓޫބަރ", "ނޮވެމްބަރ", "ޑިސެމްބަރ"];
+const DVMON2 = ["ޖަނަވަރީ", "ފެބްރުއަރީ", "މާރިޗް", "އޭޕްރިލް", "މެއި", "ޖޫން", "ޖުލައި", "އޮގަސްޓް", "ސެޕްޓެމްބަރ", "އޮކްޓޯބަރ", "ނޮވެމްބަރ", "ޑިސެމްބަރ"];
 // Wrapped in right-to-left embedding marks so it reads 2026 … 09 from the right even in an English (left-to-right) line.
 const RTLW = t => "\u202B" + t + "\u202C";
 const dvYMD = d => (isISO(d) ? RTLW(`${d.slice(0, 4)} ${DVMON2[Number(d.slice(5, 7)) - 1]} ${d.slice(8, 10)}`) : "");
@@ -235,7 +235,9 @@ const DV1 = ["", "އެކެއް", "ދޭއް", "ތިނެއް", "ހަތަރެއް",
 const DVA = ["", "އެއް", "ދެ", "ތިން", "ހަތަރު", "ފަސް", "ހަ", "ހަތް", "އަށް", "ނުވަ", "ދިހަ", "އެގާރަ", "ބާރަ", "ތޭރަ", "ސާދަ", "ފަނަރަ", "ސޯޅަ", "ސަތާރަ", "އަށާރަ", "ނަވާރަ"];
 const DVTEN = ["", "", "ވިހި", "ތިރީސް", "ސާޅީސް", "ފަންސާސް", "ފަސްދޮޅަސް", "ހައްދިހަ", "އައްޑިހަ", "ނުވަދިހަ"];
 const DVHUN = ["", "ސަތޭކަ", "ދުއިސައްތަ", "ތިންސަތޭކަ", "ހަތަރުސަތޭކަ", "ފަސްސަތޭކަ", "ހަސަތޭކަ", "ހަތްސަތޭކަ", "އަށްސަތޭކަ", "ނުވަސަތޭކަ"];
-const dv99 = (n, a) => (n < 20 ? (a ? DVA : DV1)[n] : DVTEN[Math.floor(n / 10)] + (n % 10 ? " " + (a ? DVA : DV1)[n % 10] : ""));
+// 21–29 have their own words (އެކާވީސް … ނަވާވީސް).
+const DV2X = ["ވިހި", "އެކާވީސް", "ބާވީސް", "ތޭވީސް", "ސައުވީސް", "ފަންސަވީސް", "ސައްބީސް", "ހަތާވީސް", "އަށާވީސް", "ނަވާވީސް"];
+const dv99 = (n, a) => (n < 20 ? (a ? DVA : DV1)[n] : n < 30 ? DV2X[n - 20] : DVTEN[Math.floor(n / 10)] + (n % 10 ? " " + (a ? DVA : DV1)[n % 10] : ""));
 const dv999 = (n, a) => [Math.floor(n / 100) ? DVHUN[Math.floor(n / 100)] : "", n % 100 ? dv99(n % 100, a) : ""].filter(Boolean).join(" ");
 // Whole number in Dhivehi words. a = attributive form (used before a noun such as ރުފިޔާ).
 function dvInt(n, a) {
@@ -243,7 +245,7 @@ function dvInt(n, a) {
   const m = Math.floor(n / 1e6), lk = Math.floor(n % 1e6 / 1e5), th = Math.floor(n % 1e5 / 1e3), r = n % 1e3, out = [];
   if (m) out.push(dv999(m, true) + " މިލިއަން");
   if (lk) out.push(DVA[lk] + "ލައްކަ");
-  if (th) out.push(th < 20 ? DVA[th] + "ހާސް" : dv99(th, true) + " ހާސް");
+  if (th) out.push(th < 30 ? dv99(th, true) + "ހާސް" : dv99(th, true) + " ހާސް");
   if (r) out.push(dv999(r, a));
   return out.join(" ");
 }
