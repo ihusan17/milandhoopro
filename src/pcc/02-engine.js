@@ -252,7 +252,10 @@ function valueFor(text, scope, root) {
 
 async function scanXlsx(u8, rules) {
   const X = await xlsxOpen(u8), chunks = [];
-  for (const sh of X.sheets) { const f = X.zip.file(sh.path); if (!f) continue; const d = xparse(await f.async("string")); [...d.getElementsByTagName("c")].forEach(c => { const t = rewriteText(cellText(c, X.ss), rules); t.includes("{") && chunks.push(t); }); }
+  // Per row, the cell that opens a loop is read first and the one that closes it last, so right-to-left
+  // sheets (loop opened in the last column) report the row's fields as loop fields.
+  for (const sh of X.sheets) { const f = X.zip.file(sh.path); if (!f) continue; const d = xparse(await f.async("string"));
+    [...d.getElementsByTagName("row")].forEach(row => { const T = kids(row, "c").map(c => rewriteText(cellText(c, X.ss), rules)).filter(t => t.includes("{")); const rank = t => (/\{\s*[#^]/.test(t) ? 0 : /\{\s*\//.test(t) ? 2 : 1); T.sort((a, b) => rank(a) - rank(b)).forEach(t => chunks.push(t)); }); }
   return { tags: scanText(chunks), sheets: X.sheets.map(s => s.name) };
 }
 

@@ -268,3 +268,9 @@ Any placeholder the program has no field for (e.g. `{meeting_venue_dv}`, `{secre
 ## Deleting a template
 
 Templates › **Delete** on the template's row (administrators). Documents already generated from it stay in the projects; a built-in demo template that is deleted is not added back. To stop using a template but keep it, press **Edit** and untick **Active** instead. The demo EV-YAU-M (evaluation minutes for several projects) has been removed.
+
+## Evaluation form and report (EV-FORM, EV-RPT)
+
+- EV-FORM: sheet "AB" lists every bidder (`{#bidders}`), sheet "Table 01" only bidders marked Responsive (`{#responsive_bidders}`). Each row takes `{bidder_name}`, `{bid_amount}`, `{duration_offered}`, `{experience}` from the Bidders tab; the points are Excel formulas (lowest price and shortest duration taken with MIN over the column), so they recalculate when the file opens.
+- EV-RPT: the rejected bids are listed from `{#rejected_bidders}` — type the reason sentence in each rejected bidder's **Remarks** and set it to Not responsive. `{award_bidder}` and `{award_score}` (winner's total points) fill the conclusion; the signature table lists the Evaluation Committee members present.
+- Bidder form: new **Experience (number of similar works)** box.
