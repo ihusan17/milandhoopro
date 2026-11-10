@@ -24,7 +24,7 @@ async function packPanel(p, k) {
     Object.entries(edits).forEach(([key, val]) => {
       d[key] = val;
       if (MONEYF.some(m => m[0] === key)) { const x = yn(val); if (x != null && !Number.isNaN(x)) { edits[key + "_words_dv"] == null && (d[key + "_words_dv"] = dvMoneyWords(x)); edits[key + "_words_en"] == null && (d[key + "_words_en"] = enMoneyWords(x)); d.__num[key] = x / 100; } }
-      if (DATEF.some(m => m[0] === key)) { const iso = dmy2iso(val); if (iso) { edits[key + "_dv"] == null && (d[key + "_dv"] = dvDate(iso)); edits[key + "_dv_ymd"] == null && (d[key + "_dv_ymd"] = dvYMD(iso)); edits[key + "_dv_dmy"] == null && (d[key + "_dv_dmy"] = dvDMY(iso)); edits[key + "_en"] == null && (d[key + "_en"] = enDate(iso)); edits[key + "_hijri"] == null && (d[key + "_hijri"] = hijri(iso)); } }
+      if (DATEF.some(m => m[0] === key)) { const iso = dmy2iso(val); if (iso) { edits[key + "_dv"] == null && (d[key + "_dv"] = dvDate(iso)); edits[key + "_dv_ymd"] == null && (d[key + "_dv_ymd"] = dvYMD(iso)); edits[key + "_dv_dmy"] == null && (d[key + "_dv_dmy"] = dvDMY(iso)); edits[key + "_dv_both"] == null && (d[key + "_dv_both"] = dvBoth(iso)); edits[key + "_en"] == null && (d[key + "_en"] = enDate(iso)); edits[key + "_hijri"] == null && (d[key + "_hijri"] = hijri(iso)); } }
     });
     return d;
   }

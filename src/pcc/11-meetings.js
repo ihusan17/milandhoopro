@@ -47,7 +47,7 @@ function meetingData(m) {
   d[m.kind + "_meeting_no"] = m.ref || ""; d[m.kind + "_meeting_date"] = Xt(m.date); d[m.kind + "_meeting_date_dv"] = dvDate(m.date); d[m.kind + "_meeting_date_en"] = enDate(m.date); d[m.kind + "_meeting_date_hijri"] = hijri(m.date);
   d[m.kind + "_meeting_time"] = m.time || "";
   d.projects = P.map((p, i) => { const x = dataFor(p); return { ...scalars(x), no: i + 1, bidders: x.bidders, bid_members: x.bid_members, eval_members: x.eval_members }; });
-  d.meeting_date_dv_ymd = dvYMD(m.date); d[m.kind + "_meeting_date_dv_ymd"] = dvYMD(m.date); d.meeting_date_dv_dmy = dvDMY(m.date); d[m.kind + "_meeting_date_dv_dmy"] = dvDMY(m.date);
+  d.meeting_date_dv_ymd = dvYMD(m.date); d[m.kind + "_meeting_date_dv_ymd"] = dvYMD(m.date); d.meeting_date_dv_dmy = dvDMY(m.date); d[m.kind + "_meeting_date_dv_dmy"] = dvDMY(m.date); d[m.kind + "_meeting_date_dv_both"] = dvBoth(m.date);
   return addYMD(d);
 }
 

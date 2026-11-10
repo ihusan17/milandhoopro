@@ -89,6 +89,7 @@ Two more Dhivehi date styles work on any date placeholder; the day always has tw
 |---|---|---|
 | `_dv_ymd` | `{bid_meeting_date_dv_ymd}` | `2026 ނޮވެމްބަރ 09` |
 | `_dv_dmy` | `{bid_meeting_date_dv_dmy}` | `09 ނޮވެމްބަރ 2026` |
+| `_dv_both` | `{bid_meeting_date_dv_both}` | `09 ނޮވެމްބަރ 2026 / 2026 ނޮވެމްބަރ 09` (read from the right) |
 
 The times are `{evaluation_time}`, `{bid_meeting_time}` and `{eval_meeting_time}`. Enter them on the project (Edit), or record them with a committee meeting.
 

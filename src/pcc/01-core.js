@@ -208,11 +208,15 @@ const ENMON = ["January", "February", "March", "April", "May", "June", "July", "
 const HJMON = ["މުޙައްރަމް", "ޞަފަރު", "ރަބީޢުލްއައްވަލް", "ރަބީޢުލްއާޚިރު", "ޖުމާދަލްއޫލާ", "ޖުމާދަލްއާޚިރާ", "ރަޖަބު", "ޝަޢުބާން", "ރަމަޟާން", "ޝައްވާލް", "ޛުލްޤަޢިދާ", "ޛުލްޙިއްޖާ"];
 // Year–month–day style used in council letters, e.g. "2026 ނޮވެމްބަރ 09" (placeholder suffix _dv_ymd).
 const DVMON2 = ["ޖަނަވަރީ", "ފެބްރުއަރީ", "މާރިޗް", "އޭޕްރިލް", "މެއި", "ޖޫން", "ޖުލައި", "އޯގަސްޓް", "ސެޕްޓެމްބަރ", "އޮކްޓޫބަރ", "ނޮވެމްބަރ", "ޑިސެމްބަރ"];
-const dvYMD = d => (isISO(d) ? `${d.slice(0, 4)} ${DVMON2[Number(d.slice(5, 7)) - 1]} ${d.slice(8, 10)}` : "");
+// Wrapped in right-to-left embedding marks so it reads 2026 … 09 from the right even in an English (left-to-right) line.
+const RTLW = t => "\u202B" + t + "\u202C";
+const dvYMD = d => (isISO(d) ? RTLW(`${d.slice(0, 4)} ${DVMON2[Number(d.slice(5, 7)) - 1]} ${d.slice(8, 10)}`) : "");
 // Day–month–year in the same spelling, e.g. "09 ނޮވެމްބަރ 2026" (placeholder suffix _dv_dmy).
-const dvDMY = d => (isISO(d) ? `${d.slice(8, 10)} ${DVMON2[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}` : "");
-// Adds X_dv_ymd and X_dv_dmy for every dd.mm.yyyy date value X in a data object (keeps values already set).
-function addYMD(d) { Object.keys(d).forEach(k => { const v = d[k]; const m = typeof v === "string" && /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(v); if (!m) return; const iso = `${m[3]}-${m[2]}-${m[1]}`; if (d[k + "_dv_ymd"] === undefined) d[k + "_dv_ymd"] = dvYMD(iso); if (d[k + "_dv_dmy"] === undefined) d[k + "_dv_dmy"] = dvDMY(iso); }); return d; }
+const dvDMY = d => (isISO(d) ? RTLW(`${d.slice(8, 10)} ${DVMON2[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}`) : "");
+// Both on one line as in council letters: "09 ނޮވެމްބަރ 2026 / 2026 ނޮވެމްބަރ 09" read from the right (suffix _dv_both).
+const dvBoth = d => (isISO(d) ? RTLW(dvDMY(d) + " / " + dvYMD(d)) : "");
+// Adds X_dv_ymd, X_dv_dmy and X_dv_both for every dd.mm.yyyy date value X in a data object (keeps values already set).
+function addYMD(d) { Object.keys(d).forEach(k => { const v = d[k]; const m = typeof v === "string" && /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(v); if (!m) return; const iso = `${m[3]}-${m[2]}-${m[1]}`; if (d[k + "_dv_ymd"] === undefined) d[k + "_dv_ymd"] = dvYMD(iso); if (d[k + "_dv_dmy"] === undefined) d[k + "_dv_dmy"] = dvDMY(iso); if (d[k + "_dv_both"] === undefined) d[k + "_dv_both"] = dvBoth(iso); }); return d; }
 const dvDate = d => (isISO(d) ? `${Number(d.slice(8))} ${DVMON[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}` : "");
 const enDate = d => (isISO(d) ? `${Number(d.slice(8))} ${ENMON[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}` : "");
 function hijri(d, lang = "dv") {
