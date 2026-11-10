@@ -52,9 +52,29 @@ function leaveCells(u8, byName = []) {
       let k = 0; return tr.replace(/<w:tc\b[\s\S]*?<\/w:tc>/g, () => cells[k++]);
     });
     if (!/⟦[LG]⟧/.test(x)) return;
-    const y = x.replace(/<w:tr[ >][\s\S]*?<\/w:tr>/g, tr => {
+    // Columns under a grouped header (a header cell spanning 2+ columns, e.g. "signature | time").
+    const groupsAt = off => {
+      const t0 = x.lastIndexOf("<w:tbl>", off); if (t0 < 0) return [];
+      const G = [];
+      for (const r of x.slice(t0, off).matchAll(/<w:tr[ >][\s\S]*?<\/w:tr>/g)) {
+        if (/⟦[LG]⟧/.test(r[0])) break;
+        let col = 0;
+        for (const c of r[0].matchAll(/<w:tc\b[\s\S]*?<\/w:tc>/g)) { const sp = span(c[0]); sp > 1 && plain(c[0]) && G.push([col, col + sp]); col += sp; }
+      }
+      return G;
+    };
+    const y = x.replace(/<w:tr[ >][\s\S]*?<\/w:tr>/g, (tr, off) => {
       if (!/⟦[LG]⟧/.test(tr)) return tr;
-      const cells = [...tr.matchAll(/<w:tc\b[\s\S]*?<\/w:tc>/g)]; if (!cells.length) return tr;
+      let cells = [...tr.matchAll(/<w:tc\b[\s\S]*?<\/w:tc>/g)]; if (!cells.length) return tr;
+      // A leave cell inside a group of columns merges from the group's first empty cell, and over the
+      // empty grouped cells right before that group too (all signature/time boxes, not only the last pair).
+      const li = cells.findIndex(c => c[0].includes("⟦L⟧")), G = groupsAt(off);
+      if (li > 0 && G.length) {
+        const colOf = i => cells.slice(0, i).reduce((a, c) => a + span(c[0]), 0), grouped = i => G.some(([a, b]) => colOf(i) >= a && colOf(i) < b);
+        let j = li;
+        while (j > 0 && grouped(j - 1) && grouped(j) && !plain(cells[j - 1][0]) && !/⟦G⟧/.test(cells[j - 1][0])) j--;
+        if (j < li) { const L = cells[li][0], A = cells[j][0]; cells = cells.map((c, i) => i === j ? Object.assign([L], { index: c.index }) : i === li ? Object.assign([A], { index: c.index }) : c); }
+      }
       const head = tr.slice(0, cells[0].index), tail = tr.slice(cells[cells.length - 1].index + cells[cells.length - 1][0].length);
       let out = [], merged = false;
       cells.forEach(({ 0: tc }, i) => {

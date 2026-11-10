@@ -228,3 +228,5 @@ After editing, run `node tools/build-pcc.mjs`. It replaces the block between `<!
 - **Check the Placeholders column** on Templates. A number means the file is read; open **Placeholders** and map anything shown as *Not recognised*. "0 — nothing fills" means no `{…}` was found.
 - **Upload new version on the template itself** (Projects › Templates). A file uploaded as a signed copy in a project's Documents is stored as it is and is never filled.
 - **Generate again from the project** (Bid / Evaluation tab › Generate pack). Documents made earlier keep their old values; the template Preview uses a sample project, not yours.
+- **Fonts and English text in filled values.** Values take the font your document's Dhivehi text uses (e.g. Faruma), never the MV Boli fallback, and English/number values such as `BC/284/2026-01` or `IUL(2026)14` are written left-to-right so they don't appear reversed.
+- **Leave boxes.** Put `{bid_mN_leave}` in any of the signature/time boxes: the grey leave cell covers all the empty boxes under the grouped headers (e.g. both "ސޮއި | ގަޑި" pairs) through to the end of the row.

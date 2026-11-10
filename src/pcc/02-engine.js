@@ -104,7 +104,42 @@ function fillDocx(u8, data, rules) {
     doc.render(data);
   } catch (e) { throw docxError(e); }
   const onLeave = [...(data.bid_members || []), ...(data.eval_members || [])].filter(m => m.__leave).map(m => ({ names: [m.member_name_dv, m.member_name].filter(s => s && s.length > 3), text: m.leave_text }));
-  return leaveCells(doc.getZip().generate({ type: "uint8array", compression: "DEFLATE" }), onLeave);
+  return fixRuns(leaveCells(doc.getZip().generate({ type: "uint8array", compression: "DEFLATE" }), onLeave));
+}
+// Filled values take the formatting of the run the placeholder was typed in. Placeholders are typed
+// in English, so that run often has no Thaana font (Word then shows Thaana in MV Boli) and may be
+// marked right-to-left (Word then shows BC/284/2026-01 back to front). Thaana runs get the font the
+// document's own Thaana text uses; runs with English letters and no Thaana lose the RTL mark.
+const THRE = /[\u0780-\u07BF]/;
+function fixRuns(u8) {
+  const zip = new (LIB().PizZip)(u8); let changed = false;
+  const parts = docxParts(zip), runs = n => zip.file(n).asText().match(/<w:r[ >](?:(?!<\/w:r>)[\s\S])*?<\/w:r>/g) || [];
+  const rtext = r => decodeEnt((r.match(/<w:t(?:\s[^>]*)?>[^<]*<\/w:t>/g) || []).map(t => t.replace(/<[^>]+>/g, "")).join(""));
+  const count = {};
+  parts.forEach(n => runs(n).forEach(r => { const f = (/<w:rFonts [^>]*w:cs="([^"]+)"/.exec(r) || [])[1]; f && THRE.test(rtext(r)) && !/MV Boli/i.test(f) && (count[f] = (count[f] || 0) + rtext(r).length); }));
+  const font = Object.keys(count).sort((a, b) => count[b] - count[a])[0] || "Faruma";
+  parts.forEach(n => {
+    const x = zip.file(n).asText();
+    const y = x.replace(/<w:r((?:\s[^>]*)?)>((?:(?!<\/w:r>)[\s\S])*?)<\/w:r>/g, (r, sp, body) => {
+      const t = rtext(r); if (!t.trim()) return r;
+      let b = body;
+      if (THRE.test(t)) {
+        const cs = (/<w:rFonts [^>]*w:cs="([^"]+)"/.exec(b) || [])[1];
+        if (cs && !/MV Boli/i.test(cs)) return r;
+        if (!/<w:rPr>/.test(b)) b = "<w:rPr></w:rPr>" + b;
+        b = /<w:rFonts [^>]*\/>/.test(b) ? b.replace(/<w:rFonts ([^>]*)\/>/, (m, a) => "<w:rFonts " + a.replace(/\s*w:cs="[^"]*"/, "") + ` w:cs="${font}"/>`) : b.replace("<w:rPr>", `<w:rPr><w:rFonts w:ascii="${font}" w:hAnsi="${font}" w:cs="${font}"/>`);
+        b = b.replace(/<w:rFonts ([^>]*)\/>/, (m, a) => /w:ascii=/.test(a) ? m : `<w:rFonts w:ascii="${font}" w:hAnsi="${font}" ${a}/>`);
+        /<w:rtl\/>/.test(b) || (b = b.replace("</w:rPr>", "<w:rtl/></w:rPr>"));
+      } else if (/[A-Za-z]/.test(t) && !/[\u0590-\u08FF]/.test(t)) {
+        b = b.replace(/<w:rtl\/>/g, "");
+        /<w:rFonts /.test(b) || (b = /<w:rPr>/.test(b) ? b.replace("<w:rPr>", `<w:rPr><w:rFonts w:ascii="${font}" w:hAnsi="${font}"/>`) : `<w:rPr><w:rFonts w:ascii="${font}" w:hAnsi="${font}"/></w:rPr>` + b);
+      }
+      if (b === body) return r;
+      changed = true; return "<w:r" + sp + ">" + b + "</w:r>";
+    });
+    y !== x && zip.file(n, y);
+  });
+  return changed ? zip.generate({ type: "uint8array", compression: "DEFLATE" }) : u8;
 }
 
 // ----- Excel helpers -----

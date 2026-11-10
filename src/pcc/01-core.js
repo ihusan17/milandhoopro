@@ -226,7 +226,7 @@ function hijri(d, lang = "dv") {
     const p = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn", { day: "numeric", month: "numeric", year: "numeric", timeZone: "UTC" }).formatToParts(new Date(d + "T12:00:00Z"));
     const g = t => Number((p.find(x => x.type === t) || {}).value);
     const yy = String(g("year")).replace(/\D/g, "");
-    return lang === "dv" ? `${g("day")} ${HJMON[g("month") - 1]} ${yy} ހ` : `${g("day")}/${g("month")}/${yy} AH`;
+    return lang === "dv" ? `${g("day")} ${HJMON[g("month") - 1]} ${yy}ހ` : `${g("day")}/${g("month")}/${yy} AH`;
   } catch { return ""; }
 }
 const DV1 = ["", "އެކެއް", "ދޭއް", "ތިނެއް", "ހަތަރެއް", "ފަހެއް", "ހައެއް", "ހަތެއް", "އަށެއް", "ނުވައެއް", "ދިހައެއް", "އެގާރަ", "ބާރަ", "ތޭރަ", "ސާދަ", "ފަނަރަ", "ސޯޅަ", "ސަތާރަ", "އަށާރަ", "ނަވާރަ"];
