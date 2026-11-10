@@ -246,3 +246,9 @@ The original file is not changed; the rules are applied every time a document is
 - `{bid_meeting_time}` (scheduled), `{bid_meeting_start_time}`, `{bid_meeting_end_time}`: typed on the project (Edit › Committee meetings › Meeting started at / ended at).
 - `{bid_meeting_date_hijri}`, `{bid_chair_short_dv}` (chair without އަލްފާޟިލް).
 - Table loops: `{#bid_attendance}{present_name_dv}` | `{absent_name_dv}{/bid_attendance}` puts present and on-leave members side by side; `{#bid_present}{no}` | `{member_short_dv}` | `{/bid_present}` lists the members who attended, numbered 1, 2, 3…; `{#bid_absent}` lists those on leave. All exist for `eval_` too.
+
+## Award sheet fields
+
+- `{estimated_cost}` approved budget, `{award_amount}` awarded price, `{award_duration}` days, `{award_bidder}` winning bidder (Bidders tab, marked awarded).
+- `{budget_after_award}` = estimated cost − awarded amount; `{budget_extra_needed}` = awarded amount above the estimated cost, or "-" when within budget.
+- Any date + `_dash` gives 10-11-2026 (e.g. `{bid_meeting_date_dash}`).
