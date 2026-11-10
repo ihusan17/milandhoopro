@@ -18,7 +18,7 @@ const block = [
   "<!--PCC:BEGIN-->",
   `<style id="pcc-css">${css}</style>`,
   `<script id="pcc-libs">${noClose(libs)}</script>`,
-  `<script id="pcc-demo">window.__PCC_DEMO=${JSON.stringify(demo)};window.__PCC_DEMO_META=${noClose(JSON.stringify(meta))};window.__PCC_PR09=${noClose(fs.readFileSync(path.join(src, "data/pr09-2026.json"), "utf8").replace(/\s*\n\s*/g, ""))};</script>`,
+  `<script id="pcc-demo">window.__PCC_BUILD=${JSON.stringify(new Date(Date.now() + 5 * 3600e3).toISOString().slice(0, 16).replace("T", " "))};window.__PCC_DEMO=${JSON.stringify(demo)};window.__PCC_DEMO_META=${noClose(JSON.stringify(meta))};window.__PCC_PR09=${noClose(fs.readFileSync(path.join(src, "data/pr09-2026.json"), "utf8").replace(/\s*\n\s*/g, ""))};</script>`,
   `<script id="pcc-app">(()=>{"use strict";\n${noClose(js)}\n})();</script>`,
   "<!--PCC:END-->",
 ].join("\n");
