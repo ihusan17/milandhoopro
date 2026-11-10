@@ -1,0 +1,233 @@
+[
+ {
+  "code": "BC-INV",
+  "file": "BC-INV.docx",
+  "type": "docx",
+  "group": "Bid Committee",
+  "nameEn": "Invitation to Bid Committee member",
+  "nameDv": "ބިޑް ކޮމިޓީ ބައްދަލުވުމަށް ދައުވަތު",
+  "order": 1,
+  "perMember": "bid",
+  "inPack": true
+ },
+ {
+  "code": "BC-YAU",
+  "file": "BC-YAU.docx",
+  "type": "docx",
+  "group": "Bid Committee",
+  "nameEn": "Yaumiyya (minutes) format",
+  "nameDv": "ބިޑް ކޮމިޓީ ބައްދަލުވުމުގެ ޔައުމިއްޔާ",
+  "order": 2,
+  "perMember": "",
+  "inPack": true
+ },
+ {
+  "code": "PR-05",
+  "file": "PR-05.docx",
+  "type": "docx",
+  "group": "Bid Committee",
+  "nameEn": "Award sheet / decision",
+  "nameDv": "ބީލަން ހަވާލުކުރުމުގެ ނިންމުން",
+  "order": 3,
+  "perMember": "",
+  "inPack": true
+ },
+ {
+  "code": "PR-03",
+  "file": "PR-03.docx",
+  "type": "docx",
+  "group": "Evaluation Committee",
+  "nameEn": "Project Summary Sheet 01",
+  "nameDv": "މަޝްރޫޢުގެ ޚުލާޞާ ޝީޓް 01",
+  "order": 1,
+  "perMember": "",
+  "inPack": true
+ },
+ {
+  "code": "PR-02",
+  "file": "PR-02.docx",
+  "type": "docx",
+  "group": "Evaluation Committee",
+  "nameEn": "Declaration of Evaluation Committee member",
+  "nameDv": "ބީލަން ވަޒަންކުރާ ކޮމިޓީގެ މެމްބަރުގެ އިޢުލާން",
+  "order": 2,
+  "perMember": "eval",
+  "inPack": true
+ },
+ {
+  "code": "EV-RPT",
+  "file": "EV-RPT.docx",
+  "type": "docx",
+  "group": "Evaluation Committee",
+  "nameEn": "Bid Evaluation Report",
+  "nameDv": "ބީލަން ވަޒަންކުރުމުގެ ރިޕޯޓް",
+  "order": 3,
+  "perMember": "",
+  "inPack": true
+ },
+ {
+  "code": "LTR-GEN",
+  "file": "LTR-GEN.docx",
+  "type": "docx",
+  "group": "Letters",
+  "nameEn": "General letter",
+  "nameDv": "ސިޓީ",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "LTR-CON",
+  "file": "LTR-CON.docx",
+  "type": "docx",
+  "group": "Letters",
+  "nameEn": "Letter to contractor",
+  "nameDv": "ކޮންޓްރެކްޓަރަށް ފޮނުވާ ސިޓީ",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "LTR-EOT",
+  "file": "LTR-EOT.docx",
+  "type": "docx",
+  "group": "Letters",
+  "nameEn": "Extension of time letter",
+  "nameDv": "މުއްދަތު އިތުރުކުރުމުގެ ސިޓީ",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "LTR-WARN",
+  "file": "LTR-WARN.docx",
+  "type": "docx",
+  "group": "Letters",
+  "nameEn": "Warning letter",
+  "nameDv": "އިންޒާރު ސިޓީ",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "LTR-HO",
+  "file": "LTR-HO.docx",
+  "type": "docx",
+  "group": "Letters",
+  "nameEn": "Site handover letter",
+  "nameDv": "ސައިޓް ހަވާލުކުރުމުގެ ސިޓީ",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "WCL",
+  "file": "WCL.docx",
+  "type": "docx",
+  "group": "Letters",
+  "nameEn": "Work Completion Letter",
+  "nameDv": "މަސައްކަތް ނިމުނުކަމުގެ ސިޓީ",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "MEMO",
+  "file": "MEMO.docx",
+  "type": "docx",
+  "group": "Memos",
+  "nameEn": "Internal memo",
+  "nameDv": "އިންޓަރނަލް މެމޯ",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "PAY-MEMO",
+  "file": "PAY-MEMO.docx",
+  "type": "docx",
+  "group": "Payments",
+  "nameEn": "Payment memo",
+  "nameDv": "ފައިސާ ދެއްކުމުގެ މެމޯ",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "WPR",
+  "file": "WPR.docx",
+  "type": "docx",
+  "group": "Reports",
+  "nameEn": "Work Progress Report",
+  "nameDv": "މަސައްކަތުގެ ޕްރޮގްރެސް ރިޕޯޓް",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "WCR",
+  "file": "WCR.docx",
+  "type": "docx",
+  "group": "Reports",
+  "nameEn": "Work Completion Report",
+  "nameDv": "މަސައްކަތް ނިމުނުކަމުގެ ރިޕޯޓް",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "CHK",
+  "file": "CHK.docx",
+  "type": "docx",
+  "group": "Reports",
+  "nameEn": "Project checklist",
+  "nameDv": "ޗެކްލިސްޓް",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "RPR",
+  "file": "RPR.docx",
+  "type": "docx",
+  "group": "Reports",
+  "nameEn": "Retention Period Report",
+  "nameDv": "ރިޓެންޝަން މުއްދަތުގެ ރިޕޯޓް",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "SAMPLE",
+  "file": "SAMPLE.docx",
+  "type": "docx",
+  "group": "Other",
+  "nameEn": "Placeholder sample (all fields)",
+  "nameDv": "",
+  "order": 0,
+  "perMember": "",
+  "inPack": false
+ },
+ {
+  "code": "PR-12",
+  "file": "PR-12.xlsx",
+  "type": "xlsx",
+  "group": "Bid Committee",
+  "nameEn": "Award Data Sheet",
+  "nameDv": "އެވޯޑް ޑޭޓާ ޝީޓް",
+  "order": 4,
+  "perMember": "",
+  "inPack": true
+ },
+ {
+  "code": "EV-FORM",
+  "file": "EV-FORM.xlsx",
+  "type": "xlsx",
+  "group": "Evaluation Committee",
+  "nameEn": "Bid Evaluation Form",
+  "nameDv": "ބީލަން ވަޒަންކުރާ ފޯމު",
+  "order": 4,
+  "perMember": "",
+  "inPack": true
+ }
+]

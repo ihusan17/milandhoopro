@@ -123,3 +123,11 @@ buttons in the program. The Firestore rules decide who may open the data at all.
   requests to authorise and overdue projects.
 - Light or dark mode: use the moon or sun button, or the account menu. Each
   device remembers its own choice.
+
+## Projects command centre
+
+Projects now include document templates, committee packs, letters, payments and
+files. See [docs/PROJECTS.md](docs/PROJECTS.md). Files (templates, generated
+documents, photos and signed scans) are stored in the same `office` collection as
+`f_<id>_<n>` documents, so the published rules above already cover them; no
+change is needed in Firebase.

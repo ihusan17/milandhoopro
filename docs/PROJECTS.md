@@ -1,0 +1,132 @@
+# Projects command centre
+
+Everything about each project in one place: the procurement plan, bids and committees, work logs, progress, checklists, completion, retention, letters, payments and files. It also generates the council's documents from its own Word and Excel templates.
+
+## Where things are
+
+**Projects** in the side bar opens these tabs:
+
+| Tab | What it is for |
+|---|---|
+| Overview | KPI cards, the "Handed over to contractor" strip with live countdowns, and every project as a table, cards or a timeline |
+| Goods / Services / Works | The same overview, filtered by type |
+| Procurement plan | The yearly plan, with Excel template download, export and upload |
+| Work Logs | Work log entries for all projects |
+| Documents | Every generated or uploaded file, with filters |
+| Templates *(administrators)* | Master Word and Excel templates, placeholders, reference-number patterns |
+
+Open a project to see its 13 tabs: Summary, Procurement plan, Bid Documents, Evaluation, Work Logs, Progress Reports, Checklist, Completion, Retention, Letters & Memos, Payments, Files and Activity.
+
+### Countdowns
+
+Days left = due date − today. The due date is the handover date plus the duration, plus any extensions of time.
+
+| Colour | Meaning |
+|---|---|
+| Green | more than 30 days |
+| Amber | 8 to 30 days |
+| Red | 0 to 7 days (shows hours in the last week) |
+| Dark red | "Overdue by X days" |
+| Grey | completed |
+
+The retention end date counts down the same way.
+
+## Putting in your own templates (no code changes)
+
+The built-in templates are **demo** stand-ins marked *Demo*. To replace one:
+
+1. Open your original Word or Excel file. Type placeholders where values should go, for example `{project_name_dv}`, `{contract_value}`, `{contract_value_words_dv}` or `{handover_date_dv}`. The **Placeholder cheat-sheet** (Templates tab) lists every field with an example. Click a placeholder to copy it.
+2. For a table row that repeats (bidders, committee members, payments), put `{#bidders}` in the first cell of the row and `{/bidders}` in the last cell. Use the loop fields in between, for example `{bidder_name}` and `{bid_amount}`.
+3. Save the file as .docx or .xlsx. Then open **Projects › Templates**, find the template and choose **Upload new version**. Use **Add template** for a new one.
+4. The program lists the placeholders it found. Use **Placeholders** to point any unknown ones at a program field, or have the program ask for them when you generate.
+
+Everything outside the placeholders stays exactly as in your file: letterhead, logo, fonts, RTL paragraphs, table borders, margins and signature blocks. In Excel, formulas stay live, and loop rows fill the formatted rows below them. New rows are inserted only when the formatted rows run out. Instead of placeholders, an Excel template can also use a **cell map**, for example `PR-12!C5 = project_name_dv`.
+
+Earlier documents keep a link to the template version they were made with. **Versions** lets you download any old version or make it current again.
+
+## Committee packs
+
+On **Bid Documents** or **Evaluation**:
+
+1. Add the committee members. Pick them from Staff and add their Dhivehi names and designations.
+2. Record the bids under **Evaluation**, then **Award** the winning bid. This sets the contractor and the contract value.
+3. Press **Generate Bid Committee pack** or **Generate Evaluation Committee pack**.
+   - The panel shows every value the documents need, filled in from the project.
+   - Change any value for this pack only, or tick *Save changed values back to the project*.
+   - Untick a document to leave it out, or use **+ Add document** to include any other template.
+   - Empty fields are listed for each document before anything is generated.
+4. The files download as `{ProjectRef}_{BidCommittee|Evaluation}_{date}.zip`. Each file is also saved under the project's **Files** tab, and you can preview it in the browser.
+
+Documents marked "one per member" (BC-INV and PR-02) make one file for each committee member.
+
+Generating again creates v2, v3 and so on; nothing is overwritten. After signing, use **Upload signed** to attach the scanned PDF. The document then shows as *Signed*.
+
+## Letters, memos and reference numbers
+
+On **Letters & Memos**, choose a template and fill in the recipient, subject and text (Dhivehi or English). Then press **Generate**. The reference number is taken automatically from the pattern under **Templates › Reference numbers**, for example `(IUL)351-PRO/{YYYY}/{###}`. Numbers restart each year and are never reused.
+
+The extension-of-time letter can also record the extension, and the due date then moves.
+
+## Payments
+
+Add the payment schedule: advance, interim, final and retention release. **Payment memo** generates the memo with the payment amount in Dhivehi and English words, earlier payments, retention deducted and the balance. **Mark paid** updates the totals: paid, balance, retention held and retention released.
+
+## Procurement plan in Excel
+
+- **Download plan template (.xlsx)** gives a workbook with:
+  - a locked header row,
+  - drop-down lists for type, quarter, method, funding and status,
+  - a hidden *Plan Item ID* column,
+  - an Instructions sheet.
+- **Export plan** writes the year's plan into the same layout. If an administrator uploads the council's own plan workbook as template code `PLAN`, with a `{#items}` row, that layout is used for both instead.
+- **Upload / update from Excel** shows new rows, changed cells (old → new), rows missing from the file, and rows with errors. You then choose one of these modes:
+
+  | Mode | What it does |
+  |---|---|
+  | Add new only | Adds new rows only |
+  | Add + update | Adds new rows and applies the changes |
+  | Replace whole year | Also removes missing rows; items linked to a project are kept |
+
+  Rows are matched by Plan Item ID. Rows without an ID are matched by name and quarter, and you confirm each of those.
+- **Import history** keeps every import and can roll back to the state before any of them.
+- **Convert to project** on a plan item opens a new project form pre-filled from the item.
+
+## Dhivehi
+
+- Dhivehi fields are right-to-left and use the Faruma font.
+- The **ދިވެހި / ABC** button switches the phonetic Thaana keyboard on or off. With it on, typing `h` gives ހ, `a` gives ަ, and so on. The program remembers the choice on each device.
+- Amounts in words are available in Dhivehi and English, with laari. Dates are available in Dhivehi, in English, and as a Hijri date.
+- Check the Dhivehi amount words on important documents. Any value can be corrected in the pack panel before generating.
+
+## Sample data
+
+On the Overview, an administrator can press **Load sample projects**. This adds:
+- 3 ongoing works projects: one with 45 days left, one with 6 days left, and one overdue,
+- 1 project in retention,
+- 5 plan items, with bidders and committees.
+
+**Remove sample data** deletes all of it and leaves your own data alone.
+
+## Where files are kept
+
+Templates, generated documents, photos and signed scans are stored:
+- in the browser (IndexedDB) on the device that made them,
+- and in the Firestore `office` collection as documents named `f_<id>_<n>`, in pieces of 600 KB.
+
+The Firestore rules already cover this collection, so nothing needs to change in Firebase. Large files count against the Firestore storage quota (1 GB on the free plan). Uploads are limited to 15 MB, and templates to 8 MB.
+
+## Not included yet
+
+- **E-mail reminders.** Reminders show in the bell and on the dashboard only. E-mail needs a server-side function.
+- **PDF output.** Open the .docx in Word and use *Save as PDF*.
+
+## For developers
+
+The module source is readable and kept outside the minified bundle:
+
+- `src/pcc/01-core.js` … `10-init.js`: the module, concatenated in name order into one IIFE.
+- `src/pcc/pcc.css`: the module's styles.
+- `src/pcc/doclibs.min.js`: docxtemplater, pizzip, jszip and docx-preview. Rebuild it with `tools/build-doclibs.sh`.
+- `src/pcc/demo/`: the demo templates. Rebuild them with `python3 tools/make_demo_templates.py` (needs python-docx and openpyxl).
+
+After editing, run `node tools/build-pcc.mjs`. It replaces the block between `<!--PCC:BEGIN-->` and `<!--PCC:END-->` in `index.html`. The app reaches the portal's helpers through `window.__app.K`. The bell, dashboard and search call into `window.__pcc`.
