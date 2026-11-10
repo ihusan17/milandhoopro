@@ -213,3 +213,9 @@ input.dv,textarea.dv{font-size:16px;text-align:right}
 .pcc-leave{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pcc-mmem{display:flex;flex-direction:column;gap:4px;margin:6px 0}
 .pcc-mrow2{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;flex-wrap:wrap}
+/* Thaana everywhere in Faruma (embedded in the page): Latin text keeps Public Sans, Thaana falls through to Faruma
+   instead of the system's MV Boli. Elements marked lang=dv use Faruma outright. */
+:root,:root[data-theme]{--serif:'Public Sans',system-ui,-apple-system,'Segoe UI',Roboto,'Faruma',sans-serif}
+body,input,textarea,select,button{font-family:'Public Sans',system-ui,-apple-system,'Segoe UI',Roboto,'Faruma',sans-serif}
+[lang=dv],[lang=dv] *,.dv,.pcc-banner h1[lang=dv]{font-family:'Faruma','MV Typewriter','Noto Sans Thaana',sans-serif!important}
+.pcc-banner h1[lang=dv]{font-weight:400;letter-spacing:0}

@@ -62,7 +62,7 @@ function PDETAIL(n, [id, tab = "summary"]) {
   if (!p) { n.append(o("h1", {}, "Projects"), PCNAV(""), o("div", { class: "alert err" }, "Project not found.")); return; }
   const d = daysLeft(p), w = (Z().vendors || []).find(v => v.name === p.vendor);
   n.append(o("div", { class: "pcc-banner" },
-    o("div", { class: "pcc-b-main" }, o("div", { class: "pcc-b-ref" }, p.ref, " · ", p.type, " ", stChip(p.status)), p.nameDv ? o("h1", { dir: "rtl", lang: "dv" }, p.nameDv) : null, o(p.nameDv ? "div" : "h1", { class: p.nameDv ? "pcc-b-en" : "" }, p.nameEn || p.name),
+    o("div", { class: "pcc-b-main" }, o("div", { class: "pcc-b-ref" }, p.ref, " · ", p.type, " ", stChip(p.status)), p.nameDv ? o("h1", { dir: "rtl", lang: "dv" }, p.nameDv) : null, (() => { const en = p.nameEn || (p.name !== p.nameDv ? p.name : ""); return en ? o(p.nameDv ? "div" : "h1", { class: p.nameDv ? "pcc-b-en" : "" }, en) : null; })(),
       o("div", { class: "pcc-b-kv" }, o("span", {}, SV(ICO.users), " ", p.vendor || "No contractor yet"), o("span", {}, "Contract ", o("b", {}, mvr(p.contract))), p.handover ? o("span", {}, "Handover ", o("b", {}, fd(p.handover))) : null, p.due ? o("span", {}, "Due ", o("b", {}, fd(p.due))) : null)),
     o("div", { class: "pcc-b-side" }, o("div", { class: "pcc-badge t-" + cdTone(d, isDone(p)) }, o("b", { "data-due": null }, d == null ? (isDone(p) ? "✓" : "—") : d < 0 ? String(-d) : String(d)), o("span", {}, d == null ? (isDone(p) ? p.status : "No due date") : d < 0 ? "days overdue" : d === 0 ? "due today" : d === 1 ? "day left" : "days left")),
       p.status === "In retention" ? retChip(p) : null,
