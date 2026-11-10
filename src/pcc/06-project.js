@@ -32,15 +32,23 @@ async function PEDIT2(p, type, pre, ref) {
   const lists = [o("datalist", { id: "pcc-units" }, Z().lists.units.map(u => o("option", { value: u.label }))), o("datalist", { id: "pcc-staff" }, staff.map(s => o("option", { value: s.name }, s.designation || ""))), o("datalist", { id: "pcc-vendors" }, K.sa().map(x => o("option", { value: x })))];
   const sec = t => o("h4", { class: "pcc-sec" }, t);
   let out = null;
-  const ok = await Mt(p ? "Edit project " + (p.ref || "") : "New project", [...lists, o("div", { class: "row", style: { justifyContent: "flex-end" } }, kbToggle()),
-    sec("Project"), o("div", { class: "grid2" }, L("Name in English", f.nameEn), L("Name in Dhivehi", f.nameDv), L("Type", f.type), L("Category", f.category), L("Status", f.status), L("Location / island", f.location), L("Unit / section", f.unit), L("Project officer", f.officer), L("Linked plan item", f.plan)),
-    sec("Money"), o("div", { class: "grid2" }, L("Budget line", f.budget), L("Funding source", f.fund), L("Estimated cost (MVR)", f.estimate), L("Contract value (MVR)", f.contract), L("Contractor / supplier", f.vendor)),
-    sec("Procurement"), o("div", { class: "grid2" }, L("PR number", f.prNumber), L("Iulaan number", f.advertNo), L("Iulaan date", f.advertised), L("Bid opening", f.bidOpening), o("div", { class: "grid2" }, L("Evaluation date", f.evaluation), L("Evaluation time", f.evaluationTime)), L("Award", f.award), L("Agreement signed", f.agreement), L("Agreement number", f.agreementNo)),
-    sec("Committee meetings"), o("div", { class: "grid2" }, ...[["bid", "Bid Committee", "meeting"], ["eval", "Evaluation Committee", "evalmeeting"]].flatMap(([k, l, kind]) => [o("div", { class: "pcc-f" }, o("label", {}, l + " meeting no."), o("div", { class: "row", style: { gap: "6px", alignItems: "center" } }, o("div", { class: "grow" }, f[k + "MeetingNo"]), btn("Take next number", () => { if (f[k + "MeetingNo"].value.trim() && !confirm("Replace the number already typed?")) return; f[k + "MeetingNo"].value = refNext(kind, v); K.Qt(); }, "small")), o("div", { class: "muted small" }, "Leave empty to use the latest meeting recorded for this project")), o("div", { class: "grid2" }, L(l + " meeting date", f[k + "MeetingDate"]), L(l + " meeting time", f[k + "MeetingTime"]), L("Meeting started at", f[k + "MeetingStart"]), L("Meeting ended at", f[k + "MeetingEnd"]))])),
-    Object.keys(xf).length ? [sec("Other template fields"), o("p", { class: "muted small" }, "Placeholders in your templates that the program has no field for. Type the value for this project; it fills every template that uses it."), o("div", { class: "grid2" }, Object.keys(xf).map(k => o("div", { class: "pcc-f" }, o("label", {}, (ownOf(k) || {}).label ? (ownOf(k).label + " ") : "", o("code", {}, "{" + k + "}")), xf[k], o("div", { class: "muted small" }, xtags[k].length ? "In " + xtags[k].join(", ") : "Not in a template yet"))))] : null,
-    sec("Contract period"), o("div", { class: "grid2" }, L("Site handover", f.handover), L("Duration (days)", f.duration), L("Delay penalty per day (MVR)", f.penalty), o("div", { class: "pcc-f" }, o("label", {}, "Due date"), f.due, hint), L("Actual completion", f.done), L("Physical progress (%)", f.progress)),
-    sec("Retention"), o("div", { class: "grid2" }, L("Retention (%)", f.retentionPct), L("Retention period (days)", f.retentionDays)),
-    sec("Scope"), L("Scope in Dhivehi", f.descDv), L("Scope in English", f.desc), L("Notes", f.notes)],
+  // Sections with field widths on a 12-column grid (3 = quarter, 4 = third, 6 = half, 12 = full).
+  const F = (label, el, w = 4, hint) => ({ label, el, w, hint });
+  const nextBtn = (k, kind) => btn("Take next number", () => { if (f[k + "MeetingNo"].value.trim() && !confirm("Replace the number already typed?")) return; f[k + "MeetingNo"].value = refNext(kind, v); K.Qt(); }, "small");
+  const withBtn = (el, b) => o("div", { class: "pcc-pe-inbtn" }, el, b);
+  const meet = (k, l, kind) => [{ sub: l }, F("Meeting number", withBtn(f[k + "MeetingNo"], nextBtn(k, kind)), 12, "Empty: the latest meeting recorded for this project"), F("Date", f[k + "MeetingDate"], 3), F("Time", f[k + "MeetingTime"], 3), F("Started at", f[k + "MeetingStart"], 3), F("Ended at", f[k + "MeetingEnd"], 3)];
+  const secs = [
+    { id: "project", t: "Project", ic: "M3 7l9-4 9 4-9 4-9-4zm0 5l9 4 9-4M3 17l9 4 9-4", fields: [F("Name in English", f.nameEn, 6), F("Name in Dhivehi", f.nameDv, 6), F("Type", f.type), F("Category", f.category), F("Status", f.status), F("Location / island", f.location), F("Unit / section", f.unit), F("Project officer", f.officer), F("Linked plan item", f.plan, 12)] },
+    { id: "money", t: "Money", ic: "M12 3v18M17 7.5C17 5.6 14.8 5 12 5s-5 1-5 3 2 3 5 3.5 5 1.5 5 3.5-2.2 3-5 3-5-.6-5-2.5", fields: [F("Budget line", f.budget, 6), F("Funding source", f.fund, 6), F("Estimated cost (MVR)", f.estimate), F("Contract value (MVR)", f.contract), F("Contractor / supplier", f.vendor)] },
+    { id: "proc", t: "Procurement", ic: "M9 4h6l1 3H8l1-3zM6 7h12v13H6zM9 12h6M9 16h4", fields: [F("PR number", f.prNumber), F("Iulaan number", f.advertNo), F("Iulaan date", f.advertised), F("Bid opening", f.bidOpening), F("Evaluation date", f.evaluation), F("Evaluation time", f.evaluationTime), F("Award", f.award), F("Agreement signed", f.agreement), F("Agreement number", f.agreementNo)] },
+    { id: "meet", t: "Committee meetings", sh: "Meetings", ic: "M8 11a3 3 0 100-6 3 3 0 000 6zm8 0a3 3 0 100-6 3 3 0 000 6zM2 20c0-3 3-5 6-5s6 2 6 5m0-5c1-.6 2-1 2-1 3 0 6 2 6 5", fields: [...meet("bid", "Bid Committee", "meeting"), ...meet("eval", "Evaluation Committee", "evalmeeting")] },
+    { id: "period", t: "Contract period", sh: "Period", ic: "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4", fields: [F("Site handover", f.handover), F("Duration (days)", f.duration), F("Due date", f.due, 4, hint), F("Actual completion", f.done), F("Physical progress (%)", f.progress), F("Delay penalty per day (MVR)", f.penalty)] },
+    { id: "ret", t: "Retention", ic: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z", fields: [F("Retention (%)", f.retentionPct, 6), F("Retention period (days)", f.retentionDays, 6)] },
+    Object.keys(xf).length ? { id: "own", t: "Other template fields", sh: "Other fields", ic: "M8 4H6v16h2M16 4h2v16h-2", hint: "Placeholders in your templates that the program has no field for. Type the value for this project; it fills every template that uses it.", fields: Object.keys(xf).map(k => F([(ownOf(k) || {}).label || "", o("code", {}, "{" + k + "}")], xf[k], 4, xtags[k].length ? "In " + xtags[k].join(", ") : "Not in a template yet")) } : null,
+    { id: "scope", t: "Scope and notes", sh: "Scope", ic: "M5 4h10l4 4v12H5zM14 4v5h5M8 13h8M8 17h6", fields: [F("Scope in Dhivehi", f.descDv, 12), F("Scope in English", f.desc, 12), F("Notes", f.notes, 12)] }
+  ].filter(Boolean);
+  const style = (Z().ui || {}).peditStyle || "cards";
+  const ok = await Mt(p ? "Edit project " + (p.ref || "") : "New project", [...lists, peditLayout(style, secs)],
   [{ label: "Cancel", value: !1 }, { label: p ? "Save" : "Create project", primary: !0, value: !0, onClick: () => {
     try {
       if (!f.nameEn.value.trim() && !f.nameDv.value.trim()) throw err("Type the project name in English or Dhivehi");
@@ -175,4 +183,30 @@ function docsCard(p, groups, title, codes) {
   const latest = new Map(); L2.forEach(d => { const k = d.code + "|" + (d.key || ""); latest.has(k) || latest.set(k, d); });
   const cur = [...latest.values()], old = L2.filter(d => !cur.includes(d));
   return card(title, docTable(cur.map(d => ({ kind: "gen", d, p })), false), old.length ? o("details", { class: "pcc-old" }, o("summary", {}, `${old.length} older version${old.length === 1 ? "" : "s"}`), docTable(old.map(d => ({ kind: "gen", d, p })), false)) : null);
+}
+
+// ----- Edit-project layouts: "cards", "tabs" or "sheet" -----
+function peditLayout(style, secs) {
+  const icon = d => { const sv = document.createElementNS("http://www.w3.org/2000/svg", "svg"); sv.setAttribute("viewBox", "0 0 24 24"); sv.setAttribute("class", "pcc-pe-ic"); const pa = document.createElementNS("http://www.w3.org/2000/svg", "path"); pa.setAttribute("d", d); sv.append(pa); return sv; };
+  const field = x => x.sub ? o("div", { class: "pcc-pe-sub" }, x.sub) : o("div", { class: "pcc-pe-f w" + x.w }, o("label", {}, x.label), x.el, x.hint ? (typeof x.hint === "string" ? o("div", { class: "pcc-pe-hint" }, x.hint) : o("div", { class: "pcc-pe-hint" }, x.hint)) : null);
+  const filled = s2 => { const els = s2.fields.filter(x => x.el).map(x => x.el.querySelector ? (x.el.matches("input,select,textarea") ? x.el : x.el.querySelector("input,select,textarea")) : null).filter(Boolean); return [els.filter(e => String(e.value || "").trim()).length, els.length]; };
+  const top = o("div", { class: "pcc-pe-top" }, o("span", { class: "muted small" }, "Changes are saved when you press Save."), o("span", { class: "grow" }), kbToggle());
+  if (style === "tabs") {
+    const nav = o("div", { class: "pcc-pe-nav" }), panes = o("div", { class: "pcc-pe-panes" }), btns = [];
+    const show = i => { btns.forEach((b, k) => b.classList.toggle("on", k === i)); [...panes.children].forEach((pn, k) => { pn.hidden = k !== i; }); };
+    secs.forEach((s2, i) => {
+      const cnt = o("span", { class: "pcc-pe-cnt" }), upd = () => { const [a, b] = filled(s2); cnt.textContent = a + "/" + b; cnt.classList.toggle("full", a === b && b > 0); };
+      const b = o("button", { type: "button", class: "pcc-pe-tab", onclick: () => show(i) }, icon(s2.ic), o("span", { class: "grow" }, s2.t), cnt); btns.push(b); nav.append(b);
+      const pane = o("div", { class: "pcc-pe-pane" }, o("h3", { class: "pcc-pe-h" }, icon(s2.ic), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(field)));
+      pane.addEventListener("input", upd); pane.addEventListener("change", upd); panes.append(pane); setTimeout(upd);
+    });
+    show(0);
+    return o("div", { class: "pcc-pe pcc-pe-tabs" }, top, o("div", { class: "pcc-pe-tabwrap" }, nav, panes));
+  }
+  if (style === "sheet") {
+    return o("div", { class: "pcc-pe pcc-pe-sheet" }, top, secs.map((s2, i) => o("section", { class: "pcc-pe-ssec" }, o("div", { class: "pcc-pe-sh" }, o("span", { class: "pcc-pe-num" }, String(i + 1)), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null,
+      o("div", { class: "pcc-pe-rows" }, s2.fields.map(x => x.sub ? o("div", { class: "pcc-pe-sub" }, x.sub) : o("div", { class: "pcc-pe-row" + (x.w === 12 ? " full" : "") }, o("label", {}, x.label), o("div", {}, x.el, x.hint ? o("div", { class: "pcc-pe-hint" }, x.hint) : null)))))));
+  }
+  const jump = o("div", { class: "pcc-pe-jump" }, secs.map(s2 => o("button", { type: "button", class: "pcc-pe-chip", onclick: e => { const t = e.target.closest(".pcc-pe").querySelector("#pe-" + s2.id); t && t.scrollIntoView({ behavior: "smooth", block: "start" }); } }, icon(s2.ic), s2.sh || s2.t)));
+  return o("div", { class: "pcc-pe pcc-pe-cards" }, top, jump, secs.map(s2 => o("section", { class: "pcc-pe-card", id: "pe-" + s2.id }, o("h3", { class: "pcc-pe-h" }, o("span", { class: "pcc-pe-icb" }, icon(s2.ic)), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(field)))));
 }
