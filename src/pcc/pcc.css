@@ -205,3 +205,7 @@ input.dv,textarea.dv{font-size:16px;text-align:right}
 }
 .pcc-mode input,.pcc-chk input,.pcc-ck input,.pcc-pdoc input{width:auto!important;min-height:0!important;height:auto;box-shadow:none;flex:none}
 .pcc-ck input{width:18px!important;height:18px}
+
+.pcc-mlist{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px;margin:6px 0 10px}
+.pcc-mrow{display:grid!important;grid-template-columns:auto auto 1fr auto;gap:10px;padding:6px 4px;border-bottom:1px solid var(--line)}
+.pcc-mrow:last-child{border-bottom:0}

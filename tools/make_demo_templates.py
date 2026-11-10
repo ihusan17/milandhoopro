@@ -177,6 +177,39 @@ committee_signatures(d, "bid_members")
 para(d, "ތާރީޚު: {award_date_dv}", 12)
 save_doc(d, "PR-05", "Bid Committee", "Award sheet / decision", "ބީލަން ހަވާލުކުރުމުގެ ނިންމުން", 3, "", True)
 
+# ---------------- meetings covering several projects ----------------
+def meeting_minutes(code, group, en, dv, title, members):
+    d = new_doc(); demo_note(d)
+    para(d, title, 16, True, align=WD_ALIGN_PARAGRAPH.CENTER, color=TEAL)
+    table(d, [["ބައްދަލުވުމުގެ ނަންބަރު", "{meeting_ref}"], ["ތާރީޚު", "{meeting_date_dv}"], ["ވަގުތު", "{meeting_time}"], ["ތަން", "{meeting_place}"], ["މަޝްރޫޢުތަކުގެ އަދަދު", "{project_count}"]], widths=[5, 12], header=False)
+    para(d, "ޙާޟިރުވި މެމްބަރުން", 13, True)
+    table(d, [["#", "ނަން", "މަޤާމު", "ކޮމިޓީގެ މަޤާމު"], ["{#" + members + "}{no}", "{member_name_dv}", "{member_designation_dv}", "{member_role_dv}{/" + members + "}"]], widths=[1, 6, 6, 4])
+    para(d, "{#projects}", 11)
+    para(d, "{no}. {project_name_dv}", 14, True, color=TEAL)
+    table(d, [["ރެފަރެންސް", "{ref_no}"], ["އިޢުލާން ނަންބަރު", "{advertisement_no}"], ["ބީލަން ހުޅުވި ތާރީޚު", "{bid_opening_date_dv}"], ["ލަފާކުރި އަގު", "{estimated_cost} ރ"]], widths=[5, 12], header=False)
+    table(d, [["ރޭންކް", "ބީލަން ހުށަހެޅި ފަރާތް", "އަގު (ރ)", "މުއްދަތު", "ޖުމްލަ"], ["{#bidders}{rank}", "{bidder_name}", "{bid_amount}", "{duration_offered}", "{total_score}{/bidders}"]], widths=[2, 6, 4, 3, 2])
+    para(d, "ނިންމުން: .......................................................................................................", 12.5)
+    para(d, "{/projects}", 11)
+    para(d, "ސޮއި", 13, True)
+    table(d, [["#", "ނަން", "ސޮއި"], ["{#" + members + "}{no}", "{member_name_dv}", "{/" + members + "}"]], widths=[1, 8, 8])
+    save_doc(d, code, group, en, dv, 10, members.split("_")[0] if False else "", False)
+    META[-1]["meeting"] = True
+
+meeting_minutes("BC-YAU-M", "Bid Committee", "Yaumiyya — meeting for several projects", "ބިޑް ކޮމިޓީ ބައްދަލުވުމުގެ ޔައުމިއްޔާ (އެތައް މަޝްރޫޢެއް)", "ބިޑް ކޮމިޓީ ބައްދަލުވުމުގެ ޔައުމިއްޔާ", "bid_members")
+meeting_minutes("EV-YAU-M", "Evaluation Committee", "Evaluation meeting minutes — several projects", "ވަޒަންކުރާ ކޮމިޓީ ބައްދަލުވުމުގެ ޔައުމިއްޔާ (އެތައް މަޝްރޫޢެއް)", "ބީލަން ވަޒަންކުރާ ކޮމިޓީ ބައްދަލުވުމުގެ ޔައުމިއްޔާ", "eval_members")
+
+d = new_doc(True); demo_note(d)
+ref_block(d, "{meeting_ref}", "{today_dv}")
+para(d, "ޖަނާބު/ އަލްފާޟިލާ {member_name_dv}", 13, True)
+para(d, "{member_designation_dv}", 12)
+para(d, "ބިޑް ކޮމިޓީ ބައްދަލުވުމަށް ދައުވަތު", 15, True, align=WD_ALIGN_PARAGRAPH.CENTER, after=10, color=TEAL)
+para(d, "ތިރީގައިވާ މަޝްރޫޢުތަކުގެ ބީލަމާ ގުޅޭގޮތުން ބިޑް ކޮމިޓީގެ ބައްދަލުވުމެއް {meeting_date_dv} ވަނަ ދުވަހުގެ {meeting_time} ގައި {meeting_place} ގައި ބޭއްވުމަށް ނިންމާފައިވާތީ، މި ބައްދަލުވުމަށް ޙާޟިރުވެވަޑައިގަތުމަށް ދަންނަވަމެވެ.", 13, after=8)
+table(d, [["#", "މަޝްރޫޢު", "ރެފަރެންސް", "އިޢުލާން ނަންބަރު"], ["{#projects}{no}", "{project_name_dv}", "{ref_no}", "{advertisement_no}{/projects}"]], widths=[1, 8, 4, 4])
+para(d, "ކޮމިޓީގައި ތިޔަބޭފުޅާގެ މަޤާމު: {member_role_dv}", 13)
+sign_block(d, "{signatory_name}", "{signatory_designation}")
+save_doc(d, "BC-INV-M", "Bid Committee", "Invitation — meeting for several projects", "ބިޑް ކޮމިޓީ ބައްދަލުވުމަށް ދައުވަތު (އެތައް މަޝްރޫޢެއް)", 11, "bid", False)
+META[-1]["meeting"] = True
+
 # ---------------- Evaluation Committee pack ----------------
 d = new_doc(); demo_note(d)
 para(d, "PR-03", 10, rtl=False, align=WD_ALIGN_PARAGRAPH.LEFT)

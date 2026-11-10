@@ -81,6 +81,20 @@ Documents marked "one per member" (BC-INV and PR-02) make one file for each comm
 
 Generating again creates v2, v3 and so on; nothing is overwritten. After signing, use **Upload signed** to attach the scanned PDF. The document then shows as *Signed*.
 
+### One meeting for several projects
+
+When the Bid Committee or Evaluation Committee decides on two or more projects in one meeting:
+
+1. On a project's **Bid Documents** or **Evaluation** tab, press **New meeting for several projects**.
+2. Choose the date, time and place, tick the projects decided at the meeting, and pick whose committee members attend.
+3. Press **Generate documents**. You get:
+   - **one Yaumiyya** with a section for every project: its name, reference, Iulaan number, bid opening date, estimated cost and bidders table;
+   - **one invitation per member** that lists all the projects.
+
+The meeting gets its own number (pattern under Templates › Reference numbers). The files are saved in every project of the meeting.
+
+Meeting templates repeat a block per project between `{#projects}` and `{/projects}`. Inside the block every project field works, including the `{#bidders}` table. The demo meeting templates are BC-YAU-M, BC-INV-M and EV-YAU-M; replace them with the council's originals the same way as the other templates.
+
 ## Letters, memos and reference numbers
 
 On **Letters & Memos**, choose a template and fill in the recipient, subject and text (Dhivehi or English). Then press **Generate**. The reference number is taken automatically from the pattern under **Templates › Reference numbers**, for example `(IUL)351-PRO/{YYYY}/{###}`. Numbers restart each year and are never reused.

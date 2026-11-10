@@ -33,6 +33,42 @@
   "inPack": true
  },
  {
+  "code": "BC-YAU-M",
+  "file": "BC-YAU-M.docx",
+  "type": "docx",
+  "group": "Bid Committee",
+  "nameEn": "Yaumiyya — meeting for several projects",
+  "nameDv": "ބިޑް ކޮމިޓީ ބައްދަލުވުމުގެ ޔައުމިއްޔާ (އެތައް މަޝްރޫޢެއް)",
+  "order": 10,
+  "perMember": "",
+  "inPack": false,
+  "meeting": true
+ },
+ {
+  "code": "EV-YAU-M",
+  "file": "EV-YAU-M.docx",
+  "type": "docx",
+  "group": "Evaluation Committee",
+  "nameEn": "Evaluation meeting minutes — several projects",
+  "nameDv": "ވަޒަންކުރާ ކޮމިޓީ ބައްދަލުވުމުގެ ޔައުމިއްޔާ (އެތައް މަޝްރޫޢެއް)",
+  "order": 10,
+  "perMember": "",
+  "inPack": false,
+  "meeting": true
+ },
+ {
+  "code": "BC-INV-M",
+  "file": "BC-INV-M.docx",
+  "type": "docx",
+  "group": "Bid Committee",
+  "nameEn": "Invitation — meeting for several projects",
+  "nameDv": "ބިޑް ކޮމިޓީ ބައްދަލުވުމަށް ދައުވަތު (އެތައް މަޝްރޫޢެއް)",
+  "order": 11,
+  "perMember": "bid",
+  "inPack": false,
+  "meeting": true
+ },
+ {
   "code": "PR-03",
   "file": "PR-03.docx",
   "type": "docx",
