@@ -129,10 +129,12 @@ function fixRuns(u8) {
       let b = body;
       if (THRE.test(t)) {
         const cs = (/<w:rFonts [^>]*w:cs="([^"]+)"/.exec(b) || [])[1];
-        if (cs && !/MV Boli/i.test(cs)) return r;
         if (!/<w:rPr>/.test(b)) b = "<w:rPr></w:rPr>" + b;
-        b = /<w:rFonts [^>]*\/>/.test(b) ? b.replace(/<w:rFonts ([^>]*)\/>/, (m, a) => "<w:rFonts " + a.replace(/\s*w:cs="[^"]*"/, "") + ` w:cs="${font}"/>`) : b.replace("<w:rPr>", `<w:rPr><w:rFonts w:ascii="${font}" w:hAnsi="${font}" w:cs="${font}"/>`);
-        b = b.replace(/<w:rFonts ([^>]*)\/>/, (m, a) => /w:ascii=/.test(a) ? m : `<w:rFonts w:ascii="${font}" w:hAnsi="${font}" ${a}/>`);
+        if (!cs || /MV Boli/i.test(cs)) {
+          b = /<w:rFonts [^>]*\/>/.test(b) ? b.replace(/<w:rFonts ([^>]*)\/>/, (m, a) => "<w:rFonts " + a.replace(/\s*w:cs="[^"]*"/, "") + ` w:cs="${font}"/>`) : b.replace("<w:rPr>", `<w:rPr><w:rFonts w:ascii="${font}" w:hAnsi="${font}" w:cs="${font}"/>`);
+          b = b.replace(/<w:rFonts ([^>]*)\/>/, (m, a) => /w:ascii=/.test(a) ? m : `<w:rFonts w:ascii="${font}" w:hAnsi="${font}" ${a}/>`);
+        }
+        // Dhivehi text is right-to-left (the placeholder's run may have been left-to-right).
         /<w:rtl\/>/.test(b) || (b = b.replace("</w:rPr>", "<w:rtl/></w:rPr>"));
       } else if (/[A-Za-z]/.test(t) && !/[\u0590-\u08FF]/.test(t)) {
         b = b.replace(/<w:rtl\/>/g, "");
