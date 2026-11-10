@@ -110,6 +110,15 @@ To mark someone **on leave** for a project, use **Edit** on that member; for a m
 
 Members on leave do not get a per-member invitation or declaration.
 
+**Which member is which?** There are two ways to fill a committee table:
+
+- **One repeating row (recommended).** Keep only the first member row, written like this:
+  `{#bid_members}{no}` | `{member_name_dv}` | `{member_designation_dv}` | `{absent_mark}` | `{leave}` | … | `{/bid_members}`.
+  The program repeats the row for every member in order: 1, 2, 3…
+- **Numbered placeholders for fixed rows.** Use `{bid_m1_name_dv}`, `{bid_m1_designation_dv}`, `{bid_m1_absent_mark}` and `{bid_m1_leave}` in row 1, then `bid_m2_…` in row 2, and so on. For the Evaluation Committee, use `eval_m1_…`. The number is the member's position in the project's committee list.
+
+The plain `{member_…}` placeholders only work inside a repeating row, or in a document made once per member (such as an invitation).
+
 Templates with **fixed rows** (each member's name typed in the table instead of a `{#bid_members}` row) work too. The program finds the row with the member's name; after the name and designation cells, the next empty cell gets "-" and the remaining empty cells merge into the reason, shaded grey. Keep those cells empty in the template. A row that is already merged and grey in the template stays as it is in every document.
 
 ### One meeting for several projects

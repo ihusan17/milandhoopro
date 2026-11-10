@@ -21,6 +21,11 @@ function memberData(m, i) {
     on_leave: leave ? "Yes" : "", leave_text: leave ? lt : "", leave: leave ? "⟦L⟧" + lt : "", absent_mark: leave ? "⟦G⟧-" : "", present: leave ? "" : "✓", __leave: leave };
 }
 
+// Numbered placeholders for tables with fixed rows: {bid_m1_name_dv}, {bid_m3_designation_dv}, {eval_m2_leave}…
+function numberedMembers(d, k, list) {
+  (list || []).forEach((m, i) => { const p = `${k}_m${i + 1}_`; Object.assign(d, { [p + "name"]: m.member_name, [p + "name_dv"]: m.member_name_dv, [p + "designation"]: m.member_designation, [p + "designation_dv"]: m.member_designation_dv, [p + "role"]: m.member_role, [p + "role_dv"]: m.member_role_dv, [p + "leave"]: m.leave, [p + "absent_mark"]: m.absent_mark, [p + "leave_text"]: m.leave_text }); });
+  return d;
+}
 // Word post-processing for leave rows: merge from the {leave} cell to the end of the row, shade, centre.
 function leaveCells(u8, byName = []) {
   const zip = new (LIB().PizZip)(u8); let changed = false;
