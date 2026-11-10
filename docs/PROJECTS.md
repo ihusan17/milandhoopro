@@ -79,7 +79,7 @@ On **Bid Documents** or **Evaluation**:
 
 Documents marked "one per member" (BC-INV and PR-02) make one file for each committee member.
 
-Generating again creates v2, v3 and so on; nothing is overwritten. After signing, use **Upload signed** to attach the scanned PDF. The document then shows as *Signed*.
+Generating again creates v2, v3 and so on; nothing is overwritten. Use **Delete** on a document, an older version or an uploaded file to remove it; the stored file is removed too unless another project's copy (from a meeting) still uses it. Old template versions can be deleted under Templates › Versions; the current version cannot be deleted. After signing, use **Upload signed** to attach the scanned PDF. The document then shows as *Signed*.
 
 ### Meeting numbers in documents
 

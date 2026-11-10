@@ -137,6 +137,20 @@ const idb = () => idbP || (idbP = new Promise((res, rej) => { const r = indexedD
 async function idbOp(mode, fn) { const db = await idb(); return new Promise((res, rej) => { const t = db.transaction("f", mode), q = fn(t.objectStore("f")); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); }
 const idbGet = k => idbOp("readonly", s => s.get(k)).catch(() => null);
 const idbPut = (k, v) => idbOp("readwrite", s => s.put(v, k)).catch(() => null);
+const idbDel = k => idbOp("readwrite", s => s.delete(k)).catch(() => null);
+// Is a stored file still used anywhere (another copy of a meeting document, a template version, a photo…)?
+function fileUsed(id) {
+  const z = Z();
+  return (z.pdocs || []).some(d => d.fileId === id || d.signedFileId === id) || (z.pfiles || []).some(d => d.fileId === id) || (z.ptemplates || []).some(t => (t.versions || []).some(v => v.fileId === id)) ||
+    PRJ().some(p => (p.logs || []).some(l => (l.photos || []).includes(id)) || (p.reports || []).some(r => (r.photos || []).includes(id)) || (p.checklist || []).some(c => c.fileId === id));
+}
+// Remove a file from storage once nothing refers to it any more (call after removing the reference).
+async function fdrop(id) {
+  if (!id || String(id).startsWith("demo:") || fileUsed(id)) return;
+  const b = (Z().blobs || {})[id]; delete Z().blobs[id];
+  await idbDel(id);
+  if (b && remoteOK()) for (let i = 0; i < (b.n || 1); i++) { try { await K.FBA(`/office/f_${id}_${i}`, { method: "DELETE" }); } catch (e) { console.warn("Could not delete file piece", e.message); } }
+}
 const CHUNK = 600 * 1024;
 function b64e(u8) { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
 function b64d(b) { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }

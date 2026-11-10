@@ -113,6 +113,7 @@ function docTable(rows, showP) {
     o("td", { class: "pcc-acts" }, btn("Preview", () => fget(d.fileId).then(u => previewFile(u, d.fileName || d.name, d.title || d.name)).catch(e => xt(e.message, "err")), "small"), btn("Download", () => fdownload(d.fileId, d.fileName || d.name).catch(e => xt(e.message, "err")), "small"),
       kind === "gen" && d.signedFileId ? btn("Signed copy", () => fget(d.signedFileId).then(u => previewFile(u, d.signedName || "signed.pdf", "Signed: " + d.title)).catch(e => xt(e.message, "err")), "small") : null,
       kind === "gen" && can("pdocs") ? btn(d.signedFileId ? "Replace signed" : "Upload signed", () => uploadSigned(d), "small") : null,
+      can("pdocs") ? btn("Delete", () => docDelete(kind, d), "small danger") : null,
       kind === "gen" && can("pdocs") && d.status === "Draft" ? btn("Mark final", () => save(() => { d.status = "Final"; const pp = prj(d.projectId); pp && audit(pp, "Marked final", d.title); }, "Marked final"), "small") : null))));
 }
 async function uploadSigned(d) {
@@ -122,5 +123,22 @@ async function uploadSigned(d) {
     if (f.size > 15 * 1048576) throw err("The file is larger than 15 MB");
     const id = await fput(f, { name: f.name, mime: f.type });
     save(() => { d.signedFileId = id; d.signedName = f.name; d.status = "Signed"; d.signedAt = Vt(); const p = prj(d.projectId); p && audit(p, "Signed copy uploaded", d.title); }, "Signed copy saved");
+  } catch (e) { xt(e.message, "err"); }
+}
+
+async function docDelete(kind, d) {
+  const p = prj(d.projectId), name = d.title || d.name, shared = kind === "gen" && d.meetingId && Z().pdocs.some(x => x !== d && x.fileId === d.fileId);
+  const msg = kind === "gen"
+    ? `Delete ${name}${d.version ? " (v" + d.version + ")" : ""}${d.signedFileId ? " and its signed copy" : ""}? This cannot be undone.${shared ? " The other projects of the meeting keep their copy." : ""}${d.ref ? " Its reference number " + d.ref + " is not reused." : ""}`
+    : `Delete the file ${name}? This cannot be undone.`;
+  if (!(await jt(msg, "Delete"))) return;
+  try {
+    need("pdocs");
+    const ids = [d.fileId, d.signedFileId].filter(Boolean);
+    if (kind === "gen") Z().pdocs = Z().pdocs.filter(x => x !== d); else Z().pfiles = Z().pfiles.filter(x => x !== d);
+    p && audit(p, kind === "gen" ? "Document deleted" : "File deleted", `${name}${d.version ? " v" + d.version : ""}`);
+    K.Qt();
+    for (const id of ids) await fdrop(id);
+    K.Qt(); xt("Deleted"); K.le();
   } catch (e) { xt(e.message, "err"); }
 }

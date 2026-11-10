@@ -1528,6 +1528,20 @@ const idb = () => idbP || (idbP = new Promise((res, rej) => { const r = indexedD
 async function idbOp(mode, fn) { const db = await idb(); return new Promise((res, rej) => { const t = db.transaction("f", mode), q = fn(t.objectStore("f")); t.oncomplete = () => res(q && q.result); t.onerror = () => rej(t.error); }); }
 const idbGet = k => idbOp("readonly", s => s.get(k)).catch(() => null);
 const idbPut = (k, v) => idbOp("readwrite", s => s.put(v, k)).catch(() => null);
+const idbDel = k => idbOp("readwrite", s => s.delete(k)).catch(() => null);
+// Is a stored file still used anywhere (another copy of a meeting document, a template version, a photo…)?
+function fileUsed(id) {
+  const z = Z();
+  return (z.pdocs || []).some(d => d.fileId === id || d.signedFileId === id) || (z.pfiles || []).some(d => d.fileId === id) || (z.ptemplates || []).some(t => (t.versions || []).some(v => v.fileId === id)) ||
+    PRJ().some(p => (p.logs || []).some(l => (l.photos || []).includes(id)) || (p.reports || []).some(r => (r.photos || []).includes(id)) || (p.checklist || []).some(c => c.fileId === id));
+}
+// Remove a file from storage once nothing refers to it any more (call after removing the reference).
+async function fdrop(id) {
+  if (!id || String(id).startsWith("demo:") || fileUsed(id)) return;
+  const b = (Z().blobs || {})[id]; delete Z().blobs[id];
+  await idbDel(id);
+  if (b && remoteOK()) for (let i = 0; i < (b.n || 1); i++) { try { await K.FBA(`/office/f_${id}_${i}`, { method: "DELETE" }); } catch (e) { console.warn("Could not delete file piece", e.message); } }
+}
 const CHUNK = 600 * 1024;
 function b64e(u8) { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
 function b64d(b) { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
@@ -2190,7 +2204,7 @@ async function tplEdit(t) {
   save(() => { need("templates"); Object.assign(t, { code: code.value.trim(), nameEn: en.value.trim(), nameDv: dv.value.trim(), group: grp.value, perMember: pm.value, inPack: pack.checked, active: act.checked, order: Number(ord.value) || 0 }); }, "Template saved");
 }
 async function tplVersions(t) {
-  await Mt(`${t.code} — versions`, [tbl(["Version", "File", "Size", "Uploaded", "By", ""], t.versions.slice().reverse().map(v => o("tr", {}, o("td", {}, "v" + v.v + (v.v === t.version ? " (current)" : "")), o("td", {}, v.name), o("td", {}, v.size ? kb(v.size) : ""), o("td", {}, fd(String(v.at).slice(0, 10))), o("td", {}, v.by || ""), o("td", {}, btn("Download original", () => fdownload(v.fileId, v.name).catch(e => xt(e.message, "err")), "small"), can("templates") && v.v !== t.version ? btn("Make current", () => { save(() => { t.version = v.v; }, "Version " + v.v + " is now current"); document.querySelector(".modal-back") && document.querySelector(".modal-back").click(); }, "small") : null)))), o("p", { class: "muted small" }, "Documents keep a link to the version they were made with.")], [{ label: "Close", primary: !0, value: !1 }]);
+  await Mt(`${t.code} — versions`, [tbl(["Version", "File", "Size", "Uploaded", "By", ""], t.versions.slice().reverse().map(v => o("tr", {}, o("td", {}, "v" + v.v + (v.v === t.version ? " (current)" : "")), o("td", {}, v.name), o("td", {}, v.size ? kb(v.size) : ""), o("td", {}, fd(String(v.at).slice(0, 10))), o("td", {}, v.by || ""), o("td", {}, btn("Download original", () => fdownload(v.fileId, v.name).catch(e => xt(e.message, "err")), "small"), can("templates") && v.v !== t.version ? btn("Delete", async () => { const used = Z().pdocs.filter(d => d.templateId === t.id && d.templateVersion === v.v).length; if (!(await jt(`Delete version ${v.v} of ${t.code} (${v.name})?${used ? ` ${used} generated document${used === 1 ? " was" : "s were"} made with it; ${used === 1 ? "it stays" : "they stay"} as ${used === 1 ? "it is" : "they are"}.` : ""} This cannot be undone.`, "Delete"))) return; try { need("templates"); t.versions = t.versions.filter(x => x !== v); K.Qt(); await fdrop(v.fileId); K.Qt(); xt("Version " + v.v + " deleted"); document.querySelector(".modal-back") && document.querySelector(".modal-back").click(); setTimeout(() => tplVersions(t), 50); } catch (e) { xt(e.message, "err"); } }, "small danger") : null, can("templates") && v.v !== t.version ? btn("Make current", () => { save(() => { t.version = v.v; }, "Version " + v.v + " is now current"); document.querySelector(".modal-back") && document.querySelector(".modal-back").click(); }, "small") : null)))), o("p", { class: "muted small" }, "Documents keep a link to the version they were made with.")], [{ label: "Close", primary: !0, value: !1 }]);
 }
 function blankProject() { return { id: 0, name: "Sample project", nameDv: "ނަމޫނާ މަޝްރޫޢު", ref: "MC-PRJ/2026/000", type: "Works", status: "Ongoing", bidders: [], committees: { bid: [], eval: [] }, payments: [], checklist: [], logs: [], eots: [] }; }
 async function tplPreview(t, p) {
@@ -2396,6 +2410,7 @@ function docTable(rows, showP) {
     o("td", { class: "pcc-acts" }, btn("Preview", () => fget(d.fileId).then(u => previewFile(u, d.fileName || d.name, d.title || d.name)).catch(e => xt(e.message, "err")), "small"), btn("Download", () => fdownload(d.fileId, d.fileName || d.name).catch(e => xt(e.message, "err")), "small"),
       kind === "gen" && d.signedFileId ? btn("Signed copy", () => fget(d.signedFileId).then(u => previewFile(u, d.signedName || "signed.pdf", "Signed: " + d.title)).catch(e => xt(e.message, "err")), "small") : null,
       kind === "gen" && can("pdocs") ? btn(d.signedFileId ? "Replace signed" : "Upload signed", () => uploadSigned(d), "small") : null,
+      can("pdocs") ? btn("Delete", () => docDelete(kind, d), "small danger") : null,
       kind === "gen" && can("pdocs") && d.status === "Draft" ? btn("Mark final", () => save(() => { d.status = "Final"; const pp = prj(d.projectId); pp && audit(pp, "Marked final", d.title); }, "Marked final"), "small") : null))));
 }
 async function uploadSigned(d) {
@@ -2405,6 +2420,23 @@ async function uploadSigned(d) {
     if (f.size > 15 * 1048576) throw err("The file is larger than 15 MB");
     const id = await fput(f, { name: f.name, mime: f.type });
     save(() => { d.signedFileId = id; d.signedName = f.name; d.status = "Signed"; d.signedAt = Vt(); const p = prj(d.projectId); p && audit(p, "Signed copy uploaded", d.title); }, "Signed copy saved");
+  } catch (e) { xt(e.message, "err"); }
+}
+
+async function docDelete(kind, d) {
+  const p = prj(d.projectId), name = d.title || d.name, shared = kind === "gen" && d.meetingId && Z().pdocs.some(x => x !== d && x.fileId === d.fileId);
+  const msg = kind === "gen"
+    ? `Delete ${name}${d.version ? " (v" + d.version + ")" : ""}${d.signedFileId ? " and its signed copy" : ""}? This cannot be undone.${shared ? " The other projects of the meeting keep their copy." : ""}${d.ref ? " Its reference number " + d.ref + " is not reused." : ""}`
+    : `Delete the file ${name}? This cannot be undone.`;
+  if (!(await jt(msg, "Delete"))) return;
+  try {
+    need("pdocs");
+    const ids = [d.fileId, d.signedFileId].filter(Boolean);
+    if (kind === "gen") Z().pdocs = Z().pdocs.filter(x => x !== d); else Z().pfiles = Z().pfiles.filter(x => x !== d);
+    p && audit(p, kind === "gen" ? "Document deleted" : "File deleted", `${name}${d.version ? " v" + d.version : ""}`);
+    K.Qt();
+    for (const id of ids) await fdrop(id);
+    K.Qt(); xt("Deleted"); K.le();
   } catch (e) { xt(e.message, "err"); }
 }
 
