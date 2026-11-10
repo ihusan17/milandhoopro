@@ -51,14 +51,14 @@ The program changes only text it knows about. Any text without a placeholder or 
 On the template, press **Replace text**:
 1. Pick the project the original document was made for, then press **Find its values in the file**. The program looks for that project's values in the file:
    - name (Dhivehi and English),
-   - Iulaan (advertisement) number,
+   - Iulaan number,
    - reference and PR number,
    - contractor,
    - dates (Dhivehi, English and dd.mm.yyyy formats),
    - amounts and amounts in words.
 2. Tick the suggestions you want, add any others by hand, and **Save**.
 
-Every document generated from that template then gets the current project's values in those places. The rules work even when Word has split the text into pieces. The template's details must match the original document for its values to be found. In particular, fill in the **Iulaan number** in the project (Edit › Advertisement number).
+Every document generated from that template then gets the current project's values in those places. The rules work even when Word has split the text into pieces. The template's details must match the original document for its values to be found. In particular, fill in the **Iulaan number** in the project (Edit › Iulaan number).
 
 Placeholders typed with a Dhivehi keyboard sometimes come out reversed, like `}project_name{`. The program reads those correctly too.
 

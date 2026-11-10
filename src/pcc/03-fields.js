@@ -3,14 +3,14 @@
 // Every money field X also exists as X_words_dv and X_words_en; Excel cells written from a
 // single money placeholder get the plain number so the template's own number format applies.
 
-const DATEF = [["advertised_date", "Advertised", "advertised"], ["bid_opening_date", "Bid opening", "bidOpening"], ["evaluation_date", "Evaluation", "evaluation"], ["award_date", "Award", "award"], ["agreement_date", "Agreement signed", "agreement"], ["handover_date", "Site handover", "handover"], ["due_date", "Due date (with extensions)", "due"], ["original_due_date", "Due date (as signed)", "dueOriginal"], ["completion_date", "Actual completion", "done"], ["retention_end_date", "Retention period ends", "retentionEnd"], ["today", "Today", null]];
+const DATEF = [["advertised_date", "Iulaan date", "advertised"], ["bid_opening_date", "Bid opening", "bidOpening"], ["evaluation_date", "Evaluation", "evaluation"], ["award_date", "Award", "award"], ["agreement_date", "Agreement signed", "agreement"], ["handover_date", "Site handover", "handover"], ["due_date", "Due date (with extensions)", "due"], ["original_due_date", "Due date (as signed)", "dueOriginal"], ["completion_date", "Actual completion", "done"], ["retention_end_date", "Retention period ends", "retentionEnd"], ["today", "Today", null]];
 const MONEYF = [["estimated_cost", "Estimated cost", "estimate"], ["contract_value", "Contract value", "contract"], ["retention_amount", "Retention amount", null], ["award_amount", "Awarded amount", null], ["total_paid", "Total paid so far", null], ["balance", "Contract balance", null], ["retention_held", "Retention held", null]];
 
 const FIELDS = [
   ["Project", [
     ["ref_no", "Project reference", "MC-PRJ/2026/004"], ["project_name", "Project name (main)", "Harbour wall repair"], ["project_name_dv", "Project name in Dhivehi", "ބަނދަރުގެ ފާރު މަރާމާތުކުރުން"], ["project_name_en", "Project name in English", "Harbour wall repair"],
     ["type", "Goods / Works / Non-consultancy / Consultancy", "Works"], ["type_dv", "Type in Dhivehi", "މަސައްކަތް"], ["category", "Category", "Construction"], ["location", "Location / island", "Sh. Milandhoo"], ["description", "Scope (English)", ""], ["description_dv", "Scope (Dhivehi)", ""],
-    ["status", "Status", "Ongoing"], ["pr_number", "PR number", "181/2026"], ["advertisement_no", "Advertisement number", "(IUL)351-PRO/2026/12"], ["budget_code", "Budget code", "CC2026"], ["budget_name", "Budget line description", ""], ["unit", "Unit / section", "Procurement"],
+    ["status", "Status", "Ongoing"], ["pr_number", "PR number", "181/2026"], ["advertisement_no", "Iulaan number", "(IUL)351-PRO/2026/12"], ["iulaan_no", "Iulaan number (same as advertisement_no)", "(IUL)351-PRO/2026/12"], ["budget_code", "Budget code", "CC2026"], ["budget_name", "Budget line description", ""], ["unit", "Unit / section", "Procurement"],
     ["duration_days", "Contract duration (days)", "120"], ["extension_days", "Extensions granted (days)", "15"], ["percent_complete", "Physical progress %", "65"], ["days_left", "Days left to the due date", "42"], ["retention_percent", "Retention %", "5"], ["retention_period_days", "Retention period (days)", "365"],
     ["project_officer", "Project officer", "Ahmed Ali"], ["project_officer_designation", "Officer designation", ""], ["year", "Current year", "2026"],
   ]],
@@ -72,6 +72,8 @@ function dataFor(p, extra = {}) {
   };
   DATEF.forEach(([k, , prop]) => { const iso = prop ? p[prop] : t; d[k] = isISO(iso) ? Xt(iso) : ""; d[k + "_dv"] = dvDate(iso); d[k + "_en"] = enDate(iso); d[k + "_hijri"] = hijri(iso); d[k + "_iso"] = isISO(iso) ? iso : ""; });
   d.today_hijri_en = hijri(t, "en");
+  // Iulaan aliases
+  d.iulaan_no = d.advertisement_no; ["", "_dv", "_en", "_hijri", "_iso"].forEach(x => { d["iulaan_date" + x] = d["advertised_date" + x]; });
   // letter defaults (a letter or memo overrides these with its own values)
   Object.assign(d, { letter_date: Xt(t), letter_date_dv: dvDate(t), letter_date_en: enDate(t), letter_date_hijri: hijri(t), signatory_name: p.officer || "", signatory_designation: off.designation || "" });
   const moneyVals = { estimated_cost: p.estimate, contract_value: p.contract, retention_amount: p.contract != null && p.retentionPct ? Math.round(p.contract * p.retentionPct / 100) : null, award_amount: w ? w.amount : null, total_paid: pt.totalPaid, balance: pt.balance, retention_held: pt.retentionHeld };

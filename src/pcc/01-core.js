@@ -34,7 +34,7 @@ const can = k => PERM(k);
 const need = k => PCHK(k);
 
 // ---------- project lifecycle ----------
-const PST = ["Planned", "Advertised", "Under evaluation", "Awarded", "Handed over", "Ongoing", "On hold", "Completed", "In retention", "Closed", "Cancelled"];
+const PST = ["Planned", "Iulaan", "Under evaluation", "Awarded", "Handed over", "Ongoing", "On hold", "Completed", "In retention", "Closed", "Cancelled"];
 // The four categories of the council's PR-09 procurement plan (one sheet each).
 const PTYPES = [["goods", "Goods", "ސާމާނު"], ["works", "Works", "މަސައްކަތް"], ["noncons", "Non-consultancy", "ކޮންސަލްޓެންސީ ނޫން ޚިދުމަތް"], ["cons", "Consultancy", "ކޮންސަލްޓެންސީ ޚިދުމަތް"]];
 const ONGOING = ["Handed over", "Ongoing", "On hold"];
@@ -110,6 +110,7 @@ function migrate() {
   PRJ().forEach(p => {
     if (p.status === "In progress") { p.status = "Ongoing"; ch = true; }
     if (p.type === "Services") { p.type = "Non-consultancy"; ch = true; }
+    if (p.status === "Advertised") { p.status = "Iulaan"; ch = true; }
     for (const k of ["bidders", "reports", "checklist", "letters", "payments", "eots", "activity", "retReports", "logs", "cases"]) if (!Array.isArray(p[k])) { p[k] = []; ch = true; }
     if (!p.committees || typeof p.committees !== "object") { p.committees = { bid: [], eval: [] }; ch = true; }
     if (p.dueOriginal === undefined) { p.dueOriginal = p.due || ""; ch = true; }
