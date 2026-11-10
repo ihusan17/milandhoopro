@@ -83,7 +83,12 @@ Generating again creates v2, v3 and so on; nothing is overwritten. Use **Delete*
 
 ### Dates, times and the year-month-day format
 
-Add `_dv_ymd` to any date placeholder to get the year · month · day style used in council letters, for example `{bid_meeting_date_dv_ymd}` → `2026 ނޮވެމްބަރ 09`. The day always has two digits.
+Two more Dhivehi date styles work on any date placeholder; the day always has two digits:
+
+| Add | Example | Gives |
+|---|---|---|
+| `_dv_ymd` | `{bid_meeting_date_dv_ymd}` | `2026 ނޮވެމްބަރ 09` |
+| `_dv_dmy` | `{bid_meeting_date_dv_dmy}` | `09 ނޮވެމްބަރ 2026` |
 
 The times are `{evaluation_time}`, `{bid_meeting_time}` and `{eval_meeting_time}`. Enter them on the project (Edit), or record them with a committee meeting.
 
