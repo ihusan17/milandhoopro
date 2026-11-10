@@ -22,14 +22,31 @@ function memberData(m, i) {
 }
 
 // Word post-processing for leave rows: merge from the {leave} cell to the end of the row, shade, centre.
-function leaveCells(u8) {
+function leaveCells(u8, byName = []) {
   const zip = new (LIB().PizZip)(u8); let changed = false;
   const SHD = '<w:shd w:val="clear" w:color="auto" w:fill="F2F2F2"/>';
   const shade = tc => tc.replace(/<w:shd [^>]*\/>/g, "").replace(/<w:tcPr>([\s\S]*?)<\/w:tcPr>/, (a, b) => "<w:tcPr>" + (/<w:vAlign/.test(b) ? b.replace(/<w:vAlign/, SHD + "<w:vAlign") : b + SHD) + "</w:tcPr>").replace(/<w:tc>(?!\s*<w:tcPr>)/, "<w:tc><w:tcPr>" + SHD + "</w:tcPr>");
   const span = tc => Number((/<w:gridSpan w:val="(\d+)"/.exec(tc) || [])[1] || 1), width = tc => Number((/<w:tcW w:w="(\d+)"/.exec(tc) || [])[1] || 0);
   const center = tc => tc.replace(/<w:p(\s[^>]*)?>(?!\s*<w:pPr>)/g, m => m + "<w:pPr></w:pPr>").replace(/<w:pPr>/g, '<w:pPr><w:jc w:val="center"/>').replace(/(<w:jc w:val="center"\/>[\s\S]*?)<w:jc w:val="[^"]*"\/>/g, "$1");
   docxParts(zip).forEach(n => {
-    const x = zip.file(n).asText(); if (!/⟦[LG]⟧/.test(x)) return;
+    const x0 = zip.file(n).asText(), plain = s => decodeEnt(s.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
+    // Templates with fixed member rows (no {leave}): find the row with the member's name; after the name and
+    // designation cells, the next empty cell gets "-" and the remaining empty cells merge into the reason.
+    const x = !byName.length || /⟦L⟧/.test(x0) ? x0 : x0.replace(/<w:tr[ >][\s\S]*?<\/w:tr>/g, tr => {
+      const cells = [...tr.matchAll(/<w:tc\b[\s\S]*?<\/w:tc>/g)].map(c => c[0]), txt = cells.map(plain);
+      const who = byName.find(b => b.names.some(nm => txt.some(t => t.includes(nm))));
+      if (!who) return tr;
+      const ni = txt.findIndex(t => who.names.some(nm => t.includes(nm))), rest = [];
+      for (let i = ni + 2; i < cells.length; i++) rest.push(i);
+      if (rest.length < 2 || rest.some(i => txt[i] !== "" && txt[i] !== "-") || /<w:gridSpan w:val="([2-9]|\d\d)"/.test(cells.slice(ni + 2).join(""))) return tr;
+      const run = text => '<w:r><w:rPr><w:rtl/></w:rPr><w:t xml:space="preserve">' + xmlEsc(text) + "</w:t></w:r>";
+      const put = (tc, text) => (/<w:p\b[^>]*\/>/.test(tc) && !/<w:p\b[^>]*[^/]>/.test(tc.replace(/<w:pPr>|<w:p\b[^>]*\/>/g, ""))
+        ? tc.replace(/<w:p\b([^>]*)\/>/, (m, a) => "<w:p" + a + ">" + run(text) + "</w:p>")
+        : tc.replace(/(<w:p\b[^>]*[^/]>(?:\s*<w:pPr>[\s\S]*?<\/w:pPr>)?)([\s\S]*?)(<\/w:p>)/, (m, a, b, c) => a + run(text) + c));
+      cells[rest[0]] = put(cells[rest[0]].replace(/<w:t[^>]*>-<\/w:t>/, "<w:t></w:t>"), "⟦G⟧-"); cells[rest[1]] = put(cells[rest[1]], "⟦L⟧" + who.text);
+      let k = 0; return tr.replace(/<w:tc\b[\s\S]*?<\/w:tc>/g, () => cells[k++]);
+    });
+    if (!/⟦[LG]⟧/.test(x)) return;
     const y = x.replace(/<w:tr[ >][\s\S]*?<\/w:tr>/g, tr => {
       if (!/⟦[LG]⟧/.test(tr)) return tr;
       const cells = [...tr.matchAll(/<w:tc\b[\s\S]*?<\/w:tc>/g)]; if (!cells.length) return tr;

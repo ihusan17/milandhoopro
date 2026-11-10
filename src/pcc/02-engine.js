@@ -92,7 +92,8 @@ function fillDocx(u8, data, rules) {
     doc = new Docxtemplater(new PizZip(u8), { paragraphLoop: true, linebreaks: true, nullGetter: () => "" });
     doc.render(data);
   } catch (e) { throw docxError(e); }
-  return leaveCells(doc.getZip().generate({ type: "uint8array", compression: "DEFLATE" }));
+  const onLeave = [...(data.bid_members || []), ...(data.eval_members || [])].filter(m => m.__leave).map(m => ({ names: [m.member_name_dv, m.member_name].filter(s => s && s.length > 3), text: m.leave_text }));
+  return leaveCells(doc.getZip().generate({ type: "uint8array", compression: "DEFLATE" }), onLeave);
 }
 
 // ----- Excel helpers -----
@@ -264,8 +265,19 @@ async function fillXlsx(u8, data, cellMap = [], rules) {
 }
 
 // ----- previews -----
+// Word treats jc left/right/start/end in a right-to-left paragraph as start/end (start = right edge);
+// the preview library reads them literally, so swap them for the preview only.
+function previewFixRTL(u8) {
+  const zip = new (LIB().PizZip)(u8), SW = { left: "right", right: "left", start: "right", end: "left" }; let ch = false;
+  docxParts(zip).forEach(n => {
+    const x = zip.file(n).asText(), y = x.replace(/<w:pPr>[\s\S]*?<\/w:pPr>/g, pp => (/<w:bidi(\/| w:val="(1|true|on)")/.test(pp) ? pp.replace(/<w:jc w:val="(left|right|start|end)"\/>/, (m, v) => { ch = true; return `<w:jc w:val="${SW[v]}"/>`; }) : pp));
+    if (y !== x) zip.file(n, y);
+  });
+  return ch ? zip.generate({ type: "uint8array" }) : u8;
+}
 async function previewDocx(u8, host) {
   host.replaceChildren(o("div", { class: "muted small" }, "Opening preview…"));
+  try { u8 = previewFixRTL(u8); } catch (e) { console.warn(e); }
   const box = o("div", { class: "pcc-docx" });
   await LIB().renderDocx(new Blob([u8]), box, null, { inWrapper: true, breakPages: true, ignoreLastRenderedPageBreak: true, experimental: true });
   host.replaceChildren(box);

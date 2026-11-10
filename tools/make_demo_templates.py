@@ -47,11 +47,21 @@ def _rpr(run, size=13, bold=False, rtl=True, color=None):
         run.font.color.rgb = color
 
 
+def _align(p, align, rtl):
+    """Word reads left/right in a right-to-left paragraph as start/end: visual right = no jc (start), visual left = "right"."""
+    if not rtl:
+        p.alignment = align if align is not None else WD_ALIGN_PARAGRAPH.LEFT
+    elif align == WD_ALIGN_PARAGRAPH.CENTER:
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    elif align == WD_ALIGN_PARAGRAPH.LEFT:
+        p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+
+
 def para(container, text="", size=13, bold=False, rtl=True, align=None, after=4, color=None):
     p = container.add_paragraph()
     if rtl:
         p._p.get_or_add_pPr().append(OxmlElement("w:bidi"))
-    p.alignment = align if align is not None else (WD_ALIGN_PARAGRAPH.RIGHT if rtl else WD_ALIGN_PARAGRAPH.LEFT)
+    _align(p, align, rtl)
     p.paragraph_format.space_after = Pt(after)
     if text:
         _rpr(p.add_run(text), size, bold, rtl, color)
@@ -63,7 +73,7 @@ def cell_text(cell, text, size=12, bold=False, rtl=True, align=None, shade=None)
     p = cell.paragraphs[0]
     if rtl:
         p._p.get_or_add_pPr().append(OxmlElement("w:bidi"))
-    p.alignment = align if align is not None else (WD_ALIGN_PARAGRAPH.RIGHT if rtl else WD_ALIGN_PARAGRAPH.LEFT)
+    _align(p, align, rtl)
     if text:
         _rpr(p.add_run(text), size, bold, rtl)
     if shade:

@@ -110,6 +110,8 @@ To mark someone **on leave** for a project, use **Edit** on that member; for a m
 
 Members on leave do not get a per-member invitation or declaration.
 
+Templates with **fixed rows** (each member's name typed in the table instead of a `{#bid_members}` row) work too. The program finds the row with the member's name; after the name and designation cells, the next empty cell gets "-" and the remaining empty cells merge into the reason, shaded grey. Keep those cells empty in the template. A row that is already merged and grey in the template stays as it is in every document.
+
 ### One meeting for several projects
 
 When the Bid Committee or Evaluation Committee decides on two or more projects in one meeting:
