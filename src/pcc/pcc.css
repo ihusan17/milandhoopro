@@ -221,3 +221,5 @@ body,input,textarea,select,button{font-family:'Public Sans',system-ui,-apple-sys
 .pcc-banner h1[lang=dv]{font-weight:400;letter-spacing:0}
 .pcc-mrow2 .pcc-leave{margin-left:auto}
 .pcc-mrow2 .pcc-leave input[type=text]{width:150px;min-height:34px;padding:4px 10px}
+
+.pcc-warn{color:#b45309;font-weight:600}

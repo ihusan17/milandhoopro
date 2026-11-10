@@ -105,5 +105,7 @@ function dataFor(p, extra = {}) {
   d.checklist = (p.checklist || []).map((x, i) => ({ no: i + 1, item: x.text, done: x.done ? "✓" : "", date: x.date ? Xt(x.date) : "", by: x.by || "" }));
   d.logs = (p.logs || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).map(x => ({ date: Xt(x.date), activity: x.text || "", workers: x.workers ?? "", materials: x.materials || "", weather: x.weather || "", issues: x.issues || "", by: x.by || "" }));
   d.evaluation_time = p.evaluationTime || "";
+  // Values typed on the project for template placeholders the program has no field for.
+  Object.entries(p.fields || {}).forEach(([k, val]) => { d[k] === undefined && (d[k] = /_date$/.test(k) && isISO(val) ? Xt(val) : val); });
   return addYMD(Object.assign(d, extra));
 }

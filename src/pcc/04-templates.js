@@ -24,6 +24,18 @@ async function tplTags(t) {
 const fieldLabel = k => { for (const g of FIELDS) for (const f of g[1]) if (f[0] === k) return f[1]; const m = /^(.*?)_(dv_ymd|dv_dmy|dv_both|dash|dv|en|hijri|iso|words_dv|words_en)$/.exec(k); const SUF = { dv_ymd: "2026 ނޮވެމްބަރ 09", dv_dmy: "09 ނޮވެމްބަރ 2026", dv_both: "both formats", dash: "10-11-2026", dv: "Dhivehi", en: "English", hijri: "Hijri", iso: "ISO", words_dv: "Dhivehi words", words_en: "English words" }; return m ? fieldLabel(m[1]) + " (" + SUF[m[2]] + ")" : k; };
 function knownTag(name, data) { const top = name.split(".")[0]; return Object.prototype.hasOwnProperty.call(data, top) || Object.prototype.hasOwnProperty.call(memberData({}, 0), top) || /^(bid|eval)_m\d+_(name|name_dv|short_dv|designation|designation_dv|role|role_dv|leave|absent_mark|leave_text)$/.test(top) || /^(.+_date|today)_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both|dash)$/.test(top) && Object.prototype.hasOwnProperty.call(data, top.replace(/_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both|dash)$/, "")); }
 
+// Placeholders in active templates that no program field fills (and that aren't mapped): they become
+// "Other template fields" on the project form. Returns { tag: [template codes] }.
+// Fields the program fills itself, also those filled only while generating (letters, payments, meetings, reports).
+function progField(n) { const FK = new Set(FIELDKEYS().concat(["y1", "y2", "y3", "year", "bid", "eval"])), base = n.replace(/_(dv_ymd|dv_dmy|dv_both|dash|dv|en|hijri|iso|words_dv|words_en)$/, ""); return FK.has(n) || FK.has(base); }
+function extraTags() {
+  const sample = dataFor(blankProject()), out = {};
+  TPL().filter(t => t.active !== false).forEach(t => ((curVer(t) || {}).tags || []).forEach(x => {
+    if (t.code === "PLAN" || x.loop || x.inLoop || knownTag(x.name, sample) || progField(x.name) || (t.mapping || {})[x.name]) return;
+    (out[x.name] = out[x.name] || []).includes(t.code) || out[x.name].push(t.code);
+  }));
+  return out;
+}
 // Values for one template: mapping aliases and custom inputs applied on top of the data object.
 function applyMap(t, data, custom = {}) {
   const d = Object.assign({}, data, { __num: Object.assign({}, data.__num) });
@@ -109,7 +121,7 @@ async function tplUpload(t) {
     const f = await readTemplateFile(await pickFile("." + t.type)); if (!f) return;
     if (f.ext !== t.type) throw err(`This template is ${t.type === "xlsx" ? "an Excel" : "a Word"} file; upload a .${t.type}`);
     const sample = dataFor(PRJ()[0] || blankProject()), unknown = f.tags.filter(x => !x.loop && !knownTag(x.name, sample) && !(t.mapping || {})[x.name] && !x.inLoop);
-    if (!(await jt(`Upload ${f.name} as version ${t.version + 1} of ${t.code}? ${f.tags.length} placeholders found${unknown.length ? `, ${unknown.length} not recognised (${unknown.slice(0, 5).map(x => x.name).join(", ")}) — map them next` : ""}. Documents made earlier keep using the version they were made with.`, "Upload"))) return;
+    if (!(await jt(`Upload ${f.name} as version ${t.version + 1} of ${t.code}? ${f.tags.length} placeholders found${unknown.length ? `, ${unknown.length} the program has no field for (${unknown.slice(0, 5).map(x => x.name).join(", ")}) — these become your own fields, typed on each project under Edit › Other template fields (or map them to a program field next)` : ""}. Documents made earlier keep using the version they were made with.`, "Upload"))) return;
     const fileId = await fput(f.u8, { name: f.name, mime: MIME[f.ext] });
     save(() => { const v = t.version + 1; t.versions.push({ v, fileId, name: f.name, size: f.size, at: Vt(), by: me(), tags: f.tags, sheets: f.sheets }); t.version = v; t.demo = false; }, `${t.code} updated to version ${t.version + 1}`);
     unknown.length ? setTimeout(() => tplMap(t), 400) : !f.tags.length && setTimeout(() => tplRules(t, true), 400);
@@ -140,11 +152,11 @@ async function tplMap(t) {
   try { tags = await tplTags(t); } catch (e) { return xt(e.message, "err"); }
   const sample = dataFor(PRJ()[0] || blankProject()), keys = FIELDKEYS(), dl = o("datalist", { id: "pcc-fields" }, keys.map(k => o("option", { value: k }, fieldLabel(k)))), rows = [], mapping = Object.assign({}, t.mapping || {}), custom = Object.assign({}, t.custom || {});
   const list = tags.filter(x => !x.inLoop).map(x => {
-    const known = x.loop ? Array.isArray(sample[x.name]) : knownTag(x.name, sample);
-    const sel = S([["", known ? "Program field (automatic)" : "— not mapped —"], ["@field", "Use another field…"], ["@custom", "Ask when generating"]], mapping[x.name] === "@custom" ? "@custom" : mapping[x.name] ? "@field" : ""), fld = o("input", { type: "text", list: "pcc-fields", value: mapping[x.name] && mapping[x.name] !== "@custom" ? mapping[x.name] : "", placeholder: "field name", style: { display: mapping[x.name] && mapping[x.name] !== "@custom" ? "" : "none" } }), lab = I(custom["@label:" + x.name] || "", { placeholder: "Question shown when generating", style: { display: mapping[x.name] === "@custom" ? "" : "none" } });
+    const known = x.loop ? Array.isArray(sample[x.name]) || progField(x.name) : knownTag(x.name, sample) || progField(x.name);
+    const sel = S([["", known ? "Program field (automatic)" : "Typed on the project (Edit › Other template fields)"], ["@field", "Use another field…"], ["@custom", "Ask when generating"]], mapping[x.name] === "@custom" ? "@custom" : mapping[x.name] ? "@field" : ""), fld = o("input", { type: "text", list: "pcc-fields", value: mapping[x.name] && mapping[x.name] !== "@custom" ? mapping[x.name] : "", placeholder: "field name", style: { display: mapping[x.name] && mapping[x.name] !== "@custom" ? "" : "none" } }), lab = I(custom["@label:" + x.name] || "", { placeholder: "Question shown when generating", style: { display: mapping[x.name] === "@custom" ? "" : "none" } });
     sel.addEventListener("change", () => { fld.style.display = sel.value === "@field" ? "" : "none"; lab.style.display = sel.value === "@custom" ? "" : "none"; });
     rows.push({ x, sel, fld, lab });
-    return o("tr", {}, o("td", {}, o("code", {}, "{" + (x.loop ? "#" : "") + x.name + "}")), o("td", {}, known || mapping[x.name] ? o("span", { class: "pcc-ok" }, x.loop ? "Table loop" : fieldLabel(x.name)) : o("span", { class: "pcc-bad" }, "Not recognised")), o("td", {}, x.loop ? "" : [sel, fld, lab]));
+    return o("tr", {}, o("td", {}, o("code", {}, "{" + (x.loop ? "#" : "") + x.name + "}")), o("td", {}, known || mapping[x.name] ? o("span", { class: "pcc-ok" }, x.loop ? "Table loop" : fieldLabel(x.name)) : o("span", { class: "pcc-warn", title: "Type its value on each project: Edit › Other template fields" }, "Your own field — typed on the project")), o("td", {}, x.loop ? "" : [sel, fld, lab]));
   });
   const cm = (t.cellMap || []).map(m => ({ ...m })), cmBox = o("div", {}), sheets = curVer(t).sheets || [];
   const drawCm = () => cmBox.replaceChildren(tbl(["Sheet", "Cell", "Field", ""], cm.map((m, i) => { const sh = S(sheets.length ? sheets : [m.sheet || "Sheet1"], m.sheet), ce = I(m.cell, { placeholder: "C5", style: { width: "80px" } }), fl = o("input", { type: "text", list: "pcc-fields", value: m.field || "" }); sh.onchange = () => { m.sheet = sh.value; }; ce.oninput = () => { m.cell = ce.value.trim().toUpperCase(); }; fl.oninput = () => { m.field = fl.value.trim(); }; return o("tr", {}, o("td", {}, sh), o("td", {}, ce), o("td", {}, fl), o("td", {}, btn("Remove", () => { cm.splice(i, 1); drawCm(); }, "small"))); })), btn("Add cell", () => { cm.push({ sheet: sheets[0] || "Sheet1", cell: "", field: "" }); drawCm(); }, "small"));

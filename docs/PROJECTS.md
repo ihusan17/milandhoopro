@@ -252,3 +252,7 @@ The original file is not changed; the rules are applied every time a document is
 - `{estimated_cost}` approved budget, `{award_amount}` awarded price, `{award_duration}` days, `{award_bidder}` winning bidder (Bidders tab, marked awarded).
 - `{budget_after_award}` = estimated cost − awarded amount; `{budget_extra_needed}` = awarded amount above the estimated cost, or "-" when within budget.
 - Any date + `_dash` gives 10-11-2026 (e.g. `{bid_meeting_date_dash}`).
+
+## Your own placeholders
+
+Any placeholder the program has no field for (e.g. `{meeting_venue_dv}`, `{secretary_name_dv}`, `{site_visit_date}`) is kept as **your own field**: it appears on every project's **Edit** form under **Other template fields**, where you type the value once per project, and it fills every template that uses it. Names ending in `_date` get a date picker (and the usual `_dv`, `_dv_dmy`, `_dash`… variants), `_time` a time picker, `_dv` a Dhivehi box. To fill it from a program field instead, map it under **Placeholders**.
