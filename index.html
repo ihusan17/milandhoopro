@@ -1620,7 +1620,7 @@ const dvDMY = d => (isISO(d) ? RTLW(`${d.slice(8, 10)} ${DVMON2[Number(d.slice(5
 // Both on one line as in council letters: "09 ނޮވެމްބަރ 2026 / 2026 ނޮވެމްބަރ 09" read from the right (suffix _dv_both).
 const dvBoth = d => (isISO(d) ? RTLW(dvDMY(d) + " / " + dvYMD(d)) : "");
 // Adds X_dv_ymd, X_dv_dmy and X_dv_both for every dd.mm.yyyy date value X in a data object (keeps values already set).
-function addYMD(d) { Object.keys(d).forEach(k => { const v = d[k]; const m = typeof v === "string" && /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(v); if (!m) return; const iso = `${m[3]}-${m[2]}-${m[1]}`; if (d[k + "_dv_ymd"] === undefined) d[k + "_dv_ymd"] = dvYMD(iso); if (d[k + "_dv_dmy"] === undefined) d[k + "_dv_dmy"] = dvDMY(iso); if (d[k + "_dv_both"] === undefined) d[k + "_dv_both"] = dvBoth(iso); }); return d; }
+function addYMD(d) { Object.keys(d).forEach(k => { const v = d[k]; const m = typeof v === "string" && /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(v); if (!m) { if (typeof v === "string" && /(_date|^today)$/.test(k)) ["_dv_ymd", "_dv_dmy", "_dv_both"].forEach(x => { d[k + x] === undefined && (d[k + x] = ""); }); return; } const iso = `${m[3]}-${m[2]}-${m[1]}`; if (d[k + "_dv_ymd"] === undefined) d[k + "_dv_ymd"] = dvYMD(iso); if (d[k + "_dv_dmy"] === undefined) d[k + "_dv_dmy"] = dvDMY(iso); if (d[k + "_dv_both"] === undefined) d[k + "_dv_both"] = dvBoth(iso); }); return d; }
 const dvDate = d => (isISO(d) ? `${Number(d.slice(8))} ${DVMON[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}` : "");
 const enDate = d => (isISO(d) ? `${Number(d.slice(8))} ${ENMON[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}` : "");
 function hijri(d, lang = "dv") {
@@ -2255,8 +2255,8 @@ async function tplTags(t) {
   v.tags = r.tags; v.sheets = r.sheets; K.Qt();
   return v.tags;
 }
-const fieldLabel = k => { for (const g of FIELDS) for (const f of g[1]) if (f[0] === k) return f[1]; const m = /^(.*)_(dv|en|hijri|iso|words_dv|words_en)$/.exec(k); return m ? fieldLabel(m[1]) + " (" + m[2].replace("_", " ") + ")" : k; };
-function knownTag(name, data) { const top = name.split(".")[0]; return Object.prototype.hasOwnProperty.call(data, top); }
+const fieldLabel = k => { for (const g of FIELDS) for (const f of g[1]) if (f[0] === k) return f[1]; const m = /^(.*?)_(dv_ymd|dv_dmy|dv_both|dv|en|hijri|iso|words_dv|words_en)$/.exec(k); const SUF = { dv_ymd: "2026 ނޮވެމްބަރ 09", dv_dmy: "09 ނޮވެމްބަރ 2026", dv_both: "both formats", dv: "Dhivehi", en: "English", hijri: "Hijri", iso: "ISO", words_dv: "Dhivehi words", words_en: "English words" }; return m ? fieldLabel(m[1]) + " (" + SUF[m[2]] + ")" : k; };
+function knownTag(name, data) { const top = name.split(".")[0]; return Object.prototype.hasOwnProperty.call(data, top) || /^(bid|eval)_m\d+_(name|name_dv|designation|designation_dv|role|role_dv|leave|absent_mark|leave_text)$/.test(top) || /^(.+_date|today)_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both)$/.test(top) && Object.prototype.hasOwnProperty.call(data, top.replace(/_(dv|en|hijri|iso|dv_ymd|dv_dmy|dv_both)$/, "")); }
 
 // Values for one template: mapping aliases and custom inputs applied on top of the data object.
 function applyMap(t, data, custom = {}) {
