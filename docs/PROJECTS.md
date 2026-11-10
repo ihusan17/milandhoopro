@@ -9,7 +9,7 @@ Everything about each project in one place: the procurement plan, bids and commi
 | Tab | What it is for |
 |---|---|
 | Overview | KPI cards, the "Handed over to contractor" strip with live countdowns, and every project as a table, cards or a timeline |
-| Goods / Services / Works | The same overview, filtered by type |
+| Goods / Works / Non-consultancy / Consultancy | The same overview for each category — the four sheets of the PR-09 plan |
 | Procurement plan | The yearly plan, with Excel template download, export and upload |
 | Work Logs | Work log entries for all projects |
 | Documents | Every generated or uploaded file, with filters |
@@ -71,25 +71,42 @@ The extension-of-time letter can also record the extension, and the due date the
 
 Add the payment schedule: advance, interim, final and retention release. **Payment memo** generates the memo with the payment amount in Dhivehi and English words, earlier payments, retention deducted and the balance. **Mark paid** updates the totals: paid, balance, retention held and retention released.
 
-## Procurement plan in Excel
+## Procurement plan (PR-09)
 
-- **Download plan template (.xlsx)** gives a workbook with:
-  - a locked header row,
-  - drop-down lists for type, quarter, method, funding and status,
-  - a hidden *Plan Item ID* column,
-  - an Instructions sheet.
-- **Export plan** writes the year's plan into the same layout. If an administrator uploads the council's own plan workbook as template code `PLAN`, with a `{#items}` row, that layout is used for both instead.
-- **Upload / update from Excel** shows new rows, changed cells (old → new), rows missing from the file, and rows with errors. You then choose one of these modes:
+The plan follows the council's **Annual Procurement Plan (PR-09)** workbook, which has four sheets: Goods, Works, Non consultancy and Consultancy. Each plan item has:
+- a procurement number, such as `PC-284/2026/W-01`,
+- the procurement name,
+- the estimated amount,
+- the funded method and the procurement method (NCB, ICB, Shopping, Direct, QCBS, IC),
+- the allocated budget for three years,
+- remarks such as the fund (J-GOM or J-LCL),
+- the planned dates of its category:
 
-  | Mode | What it does |
+  | Category | Planned dates |
   |---|---|
-  | Add new only | Adds new rows only |
-  | Add + update | Adds new rows and applies the changes |
-  | Replace whole year | Also removes missing rows; items linked to a project are kept |
+  | Goods and Works | Invitation for bids, bid opening, contract award |
+  | Non-consultancy | Also the bid evaluation report |
+  | Consultancy | REOI, RFP issue and submission, technical evaluation, financial opening, combined evaluation, award |
 
-  Rows are matched by Plan Item ID. Rows without an ID are matched by name and quarter, and you confirm each of those.
-- **Import history** keeps every import and can roll back to the state before any of them.
-- **Convert to project** on a plan item opens a new project form pre-filled from the item.
+**Download template (PR-09)** and **Export plan** use the council's own workbook, kept as template `PLAN`, with its logo, layout, borders and formulas. Each sheet has one loop row: `{#goods}` … `{/goods}`, and likewise `works`, `noncons` and `cons`. If the layout changes, upload a new version of `PLAN` under Templates.
+
+**Upload / update from Excel** reads all four sheets. Rows are matched by procurement number, or by name when a row has none. You then see:
+- new rows,
+- changed values (old → new),
+- items missing from the file,
+- rows with errors.
+
+Then choose one of these modes:
+
+| Mode | What it does |
+|---|---|
+| Add new only | Adds new rows only |
+| Add + update | Adds new rows and applies the changes |
+| Replace whole year | Also removes missing items; items linked to a project are kept |
+
+**Import history** can roll the plan back to before any import.
+
+The council's 2026 PR-09 plan was loaded into the portal once: 4 goods, 16 works and 3 non-consultancy items. Each item also has a project, with the procurement number as its reference. The projects start as *Planned*; update each one as it moves on.
 
 ## Dhivehi
 

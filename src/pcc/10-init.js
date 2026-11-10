@@ -44,9 +44,9 @@ function seedLoad() {
     const ret = mk("Mosque ablution block", "މިސްކިތުގެ ވުޟޫކުރާ ތަން", -80, 100, 31000000, {});
     ret.status = "In retention"; ret.done = dAdd(t, -70); ret.progress = 100; recalcDue(ret); ret.checklist.forEach((c, i) => { if (i < 13) { c.done = true; c.date = ret.done; c.by = "Ahmed Ali"; } });
     ret.payments.forEach(x => { x.status = "Paid"; x.paidDate = x.paidDate || ret.done; });
-    const items = [["Office furniture", "އޮފީހުގެ ފަރުނީޗަރު", "Goods", 1, 4500000, "Quotation (RFQ)"], ["Waste management service", "ކުނި މެނޭޖްކުރުމުގެ ޚިދުމަތް", "Services", 2, 12000000, "Open tender"], ["Harbour lighting upgrade", "ބަނދަރުގެ އަލިކުރުން ރަނގަޅުކުރުން", "Works", 2, 38000000, "Open tender"], ["Computers for the council", "ކައުންސިލަށް ކޮމްޕިއުޓަރު", "Goods", 3, 6500000, "Quotation (RFQ)"], ["Football ground fencing", "ފުޓުބޯޅަ ދަނޑު ފާރުކުރުން", "Works", 4, 22000000, "Limited tender"]];
+    const items = [["Office furniture", "އޮފީހުގެ ފަރުނީޗަރު", "Goods", "01-20", 4500000], ["Waste management service", "ކުނި މެނޭޖްކުރުމުގެ ޚިދުމަތް", "Non-consultancy", "04-12", 12000000], ["Harbour lighting upgrade", "ބަނދަރުގެ އަލިކުރުން ރަނގަޅުކުރުން", "Works", "05-03", 38000000], ["Road design consultancy", "މަގުގެ ޑިޒައިން ކޮންސަލްޓެންސީ", "Consultancy", "07-15", 6500000], ["Football ground fencing", "ފުޓުބޯޅަ ދަނޑު ފާރުކުރުން", "Works", "10-05", 22000000]];
     z.plan = z.plan || [];
-    items.forEach(([en, dv, ty, q, est, me2]) => { const id = Math.max(z.nextPlanId || 1, ...z.plan.map(k => k.id + 1)); z.nextPlanId = id + 1; z.plan.push({ id, pid: nextPid(yr), year: Number(yr), item: en, itemDv: dv, type: ty, qty: 1, uom: "lot", estimate: est, q, method: me2, funding: "Council budget", budgetId: null, unit: "", status: "Planned", notes: "Sample item", projectId: null, seed: true }); });
+    items.forEach(([en, dv, ty, md, est]) => { const id = Math.max(z.nextPlanId || 1, ...z.plan.map(k => k.id + 1)); z.nextPlanId = id + 1; const d0 = `${yr}-${md}`; z.plan.push({ id, pid: nextPid(yr), procNo: "SAMPLE/" + yr + "/" + id, year: Number(yr), item: en, itemDv: dv, type: ty, estimate: est, method: ty === "Consultancy" ? "QCBS" : "NCB", funding: "Domestic", budget: [est, null, null], dates: ty === "Consultancy" ? { reoi: d0, award: dAdd(d0, 45) } : { ifb: d0, opening: dAdd(d0, 10), award: dAdd(d0, 20) }, remarks: "J-GOM", unit: "", status: "Planned", notes: "Sample item", projectId: null, seed: true }); });
   }, "Sample data loaded — remove it any time with Remove sample data");
 }
 function seedRemove() {
@@ -74,7 +74,7 @@ window.__pcc = {
       (p.payments || []).forEach(x => { if (x.status === "Memo issued") N.push({ id: "pm" + x.id, k: "warn", i: "wallet", t: "Payment memo issued, not yet paid", s: `${p.ref} · ${x.kind} ${mvr(x.amount)}`, h: `#/project/${p.id}/payments`, at: x.at || t }); else if (x.status === "Planned" && x.invoice && !x.memoRef) N.push({ id: "pmi" + x.id, k: "info", i: "wallet", t: "Invoice received — payment memo pending", s: `${p.ref} · ${x.kind}`, h: `#/project/${p.id}/payments`, at: x.at || t }); });
     });
     const q = Math.floor((Number(t.slice(5, 7)) - 1) / 3) + 1;
-    (Z().plan || []).filter(x => String(x.year) === t.slice(0, 4) && x.q && x.q < q && x.status === "Planned").forEach(x => N.push({ id: "pl" + x.id + "late", k: "warn", i: "list", t: `Plan item not started (Q${x.q})`, s: x.item, h: "#/plan/" + x.year, at: t }));
+    (Z().plan || []).filter(x => String(x.year) === t.slice(0, 4) && qOf(x) && qOf(x) < q && x.status === "Planned" && !x.projectId).forEach(x => N.push({ id: "pl" + x.id + "late", k: "warn", i: "list", t: `Plan item not started (Q${qOf(x)})`, s: (x.procNo ? x.procNo + " " : "") + planName(x), h: "#/plan/" + x.year, at: t }));
   },
   tasks(T, t) {
     PRJ().forEach(p => {
@@ -85,7 +85,7 @@ window.__pcc = {
   search(m, add) {
     Z().pdocs && Z().pdocs.forEach(d => { if (m(d.title) || m(d.ref) || m(d.fileName) || m(d.code)) { const p = prj(d.projectId); add("doc", d.title, `${d.ref ? d.ref + " · " : ""}${d.fileName}${p ? " · " + p.ref : ""}`, `#/project/${d.projectId}/files`); } });
     (Z().pfiles || []).forEach(d => { if (m(d.name)) add("folder", d.name, "Project file", `#/project/${d.projectId}/files`); });
-    (Z().plan || []).forEach(x => { if (m(x.item) || m(x.itemDv) || m(x.pid)) add("list", x.item, `${x.pid} · plan ${x.year}`, "#/plan/" + x.year); });
+    (Z().plan || []).forEach(x => { if (m(x.item) || m(x.itemDv) || m(x.pid) || m(x.procNo)) add("list", planName(x), `${x.procNo || x.pid} · ${x.type} · plan ${x.year}`, "#/plan/" + x.year); });
   },
   dash(n, CH) {
     const t = today(), E = [];
@@ -109,5 +109,6 @@ function ROUTE_PROJECTS(n, [sub]) {
 }
 Object.assign(K.Fa, { projects: ROUTE_PROJECTS, project: (n, a) => { migrate(); PDETAIL(n, a); }, plan: (n, a) => { migrate(); PLANPAGE(n, a); }, worklog: n => { migrate(); WLOG(n); } });
 window.addEventListener("online", () => retryUploads());
-setTimeout(() => { try { migrate(); retryUploads(); } catch (e) { console.error(e); } }, 1500);
+// Only for signed-in staff (not on the vendor quotation page).
+setTimeout(() => { try { if (K.SYS().refresh && !/^#\/?(q|vq|login)(\/|$)/.test(location.hash)) { migrate(); retryUploads(); } } catch (e) { console.error(e); } }, 1500);
 if (/^#\/(projects?|plan|worklog)(\/|$)/.test(location.hash)) K.le();

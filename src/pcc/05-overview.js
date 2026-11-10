@@ -6,7 +6,7 @@ function PCNAV(cur) {
 }
 const viewPref = () => { try { return localStorage.getItem("mq-pview") || "table"; } catch { return "table"; } };
 const setViewPref = v => { try { localStorage.setItem("mq-pview", v); } catch {} };
-const pName = p => o("div", { class: "pcc-pn" }, p.nameDv ? o("b", { dir: "rtl", lang: "dv" }, p.nameDv) : null, o(p.nameDv ? "span" : "b", { class: p.nameDv ? "muted small" : "" }, p.nameEn || p.name));
+const pName = p => { const en = p.nameEn || (p.name !== p.nameDv ? p.name : ""); return o("div", { class: "pcc-pn" }, p.nameDv ? o("b", { dir: "rtl", lang: "dv" }, p.nameDv) : null, en ? o(p.nameDv ? "span" : "b", { class: p.nameDv ? "muted small" : "" }, en) : null); };
 const pyear = p => String(p.handover || p.agreement || p.award || p.advertised || p.due || p.createdAt || "").slice(0, 4);
 
 function dualBar(p) {
@@ -17,7 +17,7 @@ function dualBar(p) {
 }
 
 function OVERVIEW(n, type) {
-  const T = PTYPES.find(x => x[0] === type), all = PRJ().filter(p => !T || p.type === T[1]), t = today(), yr = t.slice(0, 4);
+  const T = PTYPES.find(x => x[0] === (type === "services" ? "noncons" : type)), all = PRJ().filter(p => !T || p.type === T[1]), t = today(), yr = t.slice(0, 4);
   const ongoing = all.filter(isOngoing), od = all.filter(p => (daysLeft(p) ?? 1) < 0), due30 = all.filter(p => { const d = daysLeft(p); return d != null && d >= 0 && d <= 30; });
   const tv = all.filter(p => p.status !== "Cancelled").reduce((a, p) => a + (Number(p.contract) || 0), 0);
   const F = { q: "", status: "", year: "", vendor: "", overdue: false, sort: "due", view: viewPref() };

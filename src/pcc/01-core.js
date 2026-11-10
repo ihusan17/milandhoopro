@@ -35,7 +35,8 @@ const need = k => PCHK(k);
 
 // ---------- project lifecycle ----------
 const PST = ["Planned", "Advertised", "Under evaluation", "Awarded", "Handed over", "Ongoing", "On hold", "Completed", "In retention", "Closed", "Cancelled"];
-const PTYPES = [["goods", "Goods", "ސާމާނު"], ["services", "Services", "ޚިދުމަތް"], ["works", "Works", "މަސައްކަތް"]];
+// The four categories of the council's PR-09 procurement plan (one sheet each).
+const PTYPES = [["goods", "Goods", "ސާމާނު"], ["works", "Works", "މަސައްކަތް"], ["noncons", "Non-consultancy", "ކޮންސަލްޓެންސީ ނޫން ޚިދުމަތް"], ["cons", "Consultancy", "ކޮންސަލްޓެންސީ ޚިދުމަތް"]];
 const ONGOING = ["Handed over", "Ongoing", "On hold"];
 const DONE = ["Completed", "In retention", "Closed", "Cancelled"];
 const PRJ = () => K.PJ();
@@ -107,6 +108,7 @@ function migrate() {
   const yrs = {};
   PRJ().forEach(p => {
     if (p.status === "In progress") { p.status = "Ongoing"; ch = true; }
+    if (p.type === "Services") { p.type = "Non-consultancy"; ch = true; }
     for (const k of ["bidders", "reports", "checklist", "letters", "payments", "eots", "activity", "retReports", "logs", "cases"]) if (!Array.isArray(p[k])) { p[k] = []; ch = true; }
     if (!p.committees || typeof p.committees !== "object") { p.committees = { bid: [], eval: [] }; ch = true; }
     if (p.dueOriginal === undefined) { p.dueOriginal = p.due || ""; ch = true; }
@@ -115,12 +117,14 @@ function migrate() {
   });
   (z.plan || []).forEach(x => {
     if (x.status === "Dropped") { x.status = "Cancelled"; ch = true; }
+    if (x.type === "Services") { x.type = "Non-consultancy"; ch = true; }
     if (!x.pid) { const y = x.year || today().slice(0, 4); yrs[y] = yrs[y] || Math.max(0, ...(z.plan || []).filter(k => k.pid && String(k.year) === String(y)).map(k => Number(String(k.pid).split("-").pop()) || 0)); x.pid = `PL-${y}-${String(++yrs[y]).padStart(4, "0")}`; ch = true; }
   });
   if (!Array.isArray(z.ptemplates)) { z.ptemplates = []; ch = true; }
   if (seedDemoTemplates()) ch = true;
   for (const k of ["pdocs", "pfiles", "planImports"]) if (!Array.isArray(z[k])) { z[k] = []; ch = true; }
   if (!z.blobs || typeof z.blobs !== "object") { z.blobs = {}; ch = true; }
+  if (loadPR09(z)) ch = true;
   if (ch) K.Qt();
 }
 

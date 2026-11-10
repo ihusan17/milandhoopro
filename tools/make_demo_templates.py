@@ -354,5 +354,12 @@ for col, w in zip("ABCDEFGHI", [5, 30, 17, 34, 12, 12, 9, 7, 11]): ws.column_dim
 ws.page_setup.orientation = "landscape"; ws.page_setup.paperSize = 9
 xl_save(wb, "EV-FORM", "Evaluation Committee", "Bid Evaluation Form", "ބީލަން ވަޒަންކުރާ ފޯމު", 4, True)
 
+# the council's own PR-09 plan workbook, turned into a template by tools/make_plan_template.py
+PLAN = os.path.join(ROOT, "tools", "assets", "PR-09-plan-template.xlsx")
+if os.path.exists(PLAN):
+    import shutil
+    shutil.copy(PLAN, os.path.join(OUT, "PLAN.xlsx"))
+    META.append(dict(code="PLAN", file="PLAN.xlsx", type="xlsx", group="Plan", nameEn="Annual Procurement Plan (PR-09)", nameDv="އަހަރީ ޕްރޮކިއުމަންޓް ޕްލޭން", order=1, perMember="", inPack=False, official=True))
+
 json.dump(META, open(os.path.join(OUT, "meta.json"), "w", encoding="utf8"), ensure_ascii=False, indent=1)
 print(len(META), "demo templates written to", OUT)

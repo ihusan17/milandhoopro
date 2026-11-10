@@ -229,5 +229,17 @@
   "order": 4,
   "perMember": "",
   "inPack": true
+ },
+ {
+  "code": "PLAN",
+  "file": "PLAN.xlsx",
+  "type": "xlsx",
+  "group": "Plan",
+  "nameEn": "Annual Procurement Plan (PR-09)",
+  "nameDv": "އަހަރީ ޕްރޮކިއުމަންޓް ޕްލޭން",
+  "order": 1,
+  "perMember": "",
+  "inPack": false,
+  "official": true
  }
 ]

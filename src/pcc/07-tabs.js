@@ -74,7 +74,8 @@ function tProgress(n, p) {
 const CHECKS = {
   Works: ["Agreement signed", "Performance guarantee received", "Advance payment guarantee received", "Insurance documents received", "Site handed over to contractor", "Work programme approved", "Site meeting held", "Monthly progress reports received", "Variations approved in writing", "Final inspection done", "Snag list cleared", "Work completion certificate issued", "As-built drawings received", "Retention period started", "Retention released"],
   Goods: ["Purchase order / agreement issued", "Delivery schedule agreed", "Goods delivered", "Goods inspected", "Goods received note signed", "Warranty documents received", "Invoice received", "Payment made"],
-  Services: ["Agreement signed", "Service start confirmed", "Monthly service report received", "Service quality reviewed", "Invoice received", "Payment made", "Service completion confirmed"],
+  Consultancy: ["Contract signed", "Inception report received", "Draft report received", "Comments sent to the consultant", "Final report received", "Invoice received", "Payment made"],
+  "Non-consultancy": ["Agreement signed", "Service start confirmed", "Monthly service report received", "Service quality reviewed", "Invoice received", "Payment made", "Service completion confirmed"],
 };
 const defaultChecklist = type => (CHECKS[type] || CHECKS.Works).map(t => ({ id: uid() + Math.random(), text: t, done: false, date: "", by: "", fileId: null }));
 function tChecklist(n, p) {

@@ -1,140 +1,198 @@
-// Procurement plan with Excel template download, export in the same layout, and import
-// with a preview of changes, three apply modes, and a history that can be rolled back.
+// Annual Procurement Plan in the council's PR-09 layout: four categories (sheets) — Goods, Works,
+// Non-consultancy services, Consultancy services — with procurement numbers, budgets for three
+// years and the planned dates of each category. Template download / export use the PR-09 workbook
+// (template code PLAN); upload reads all four sheets and shows the changes before applying them.
 
-const PMETHODS = ["Quotation (RFQ)", "Open tender", "Limited tender", "Direct purchase", "Framework / contract", "Other"];
-const PFUND = ["Council budget", "Government grant", "Donor / grant", "Loan", "Other"];
+const PCATS = [["Goods", "goods", "G", "Goods"], ["Works", "works", "W", "Works"], ["Non-consultancy", "noncons", "NC", "Non consultancy"], ["Consultancy", "cons", "C", "Consultancy"]];
+const PMETHODS = ["NCB", "ICB", "Shopping", "Direct", "QCBS", "IC", "Other"];
+const PMETHOD_INFO = { NCB: "National Competitive Bidding", ICB: "International Competitive Bidding", QCBS: "Quality and Cost Based Selection", IC: "Individual / International Consultant" };
+const PFUND = ["Domestic", "Other"];
 const PLSTAT = ["Planned", "In progress", "Done", "Cancelled"];
-const PCOLS = [
-  ["pid", "Plan Item ID", 15, "id"], ["item", "Description (English)", 40, "text"], ["itemDv", "Description (Dhivehi)", 40, "dv"], ["type", "Type", 11, "text"], ["qty", "Quantity", 10, "num"], ["uom", "Unit", 10, "text"], ["estimate", "Estimated cost (MVR)", 18, "money"], ["q", "Quarter", 9, "text"], ["method", "Procurement method", 22, "text"], ["funding", "Funding source", 18, "text"], ["budget", "Budget code", 13, "text"], ["unit", "Responsible section", 20, "text"], ["status", "Status", 12, "text"], ["notes", "Notes", 30, "text"],
-];
-const HSYN = { pid: ["plan item id", "item id", "id"], item: ["description (english)", "description", "item", "item / work", "work"], itemDv: ["description (dhivehi)", "dhivehi", "ތަފްޞީލް"], type: ["type"], qty: ["quantity", "qty"], uom: ["unit", "uom", "unit of measure"], estimate: ["estimated cost (mvr)", "estimated cost", "estimate", "estimate (mvr)", "cost"], q: ["quarter", "when"], method: ["procurement method", "method"], funding: ["funding source", "funding", "fund"], budget: ["budget code", "budget"], unit: ["responsible section", "section", "unit / section"], status: ["status"], notes: ["notes", "remarks"] };
+const PDATES = {
+  bid: [["ifb", "Invitation for bids"], ["opening", "Bid opening"], ["award", "Contract award"]],
+  "Non-consultancy": [["ifb", "Invitation for bids"], ["opening", "Bid opening"], ["eval", "Bid evaluation report"], ["award", "Approval for contract award"]],
+  Consultancy: [["reoi", "Request for expression of interest"], ["rfp_issue", "RFP issue"], ["rfp_sub", "RFP submission"], ["tech", "Technical evaluation"], ["fin_open", "Financial proposal opening"], ["combined", "Combined evaluation"], ["award", "Approval for contract award"]],
+};
+const datesFor = type => PDATES[type] || PDATES.bid;
+const DSHORT = { ifb: "IFB", opening: "Opening", eval: "Eval. report", award: "Award", reoi: "REOI", rfp_issue: "RFP issue", rfp_sub: "RFP subm.", tech: "Tech. eval.", fin_open: "Fin. opening", combined: "Combined" };
+const firstDate = x => { const d = x.dates || {}; return d.ifb || d.reoi || d.opening || d.award || ""; };
+const qOf = x => x.q || (isISO(firstDate(x)) ? Math.floor((Number(firstDate(x).slice(5, 7)) - 1) / 3) + 1 : null);
 const planYear = y => (Z().plan || []).filter(x => String(x.year) === String(y));
 const budgetCode = id => { const b = id ? K.Kt(Z(), id) : null; return b ? b.code : ""; };
-const budgetByCode = c => (Z().budgets || []).find(b => String(b.code).toLowerCase() === String(c || "").trim().toLowerCase());
-function nextPid(yr) { const n = Math.max(0, ...(Z().plan || []).filter(k => String(k.year) === String(yr)).map(k => Number(String(k.pid || "").split("-").pop()) || 0)); return `PL-${yr}-${String(n + 1).padStart(4, "0")}`; }
-
-function PLANPAGE(n, [y]) {
-  const yr = /^\d{4}$/.test(y || "") ? y : today().slice(0, 4), L2 = planYear(yr).sort((a, b) => (a.q || 9) - (b.q || 9) || String(a.pid).localeCompare(String(b.pid))), act = L2.filter(x => x.status !== "Cancelled"), ed = can("projects");
-  const ys = S([...new Set([today().slice(0, 4), String(Number(today().slice(0, 4)) + 1), yr, ...(Z().plan || []).map(x => String(x.year))])].sort().map(x => [x, x]), yr, { style: { width: "auto", minWidth: "110px" } });
-  ys.addEventListener("change", () => nav("#/plan/" + ys.value));
-  const hist = Z().planImports.filter(h => String(h.year) === yr);
-  n.append(o("div", { class: "row" }, o("h1", { style: { margin: 0 } }, "Procurement plan " + yr), o("div", { class: "grow right pcc-acts" }, btn("Download plan template (.xlsx)", () => planTemplate(yr).catch(e => xt(e.message, "err"))), L2.length ? btn("Export plan", () => planExport(yr).catch(e => xt(e.message, "err"))) : null, ed ? btn("Upload / update from Excel", () => planImport(yr)) : null, ed ? btn("Add plan item", () => planEdit(null, yr), "primary") : null)),
-    PCNAV("plan"),
-    o("div", { class: "card toolbar" }, o("div", { class: "row", style: { alignItems: "center" } }, o("div", {}, o("label", {}, "Year"), ys), o("div", { class: "grow muted" }, `${L2.length} item${L2.length === 1 ? "" : "s"} · planned total ${ht(act.reduce((a, x) => a + (x.estimate || 0), 0))} MVR · done ${L2.filter(x => x.status === "Done").length}`), hist.length ? btn(`Import history (${hist.length})`, () => planHistory(yr), "small") : null)),
-    o("div", { class: "stats pcc-kpis" }, [1, 2, 3, 4].map(q => { const Q = act.filter(x => x.q === q); return o("div", { class: "stat" }, o("div", { class: "k" }, `Quarter ${q} · ${Q.length} item${Q.length === 1 ? "" : "s"} · ${Q.filter(x => x.status === "Done").length} done`), o("div", { class: "v" }, ht(Q.reduce((a, x) => a + (x.estimate || 0), 0)), o("small", {}, " MVR"))); })),
-    o("div", { class: "card flush" }, L2.length ? tbl(["Plan ID", "Item", "Type", "Qty", "When", "Method", "Funding", "Budget", "Section", "Estimate (MVR)", "Status", "Project"], L2.map(x => { const pj = x.projectId && prj(x.projectId); return o("tr", { class: ed ? "click" : "", onclick: e => { ed && !e.target.closest("a,button") && planEdit(x, yr); } }, o("td", { class: "nowrap muted small" }, x.pid), o("td", { style: { minWidth: "220px" } }, o("b", { dir: "auto" }, x.item), x.itemDv ? o("div", { dir: "rtl", lang: "dv", class: "small" }, x.itemDv) : null, x.notes ? o("div", { class: "muted small" }, x.notes) : null), o("td", {}, x.type), o("td", {}, [x.qty, x.uom].filter(v => v !== "" && v != null).join(" ")), o("td", {}, x.q ? "Q" + x.q : "—"), o("td", {}, x.method || ""), o("td", {}, x.funding || ""), o("td", {}, budgetCode(x.budgetId)), o("td", { dir: "auto" }, x.unit || ""), o("td", { class: "money" }, money(x.estimate)), o("td", {}, stChip(x.status)), o("td", {}, pj ? o("a", { href: "#/project/" + pj.id, dir: "auto" }, pj.ref) : x.status === "Cancelled" || !ed ? "" : btn("Convert to project", () => planToProject(x), "small"))); })) : empty(`No plan items for ${yr} yet. Add them one by one, or download the template, fill it in Excel and upload it.`)));
+const planName = x => x.itemDv || x.item || "";
+const procPrefix = () => { const m = (Z().plan || []).map(x => /^([A-Z]+-\d+)\//.exec(x.procNo || "")).find(Boolean); return m ? m[1] : Z().procPrefix || "PC-284"; };
+function nextProcNo(yr, type) {
+  const c = (PCATS.find(k => k[0] === type) || PCATS[0])[2], re = new RegExp(`/${yr}/${c}-(\\d+)$`);
+  const n = Math.max(0, ...(Z().plan || []).map(x => (re.exec(x.procNo || "") || [])[1]).filter(Boolean).map(Number));
+  return `${procPrefix()}/${yr}/${c}-${String(n + 1).padStart(2, "0")}`;
 }
-async function planEdit(x, yr) {
-  const v = x || {}, item = I(v.item), itemDv = DVI(v.itemDv), type = S(PTYPES.map(k => k[1]), v.type || "Goods"), qty = N(v.qty ?? "", { min: 0 }), uom = I(v.uom, { placeholder: "e.g. nos, lot" }), q = S([["", "Not set"], ...[1, 2, 3, 4].map(k => [k, ["Q1 (Jan–Mar)", "Q2 (Apr–Jun)", "Q3 (Jul–Sep)", "Q4 (Oct–Dec)"][k - 1]])], v.q ?? ""), meth = S(PMETHODS, v.method || PMETHODS[0]), fund = S(PFUND, v.funding || PFUND[0]), est = MI(v.estimate), bud = S([["", "— none —"], ...Z().budgets.map(b => [b.id, `${b.code} - ${b.description}`])], v.budgetId ?? ""), unit = I(v.unit, { list: "pcc-units" }), st = S(PLSTAT, v.status || "Planned"), notes = I(v.notes);
-  const r = await Mt(x ? "Plan item " + x.pid : "Add plan item — " + yr, [o("datalist", { id: "pcc-units" }, Z().lists.units.map(u => o("option", { value: u.label }))), o("div", { class: "row", style: { justifyContent: "flex-end" } }, kbToggle()), L("Description (English)", item), L("Description (Dhivehi)", itemDv), o("div", { class: "grid2" }, L("Type", type), L("Quarter", q), L("Quantity", qty), L("Unit", uom), L("Estimated cost (MVR)", est), L("Procurement method", meth), L("Funding source", fund), L("Budget line", bud), L("Responsible section", unit), L("Status", st)), L("Notes", notes)], [...(x && !x.projectId ? [{ label: "Delete", value: "del" }] : []), { label: "Cancel", value: !1 }, { label: x ? "Save" : "Add", primary: !0, value: !0, onClick: () => { try { if (!item.value.trim() && !itemDv.value.trim()) throw err("Type the description"); parseMoney(est, "Estimated cost"); } catch (e) { xt(e.message, "err"); return !1; } } }]);
+function nextPid(yr) { const n = Math.max(0, ...(Z().plan || []).filter(k => String(k.year) === String(yr)).map(k => Number(String(k.pid || "").split("-").pop()) || 0)); return `PL-${yr}-${String(n + 1).padStart(4, "0")}`; }
+const bsum = x => (x.budget || []).reduce((a, v) => a + (Number(v) || 0), 0);
+const sortPlan = (a, b) => PCATS.findIndex(c => c[0] === a.type) - PCATS.findIndex(c => c[0] === b.type) || String(a.procNo || a.pid).localeCompare(String(b.procNo || b.pid), undefined, { numeric: true });
+
+function PLANPAGE(n, [y, cat]) {
+  const yr = /^\d{4}$/.test(y || "") ? y : today().slice(0, 4), C = PCATS.find(c => c[1] === cat), all = planYear(yr).sort(sortPlan), L2 = all.filter(x => !C || x.type === C[0]), act = L2.filter(x => x.status !== "Cancelled"), ed = can("projects");
+  const ys = S([...new Set([today().slice(0, 4), String(Number(today().slice(0, 4)) + 1), yr, ...(Z().plan || []).map(x => String(x.year))])].sort().map(x => [x, x]), yr, { style: { width: "auto", minWidth: "110px" } });
+  ys.addEventListener("change", () => nav("#/plan/" + ys.value + (C ? "/" + C[1] : "")));
+  const hist = Z().planImports.filter(h => String(h.year) === yr), tot = L => L.filter(x => x.status !== "Cancelled").reduce((a, x) => a + (x.estimate || 0), 0);
+  n.append(o("div", { class: "row" }, o("h1", { style: { margin: 0 } }, "Annual procurement plan " + yr), o("div", { class: "grow right pcc-acts" }, btn("Download template (PR-09)", () => planTemplate(yr).catch(e => xt(e.message, "err"))), all.length ? btn("Export plan", () => planExport(yr).catch(e => xt(e.message, "err"))) : null, ed ? btn("Upload / update from Excel", () => planImport(yr)) : null, ed ? btn("Add plan item", () => planEdit(null, yr, C && C[0]), "primary") : null)),
+    PCNAV("plan"),
+    o("div", { class: "card toolbar" }, o("div", { class: "row", style: { alignItems: "center" } }, o("div", {}, o("label", {}, "Year"), ys), o("div", { class: "grow muted" }, `${all.length} item${all.length === 1 ? "" : "s"} · estimated ${ht(tot(all))} MVR · done ${all.filter(x => x.status === "Done").length}`), hist.length ? btn(`Import history (${hist.length})`, () => planHistory(yr), "small") : null),
+      o("div", { class: "pills", style: { marginTop: "12px" } }, [["", "All categories", all], ...PCATS.map(c => [c[1], c[0], all.filter(x => x.type === c[0])])].map(([k, l, L]) => o("a", { href: `#/plan/${yr}${k ? "/" + k : ""}`, class: "pill" + ((C ? C[1] : "") === k ? " on" : ""), style: { textDecoration: "none" } }, l, o("span", {}, String(L.length)))))),
+    o("div", { class: "stats pcc-kpis" }, [1, 2, 3, 4].map(q => { const Q = act.filter(x => qOf(x) === q); return o("div", { class: "stat" }, o("div", { class: "k" }, `Quarter ${q} · ${Q.length} item${Q.length === 1 ? "" : "s"} · ${Q.filter(x => x.status === "Done").length} done`), o("div", { class: "v" }, ht(Q.reduce((a, x) => a + (x.estimate || 0), 0)), o("small", {}, " MVR"))); })),
+    o("div", { class: "card flush" }, L2.length ? tbl(["#", "Procurement no.", "Procurement name", ...(C ? [] : ["Category"]), "Estimated (MVR)", "Funded / method", "Allocated budget", "Planned dates", "Remarks", "Status", "Project"], L2.map((x, i) => { const pj = x.projectId && prj(x.projectId); return o("tr", { class: ed ? "click" : "", onclick: e => { ed && !e.target.closest("a,button") && planEdit(x, yr); } },
+      o("td", {}, i + 1), o("td", { class: "nowrap" }, x.procNo || o("span", { class: "muted small" }, x.pid)), o("td", { style: { minWidth: "220px" } }, x.itemDv ? o("b", { dir: "rtl", lang: "dv" }, x.itemDv) : null, x.item && x.item !== x.itemDv ? o("div", { class: x.itemDv ? "small muted" : "", dir: "auto" }, x.item) : null, x.notes ? o("div", { class: "muted small" }, x.notes) : null),
+      C ? null : o("td", {}, x.type), o("td", { class: "money" }, money(x.estimate)), o("td", { class: "small" }, x.funding || "", o("div", { title: PMETHOD_INFO[x.method] || "" }, o("b", {}, x.method || ""))),
+      o("td", { class: "small nowrap" }, (x.budget || []).map((v, k) => (v == null ? null : o("div", {}, o("span", { class: "muted" }, Number(x.year) + k + " "), ht(v)))), (x.budget || []).filter(v => v != null).length > 1 ? o("div", {}, o("b", {}, "Total " + ht(bsum(x)))) : null),
+      o("td", { class: "small nowrap" }, datesFor(x.type).filter(([k]) => (x.dates || {})[k]).map(([k, l]) => o("div", { title: l }, o("span", { class: "muted" }, DSHORT[k] + " "), fd(x.dates[k])))),
+      o("td", { class: "small" }, x.remarks || ""), o("td", {}, stChip(x.status)),
+      o("td", {}, pj ? o("a", { href: "#/project/" + pj.id, dir: "auto" }, pj.ref) : x.status === "Cancelled" || !ed ? "" : btn("Convert to project", () => planToProject(x), "small"))); })) : empty(`No ${C ? C[0].toLowerCase() + " " : ""}plan items for ${yr} yet. Add them here, or fill in the PR-09 template in Excel and upload it.`)),
+    o("p", { class: "muted small" }, "Methods: " + Object.entries(PMETHOD_INFO).map(([k, v]) => k + " = " + v).join(" · ")));
+}
+
+async function planEdit(x, yr, cat) {
+  const v = x || {}, type = S(PCATS.map(k => k[0]), v.type || cat || "Goods"), procNo = I(v.procNo || nextProcNo(yr, v.type || cat || "Goods")), itemDv = DVI(v.itemDv), item = I(v.item && v.item !== v.itemDv ? v.item : ""), est = MI(v.estimate),
+    fund = S([["", "—"], ...[...new Set([...PFUND, v.funding].filter(Boolean))].map(f => [f, f])], x ? v.funding || "" : "Domestic"), meth = S([...new Set([...PMETHODS, v.method].filter(Boolean))], v.method || "NCB"),
+    bud = [0, 1, 2].map(i => MI((v.budget || [])[i])), rem = I(v.remarks, { list: "pcc-funds" }), st = S(PLSTAT, v.status || "Planned"), unit = I(v.unit, { list: "pcc-units" }), notes = I(v.notes), dbox = o("div", { class: "grid2" }), dins = {};
+  const drawDates = () => { dbox.replaceChildren(...datesFor(type.value).map(([k, l]) => { dins[k] = dins[k] || D((v.dates || {})[k]); return L(l, dins[k]); })); };
+  type.addEventListener("change", () => { if (!x) procNo.value = nextProcNo(yr, type.value); drawDates(); }); drawDates();
+  bud[0].addEventListener("focus", () => { if (!bud[0].value && est.value) bud[0].value = est.value; });
+  const r = await Mt(x ? "Plan item " + (x.procNo || x.pid) : "Add plan item — " + yr, [o("datalist", { id: "pcc-units" }, Z().lists.units.map(u => o("option", { value: u.label }))), o("datalist", { id: "pcc-funds" }, ["J-GOM", "J-LCL"].map(f => o("option", { value: f }))), o("div", { class: "row", style: { justifyContent: "flex-end" } }, kbToggle()),
+    o("div", { class: "grid2" }, L("Category", type), L("Procurement no.", procNo)), L("Procurement name (Dhivehi)", itemDv), L("Procurement name (English, optional)", item),
+    o("div", { class: "grid2" }, L("Estimated amount (MVR)", est), L("Funded method", fund), L("Procurement method", meth), L("Remarks / fund", rem)),
+    o("h4", { class: "pcc-sec" }, "Allocated budget (MVR)"), o("div", { class: "grid2" }, bud.map((b, i) => L(String(Number(yr) + i), b))),
+    o("h4", { class: "pcc-sec" }, "Planned dates"), dbox,
+    o("h4", { class: "pcc-sec" }, "Tracking"), o("div", { class: "grid2" }, L("Status", st), L("Responsible section", unit)), L("Notes", notes)],
+  [...(x && !x.projectId ? [{ label: "Delete", value: "del" }] : []), { label: "Cancel", value: !1 }, { label: x ? "Save" : "Add", primary: !0, value: !0, onClick: () => { try { if (!itemDv.value.trim() && !item.value.trim()) throw err("Type the procurement name"); parseMoney(est, "Estimated amount"); bud.forEach((b, i) => parseMoney(b, "Budget " + (Number(yr) + i))); if ((Z().plan || []).some(k => k !== x && procNo.value.trim() && k.procNo === procNo.value.trim())) throw err("That procurement number is already used"); } catch (e) { xt(e.message, "err"); return !1; } } }]);
   if (r === "del") { (await jt("Delete this plan item?", "Delete")) && save(() => { need("projects"); Z().plan = Z().plan.filter(k => k !== x); }, "Plan item deleted"); return; }
   if (!r) return;
-  save(() => { need("projects"); const o2 = { item: item.value.trim() || itemDv.value.trim(), itemDv: itemDv.value.trim(), type: type.value, qty: qty.value === "" ? "" : Number(qty.value), uom: uom.value.trim(), q: q.value ? Number(q.value) : null, method: meth.value, funding: fund.value, estimate: parseMoney(est, "Estimated cost"), budgetId: bud.value ? Number(bud.value) : null, unit: unit.value.trim(), status: st.value, notes: notes.value.trim() }; if (x) Object.assign(x, o2); else { const id = Math.max(Z().nextPlanId || 1, ...(Z().plan || []).map(k => k.id + 1)); Z().nextPlanId = id + 1; (Z().plan = Z().plan || []).push({ id, pid: nextPid(yr), year: Number(yr), ...o2, projectId: null }); } }, x ? "Plan item saved" : "Plan item added");
+  save(() => {
+    need("projects");
+    const dates = {}; datesFor(type.value).forEach(([k]) => { dins[k] && dins[k].value && (dates[k] = dins[k].value); });
+    const o2 = { type: type.value, procNo: procNo.value.trim(), itemDv: itemDv.value.trim(), item: item.value.trim() || itemDv.value.trim(), estimate: parseMoney(est, "Estimated amount"), funding: fund.value, method: meth.value, budget: bud.map(b => parseMoney(b, "Budget")), dates, remarks: rem.value.trim(), status: st.value, unit: unit.value.trim(), notes: notes.value.trim(), q: null };
+    if (x) Object.assign(x, o2); else { const id = Math.max(Z().nextPlanId || 1, ...(Z().plan || []).map(k => k.id + 1)); Z().nextPlanId = id + 1; (Z().plan = Z().plan || []).push({ id, pid: nextPid(yr), year: Number(yr), ...o2, projectId: null }); }
+  }, x ? "Plan item saved" : "Plan item added");
 }
-function planToProject(x) {
-  const yr = x.year, qs = x.q ? `${yr}-${["01", "04", "07", "10"][x.q - 1]}-01` : "";
-  PEDIT2(null, x.type, { nameEn: x.item, nameDv: x.itemDv, type: x.type, status: "Planned", unit: x.unit, budgetId: x.budgetId, fund: x.funding, estimate: x.estimate, planId: x.id, notes: `From plan item ${x.pid}${x.method ? " · " + x.method : ""}${qs ? " · planned start " + Xt(qs) : ""}${x.notes ? " · " + x.notes : ""}` });
+// Project fields that come from a plan item.
+function planProjectFields(x) {
+  const d = x.dates || {};
+  return { nameDv: x.itemDv || "", nameEn: x.item && x.item !== x.itemDv ? x.item : "", name: x.item || x.itemDv, type: x.type, status: "Planned", unit: x.unit || "", budgetId: x.budgetId || null, fund: x.remarks || x.funding || "", estimate: x.estimate, planId: x.id, advertised: d.ifb || d.reoi || "", bidOpening: d.opening || d.fin_open || "", evaluation: d.eval || d.tech || d.combined || "", award: d.award || "", notes: `From plan item ${x.procNo || x.pid}${x.method ? " · " + x.method : ""}${x.funding ? " · " + x.funding : ""}` };
 }
+function planToProject(x) { PEDIT2(null, x.type, planProjectFields(x), x.procNo); }
 
-// ---------- Excel writer (built-in plan template) ----------
-const xesc = s => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "");
-function xcell(ref, v, s) { if (v === "" || v == null) return `<c r="${ref}" s="${s}"/>`; if (typeof v === "number") return `<c r="${ref}" s="${s}"><v>${v}</v></c>`; return `<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xesc(v)}</t></is></c>`; }
-const XSTYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="5"><font><sz val="11"/><name val="Calibri"/><family val="2"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/></font><font><sz val="12"/><name val="Faruma"/></font><font><b/><sz val="14"/><color rgb="FF0B6E5F"/><name val="Calibri"/><family val="2"/></font><font><sz val="10"/><color rgb="FF666666"/><name val="Calibri"/><family val="2"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0B7F6D"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFEEF3F1"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFC9D3CF"/></left><right style="thin"><color rgb="FFC9D3CF"/></right><top style="thin"><color rgb="FFC9D3CF"/></top><bottom style="thin"><color rgb="FFC9D3CF"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="9"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="4" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyProtection="1"><protection locked="0"/></xf><xf numFmtId="4" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyProtection="1"><protection locked="0"/></xf><xf numFmtId="0" fontId="2" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1" applyProtection="1"><alignment horizontal="right" readingOrder="2"/><protection locked="0"/></xf><xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment wrapText="1" vertical="top"/></xf><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="right" readingOrder="2" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
-async function planWorkbook(yr, items) {
-  const STY = { id: 2, text: 3, num: 3, money: 4, dv: 5 }, nRows = Math.max(items.length + 200, 300), last = colStr(PCOLS.length);
-  const head = `<row r="1" ht="32" customHeight="1">${PCOLS.map((c, i) => xcell(colStr(i + 1) + "1", c[1], 1)).join("")}</row>`;
-  const body = [];
-  for (let r = 0; r < nRows; r++) {
-    const x = items[r], R = r + 2;
-    body.push(`<row r="${R}">${PCOLS.map(([k, , , t], i) => { let v = ""; if (x) { v = k === "estimate" ? (x.estimate == null ? "" : Math.round(x.estimate) / 100) : k === "q" ? (x.q ? "Q" + x.q : "") : k === "budget" ? budgetCode(x.budgetId) : k === "qty" ? (x.qty === "" || x.qty == null ? "" : Number(x.qty)) : x[k] ?? ""; } return xcell(colStr(i + 1) + R, v, STY[t]); }).join("")}</row>`);
-  }
-  const dvl = (col, list) => `<dataValidation type="list" allowBlank="1" showErrorMessage="1" errorTitle="Not in the list" error="Choose a value from the list" sqref="${col}2:${col}${nRows + 1}"><formula1>"${xesc(list.join(","))}"</formula1></dataValidation>`;
-  const ci = k => colStr(PCOLS.findIndex(c => c[0] === k) + 1);
-  const vals = [dvl(ci("type"), PTYPES.map(t => t[1])), dvl(ci("q"), ["Q1", "Q2", "Q3", "Q4"]), dvl(ci("method"), PMETHODS), dvl(ci("funding"), PFUND), dvl(ci("status"), PLSTAT), `<dataValidation type="decimal" operator="greaterThanOrEqual" allowBlank="1" showErrorMessage="1" error="Type an amount, e.g. 12500.00" sqref="${ci("estimate")}2:${ci("estimate")}${nRows + 1}"><formula1>0</formula1></dataValidation>`];
-  const sheet1 = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr><tabColor rgb="FF0B7F6D"/></sheetPr><dimension ref="A1:${last}${nRows + 1}"/><sheetViews><sheetView workbookViewId="0" zoomScale="100"><pane xSplit="1" ySplit="1" topLeftCell="B2" activePane="bottomRight" state="frozen"/><selection pane="bottomRight" activeCell="B2" sqref="B2"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="18"/><cols>${PCOLS.map((c, i) => `<col min="${i + 1}" max="${i + 1}" width="${c[2]}" customWidth="1"${c[0] === "pid" ? ' hidden="1"' : ""}/>`).join("")}</cols><sheetData>${head}${body.join("")}</sheetData><sheetProtection sheet="1" objects="1" scenarios="1" formatCells="0" formatColumns="0" formatRows="0" insertRows="0" deleteRows="0" sort="0" autoFilter="0"/><dataValidations count="${vals.length}">${vals.join("")}</dataValidations><pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="landscape" fitToHeight="0"/></worksheet>`;
-  const ins = [["Milandhoo Council — Procurement plan " + yr, 6], ["", 7], ["How to fill in this file", 6], ["1. Use the Plan sheet. One row per item, goods, service or work.", 7], ["2. Leave the hidden Plan Item ID column alone. Rows that already have an ID are updated; rows without one are added as new items.", 7], ["3. Type, Quarter, Procurement method, Funding source and Status have drop-down lists. Pick from the list.", 7], ["4. Estimated cost is in MVR, e.g. 12500.00. Budget code must match a budget line in the program (e.g. CC2026), or be left empty.", 7], ["5. The header row is locked so the columns stay in place. You can still add, delete and sort rows.", 7], ["6. Save as .xlsx and use Projects > Procurement plan > Upload / update from Excel. You will see every change before anything is saved.", 7], ["", 7], ["ފައިލް ފުރުމުގެ އިރުޝާދު: ޕްލޭން ޝީޓުގައި ކޮންމެ ބައެއް ވަކި ލައިނެއްގައި ލިޔުއްވާ. ޕްލޭން އައިޓަމް އައިޑީ ބަދަލު ނުކުރައްވާ.", 8]];
-  const sheet2 = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetPr><tabColor rgb="FF8A5A00"/></sheetPr><dimension ref="A1:A${ins.length}"/><sheetViews><sheetView workbookViewId="0" showGridLines="0"/></sheetViews><sheetFormatPr defaultRowHeight="18"/><cols><col min="1" max="1" width="110" customWidth="1"/></cols><sheetData>${ins.map(([t, s], i) => `<row r="${i + 1}"${s === 7 || s === 8 ? ' ht="30" customHeight="1"' : ""}>${xcell("A" + (i + 1), t, s)}</row>`).join("")}</sheetData><pageMargins left="0.5" right="0.5" top="0.5" bottom="0.5" header="0.3" footer="0.3"/></worksheet>`;
-  const z = new (LIB().JSZip)();
-  z.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`);
-  z.file("_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`);
-  z.file("docProps/core.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>Procurement plan ${yr}</dc:title><dc:creator>Milandhoo Council</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString().slice(0, 19)}Z</dcterms:created></cp:coreProperties>`);
-  z.file("docProps/app.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Microsoft Excel</Application></Properties>`);
-  z.file("xl/workbook.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView activeTab="0"/></bookViews><sheets><sheet name="Plan" sheetId="1" r:id="rId1"/><sheet name="Instructions" sheetId="2" r:id="rId2"/></sheets><definedNames><definedName name="_xlnm.Print_Titles" localSheetId="0">Plan!$1:$1</definedName></definedNames><calcPr calcId="191029"/></workbook>`);
-  z.file("xl/_rels/workbook.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
-  z.file("xl/styles.xml", XSTYLES);
-  z.file("xl/worksheets/sheet1.xml", sheet1); z.file("xl/worksheets/sheet2.xml", sheet2);
-  return z.generateAsync({ type: "uint8array", compression: "DEFLATE" });
+// ---------- PR-09 template (Excel) ----------
+const xlSerial = iso => (isISO(iso) ? Math.round((Date.parse(iso + "T00:00:00Z") - Date.UTC(1899, 11, 30)) / 864e5) : null);
+const planTpl = () => { const t = tplByCode("PLAN"); return t && t.active !== false ? t : null; };
+function planData(yr, L2) {
+  const d = { year: yr, y1: Number(yr), y2: Number(yr) + 1, y3: Number(yr) + 2, __num: { year: Number(yr), y1: Number(yr), y2: Number(yr) + 1, y3: Number(yr) + 2 } };
+  PCATS.forEach(([type, loop]) => {
+    d[loop] = L2.filter(x => x.type === type).sort(sortPlan).map((x, i) => {
+      const r = { no: i + 1, year: x.year, proc_no: x.procNo || x.pid, name: planName(x), name_en: x.item || "", estimate: x.estimate == null ? "" : ht(x.estimate), funded: x.funding || "", method: x.method || "", remarks: x.remarks || "", status: x.status, __num: { no: i + 1, year: Number(x.year), estimate: x.estimate == null ? null : x.estimate / 100 } };
+      [0, 1, 2].forEach(k => { const v = (x.budget || [])[k]; r["budget_y" + (k + 1)] = v == null ? "-" : ht(v); r.__num["budget_y" + (k + 1)] = v == null ? null : v / 100; });
+      Object.entries(x.dates || {}).forEach(([k, v]) => { r["d_" + k] = isISO(v) ? Xt(v) : ""; r.__num["d_" + k] = xlSerial(v); });
+      return r;
+    });
+  });
+  return d;
 }
-// An administrator can upload the council's own plan workbook as template PLAN (with a {#items} row).
-const customPlanTpl = () => { const t = tplByCode("PLAN"); return t && t.active !== false && !String(curVer(t).fileId).startsWith("demo:") ? t : null; };
-const planRows = L2 => L2.map((x, i) => ({ no: i + 1, plan_id: x.pid, description: x.item, description_dv: x.itemDv || "", type: x.type, quantity: x.qty ?? "", unit: x.uom || "", estimate: x.estimate == null ? "" : ht(x.estimate), quarter: x.q ? "Q" + x.q : "", method: x.method || "", funding: x.funding || "", budget_code: budgetCode(x.budgetId), section: x.unit || "", status: x.status, notes: x.notes || "", __num: { estimate: x.estimate == null ? null : x.estimate / 100, quantity: num(x.qty) } }));
 async function planTemplate(yr) {
-  const t = customPlanTpl();
-  if (t) { const u = await fget(curVer(t).fileId); return ii(new Blob([await fillXlsx(u, { year: yr, items: [], __num: {} }, t.cellMap)], { type: MIME.xlsx }), `procurement-plan-template-${yr}.xlsx`); }
-  ii(new Blob([await planWorkbook(yr, [])], { type: MIME.xlsx }), `procurement-plan-template-${yr}.xlsx`);
+  const t = planTpl(); if (!t) throw err("The PLAN template is missing or inactive (Projects › Templates).");
+  ii(new Blob([await fillXlsx(await fget(curVer(t).fileId), planData(yr, []), t.cellMap)], { type: MIME.xlsx }), `PR-09_Procurement_Plan_${yr}_template.xlsx`);
 }
 async function planExport(yr) {
-  const L2 = planYear(yr).sort((a, b) => (a.q || 9) - (b.q || 9) || String(a.pid).localeCompare(String(b.pid))), t = customPlanTpl();
-  if (t) { const u = await fget(curVer(t).fileId); return ii(new Blob([await fillXlsx(u, { year: yr, items: planRows(L2), total: ht(L2.reduce((a, x) => a + (x.estimate || 0), 0)), __num: {} }, t.cellMap)], { type: MIME.xlsx }), `procurement-plan-${yr}.xlsx`); }
-  ii(new Blob([await planWorkbook(yr, L2)], { type: MIME.xlsx }), `procurement-plan-${yr}.xlsx`);
+  const t = planTpl(); if (!t) throw err("The PLAN template is missing or inactive (Projects › Templates).");
+  ii(new Blob([await fillXlsx(await fget(curVer(t).fileId), planData(yr, planYear(yr).filter(x => x.status !== "Cancelled")), t.cellMap)], { type: MIME.xlsx }), `PR-09_Procurement_Plan_${yr}.xlsx`);
 }
 
-// ---------- import ----------
-const hnorm = s => String(s || "").toLowerCase().replace(/\s+/g, " ").replace(/[*:]/g, "").trim();
-function parsePlanSheet(rows) {
-  let hr = rows.findIndex(r => r.some(c => Object.values(HSYN).some(syn => syn.includes(hnorm(c)))) && r.filter(c => Object.values(HSYN).some(syn => syn.includes(hnorm(c)))).length >= 3);
-  if (hr < 0) throw err("Could not find the header row. Use the plan template (Download plan template).");
-  const map = {}; rows[hr].forEach((c, i) => { const h = hnorm(c); for (const [k, syn] of Object.entries(HSYN)) if (!(k in map) && syn.includes(h)) { map[k] = i; break; } });
-  if (!("item" in map) && !("itemDv" in map)) throw err("The file has no Description column.");
+// ---------- import (all sheets) ----------
+async function readBook(u8) {
+  const X = await xlsxOpen(u8), out = [];
+  for (const sh of X.sheets) {
+    const f = X.zip.file(sh.path); if (!f) continue;
+    const d = xparse(await f.async("string")), rows = [];
+    [...d.getElementsByTagName("c")].forEach(c => { const rc = splitRef(c.getAttribute("r")); if (!rc) return; (rows[rc[1] - 1] = rows[rc[1] - 1] || [])[rc[0] - 1] = String(cellText(c, X.ss) ?? "").trim(); });
+    out.push({ name: sh.name, rows: Array.from(rows, r => Array.from(r || [], v => v ?? "")) });
+  }
+  return out;
+}
+const lc = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+function sheetCat(sh) {
+  const t = lc(sh.name + " " + sh.rows.slice(0, 6).map(r => r.join(" ")).join(" "));
+  return /non[- ]?consult/.test(t) ? "Non-consultancy" : /consult/.test(t) ? "Consultancy" : /works?\b/.test(lc(sh.name)) || /of works/.test(t) ? "Works" : /goods/.test(t) ? "Goods" : null;
+}
+function toISO(v) {
+  if (v === "" || v == null || v === "-") return "";
+  if (/^\d+(\.\d+)?$/.test(v)) { const n = Number(v); if (n > 20000 && n < 80000) return new Date(Date.UTC(1899, 11, 30) + Math.round(n) * 864e5).toISOString().slice(0, 10); }
+  const m = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(v); if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  return isISO(v) ? v : null;
+}
+const toLaari = v => { if (v === "" || v == null || v === "-") return null; const n = Number(String(v).replace(/[, ]|MVR|Rf\.?/gi, "")); return isFinite(n) ? Math.round(n * 100) : NaN; };
+function parsePR09(book) {
   const out = [];
-  rows.slice(hr + 1).forEach((r, i) => {
-    const g = k => (k in map ? String(r[map[k]] ?? "").trim() : ""), line = hr + i + 2, errs = [];
-    if (!PCOLS.some(c => g(c[0]))) return;
-    const typ = PTYPES.find(t => t[1].toLowerCase() === g("type").toLowerCase() || t[0] === g("type").toLowerCase());
-    if (!g("item") && !g("itemDv")) errs.push("description is missing");
-    if (!typ) errs.push(g("type") ? `type "${g("type")}" is not Goods, Services or Works` : "type is missing");
-    let est = null; if (g("estimate")) { const v = Number(g("estimate").replace(/[, ]|MVR/gi, "")); if (!isFinite(v) || v < 0) errs.push(`estimated cost "${g("estimate")}" is not a number`); else est = Math.round(v * 100); }
-    let q = null; if (g("q")) { const m = /^q?\s*([1-4])$/i.exec(g("q")); m ? (q = Number(m[1])) : errs.push(`quarter "${g("q")}" should be Q1–Q4`); }
-    let qty = ""; if (g("qty")) { const v = Number(g("qty").replace(/,/g, "")); isFinite(v) ? (qty = v) : errs.push(`quantity "${g("qty")}" is not a number`); }
-    const st = g("status") ? PLSTAT.find(s => s.toLowerCase() === g("status").toLowerCase()) : "Planned"; if (!st) errs.push(`status "${g("status")}" is not one of ${PLSTAT.join(", ")}`);
-    let budgetId = null; if (g("budget")) { const b = budgetByCode(g("budget")); b ? (budgetId = b.id) : errs.push(`budget code "${g("budget")}" is not in the program`); }
-    out.push({ line, errs, v: { pid: g("pid"), item: g("item") || g("itemDv"), itemDv: g("itemDv"), type: typ ? typ[1] : "", qty, uom: g("uom"), estimate: est, q, method: g("method"), funding: g("funding"), budgetId, unit: g("unit"), status: st || "Planned", notes: g("notes") } });
+  book.forEach(sh => {
+    const type = sheetCat(sh); if (!type) return;
+    const h = sh.rows.findIndex(r => (r || []).some(c => /procurement (name|description)/i.test(c))); if (h < 0) return;
+    const H = sh.rows[h] || [], Sb = sh.rows[h + 1] || [], map = {}, years = [];
+    const width = Math.max(H.length, Sb.length);
+    for (let i = 0; i < width; i++) {
+      const a = lc(H[i]), b = lc(Sb[i]);
+      if (/^(s\.? ?no\.?|#)$/.test(a)) map.no = i; else if (a === "year") map.year = i; else if (/procurement no|reference no/.test(a)) map.procNo = i; else if (/procurement (name|description)/.test(a)) map.name = i; else if (/estimated amount/.test(a)) map.estimate = i; else if (/funded/.test(a)) map.funding = i; else if (/procurement method/.test(a)) map.method = i; else if (/remarks/.test(a)) map.remarks = i;
+      if (/^\d{4}$/.test(b) || /^\{y[123]\}$/.test(b)) years.push(i); else if (b === "total") map.total = i;
+      else if (/invitation for bids/.test(b)) map.d_ifb = i; else if (/bid opening/.test(b)) map.d_opening = i; else if (/evaluation report/.test(b)) map.d_eval = i; else if (/contract award/.test(b)) map.d_award = i; else if (/expression of interest/.test(b)) map.d_reoi = i; else if (/\(rfp\) issue|rfp issue/.test(b)) map.d_rfp_issue = i; else if (/rfp submission/.test(b)) map.d_rfp_sub = i; else if (/technical evaluation/.test(b)) map.d_tech = i; else if (/financial proposal/.test(b)) map.d_fin_open = i; else if (/combine/.test(b)) map.d_combined = i;
+    }
+    for (let r = h + 2; r < sh.rows.length; r++) {
+      const row = sh.rows[r] || [], g = k => (k in map ? String(row[map[k]] ?? "").trim() : ""), line = `${sh.name} row ${r + 1}`;
+      if (/^key$/i.test(g("no"))) break;
+      if (!g("name") && !g("procNo")) continue;
+      const errs = [], v = { type, procNo: g("procNo"), itemDv: g("name"), item: g("name"), funding: g("funding"), method: g("method"), remarks: g("remarks"), dates: {} };
+      v.estimate = toLaari(g("estimate")); Number.isNaN(v.estimate) && errs.push(`estimated amount "${g("estimate")}" is not a number`);
+      v.budget = years.slice(0, 3).map(i => toLaari(String(row[i] ?? "").trim())); v.budget.some(Number.isNaN) && errs.push("an allocated budget is not a number");
+      if (g("year") && !/^\d{4}$/.test(g("year"))) errs.push(`year "${g("year")}" is not a year`);
+      v.year = Number(g("year")) || null;
+      Object.keys(map).filter(k => k.startsWith("d_")).forEach(k => { const iso = toISO(g(k)); if (iso === null) errs.push(`date "${g(k)}" is not a date`); else if (iso) v.dates[k.slice(2)] = iso; });
+      if (!g("name")) errs.push("procurement name is missing");
+      out.push({ line, errs, v });
+    }
   });
   return out;
 }
-const PFIELDS = [["item", "Description"], ["itemDv", "Dhivehi"], ["type", "Type"], ["qty", "Qty"], ["uom", "Unit"], ["estimate", "Estimate"], ["q", "Quarter"], ["method", "Method"], ["funding", "Funding"], ["budgetId", "Budget"], ["unit", "Section"], ["status", "Status"], ["notes", "Notes"]];
-const pshow = (k, v) => (k === "estimate" ? (v == null ? "" : ht(v)) : k === "q" ? (v ? "Q" + v : "") : k === "budgetId" ? budgetCode(v) : v ?? "");
+const PFIELDS = [["procNo", "Procurement no."], ["itemDv", "Name"], ["type", "Category"], ["estimate", "Estimate"], ["funding", "Funded"], ["method", "Method"], ["budget", "Budget"], ["dates", "Planned dates"], ["remarks", "Remarks"]];
+const pshow = (k, v) => (k === "estimate" ? (v == null ? "" : ht(v)) : k === "budget" ? (v || []).map(b => (b == null ? "-" : ht(b))).join(" · ") : k === "dates" ? Object.entries(v || {}).map(([a, b]) => a + " " + fd(b)).join(", ") : v ?? "");
 async function planImport(yr) {
   try {
     need("projects");
     const f = await pickFile(".xlsx"); if (!f) return;
-    const rows = await K.XLREAD(await f.arrayBuffer()), parsed = parsePlanSheet(rows), cur = planYear(yr);
-    const ok = parsed.filter(r => !r.errs.length), bad = parsed.filter(r => r.errs.length);
-    const byPid = new Map(cur.map(x => [x.pid, x])), used = new Set(), NEW = [], CHG = [], SAME = [];
+    const book = await readBook(await toU8(f)), parsed = parsePR09(book);
+    if (!parsed.length) throw err("No plan rows found. Use the PR-09 template (Download template) — sheets Goods, Works, Non consultancy and Consultancy.");
+    const other = parsed.filter(r => r.v.year && String(r.v.year) !== String(yr));
+    if (other.length && !(await jt(`${other.length} row${other.length === 1 ? " is" : "s are"} for another year (${[...new Set(other.map(r => r.v.year))].join(", ")}). Import everything into ${yr}?`, "Continue"))) return;
+    const cur = planYear(yr), ok = parsed.filter(r => !r.errs.length), bad = parsed.filter(r => r.errs.length);
+    const used = new Set(), NEW = [], CHG = [], SAME = [];
     ok.forEach(r => {
-      let x = r.v.pid && byPid.get(r.v.pid), how = "id";
-      if (!x) { x = cur.find(c => !used.has(c) && String(c.item).trim().toLowerCase() === String(r.v.item).trim().toLowerCase() && (c.q || null) === (r.v.q || null)); how = "name"; }
-      if (x && !used.has(x)) { used.add(x); const diff = PFIELDS.filter(([k]) => String(pshow(k, x[k])) !== String(pshow(k, r.v[k]))); (diff.length ? CHG : SAME).push({ r, x, how, diff, confirm: o("input", { type: "checkbox", checked: true }) }); }
+      let x = r.v.procNo && cur.find(c => !used.has(c) && lc(c.procNo) === lc(r.v.procNo)), how = "no";
+      if (!x) { x = cur.find(c => !used.has(c) && c.type === r.v.type && lc(planName(c)) === lc(r.v.itemDv)); how = "name"; }
+      if (x) { used.add(x); const diff = PFIELDS.filter(([k]) => JSON.stringify(pshow(k, x[k])) !== JSON.stringify(pshow(k, r.v[k]))); (diff.length ? CHG : SAME).push({ r, x, how, diff, confirm: o("input", { type: "checkbox", checked: true }) }); }
       else NEW.push({ r });
     });
     const MISS = cur.filter(x => !used.has(x));
     const mode = o("div", { class: "pcc-modes" }, [["add", "Add new only", "Adds the new rows. Existing items are not changed."], ["update", "Add + update", "Adds new rows and applies the changes shown."], ["replace", "Replace whole year", `Makes the ${yr} plan exactly like the file: also removes items missing from it (items linked to a project are kept).`]].map(([v, l, h], i) => o("label", { class: "pcc-mode" }, o("input", { type: "radio", name: "pcc-mode", value: v, checked: i === 1 }), o("b", {}, l), o("span", { class: "muted small" }, h))));
     const sec = (t, cls, kids2) => o("details", { class: "pcc-diff " + cls, open: true }, o("summary", {}, t), kids2);
-    const res = await Mt(`Update plan ${yr} from ${f.name}`, [o("div", { class: "stats pcc-kpis" }, [["New rows", NEW.length, ""], ["Changed rows", CHG.length, CHG.length ? "warn" : ""], ["Unchanged", SAME.length, ""], ["Missing from file", MISS.length, ""], ["Errors", bad.length, bad.length ? "bad" : ""]].map(([k, v, c]) => o("div", { class: "stat " + c }, o("div", { class: "k" }, k), o("div", { class: "v" }, String(v))))),
-      bad.length ? sec(`Errors — ${bad.length} row${bad.length === 1 ? "" : "s"} will be skipped`, "bad", tbl(["Row", "Problem"], bad.map(b => o("tr", {}, o("td", {}, b.line), o("td", {}, b.errs.join("; ")))))) : null,
-      NEW.length ? sec(`New rows (${NEW.length})`, "new", tbl(["Row", "Description", "Type", "Quarter", "Estimate"], NEW.map(({ r }) => o("tr", {}, o("td", {}, r.line), o("td", { dir: "auto" }, r.v.item), o("td", {}, r.v.type), o("td", {}, pshow("q", r.v.q)), o("td", { class: "money" }, pshow("estimate", r.v.estimate)))))) : null,
-      CHG.length ? sec(`Changed rows (${CHG.length})`, "chg", tbl(["Row", "Item", "Changes (old → new)", "Same item?"], CHG.map(c => o("tr", {}, o("td", {}, c.r.line), o("td", { dir: "auto" }, c.x.pid, o("div", {}, c.x.item)), o("td", {}, c.diff.map(([k, l]) => o("div", { class: "small" }, o("b", {}, l + ": "), o("s", { class: "muted" }, String(pshow(k, c.x[k])) || "(empty)"), " → ", o("span", {}, String(pshow(k, c.r.v[k])) || "(empty)")))), o("td", {}, c.how === "name" ? o("label", { class: "pcc-chk small" }, c.confirm, " matched by name + quarter") : "by ID"))))) : null,
-      MISS.length ? sec(`In the program but not in the file (${MISS.length})`, "miss", tbl(["Plan ID", "Item", "Project"], MISS.map(x => o("tr", {}, o("td", {}, x.pid), o("td", { dir: "auto" }, x.item), o("td", {}, x.projectId ? "linked — kept" : ""))))) : null,
+    const byCat = PCATS.map(c => `${c[0]} ${parsed.filter(r => r.v.type === c[0]).length}`).join(" · ");
+    const res = await Mt(`Update plan ${yr} from ${f.name}`, [o("p", { class: "muted small" }, "Rows found by sheet: " + byCat), o("div", { class: "stats pcc-kpis" }, [["New rows", NEW.length, ""], ["Changed rows", CHG.length, CHG.length ? "warn" : ""], ["Unchanged", SAME.length, ""], ["Missing from file", MISS.length, ""], ["Errors", bad.length, bad.length ? "bad" : ""]].map(([k, v, c]) => o("div", { class: "stat " + c }, o("div", { class: "k" }, k), o("div", { class: "v" }, String(v))))),
+      bad.length ? sec(`Errors — ${bad.length} row${bad.length === 1 ? "" : "s"} will be skipped`, "bad", tbl(["Row", "Problem"], bad.map(b => o("tr", {}, o("td", { class: "nowrap" }, b.line), o("td", {}, b.errs.join("; ")))))) : null,
+      NEW.length ? sec(`New rows (${NEW.length})`, "new", tbl(["Row", "Procurement no.", "Name", "Category", "Estimate"], NEW.map(({ r }) => o("tr", {}, o("td", { class: "nowrap small" }, r.line), o("td", { class: "nowrap" }, r.v.procNo || "(new number)"), o("td", { dir: "auto" }, r.v.itemDv), o("td", {}, r.v.type), o("td", { class: "money" }, pshow("estimate", r.v.estimate)))))) : null,
+      CHG.length ? sec(`Changed rows (${CHG.length})`, "chg", tbl(["Row", "Item", "Changes (old → new)", "Same item?"], CHG.map(c => o("tr", {}, o("td", { class: "nowrap small" }, c.r.line), o("td", { dir: "auto" }, c.x.procNo || c.x.pid, o("div", {}, planName(c.x))), o("td", {}, c.diff.map(([k, l]) => o("div", { class: "small" }, o("b", {}, l + ": "), o("s", { class: "muted" }, String(pshow(k, c.x[k])) || "(empty)"), " → ", o("span", {}, String(pshow(k, c.r.v[k])) || "(empty)")))), o("td", {}, c.how === "name" ? o("label", { class: "pcc-chk small" }, c.confirm, " matched by name") : "by number"))))) : null,
+      MISS.length ? sec(`In the program but not in the file (${MISS.length})`, "miss", tbl(["Procurement no.", "Name", "Project"], MISS.map(x => o("tr", {}, o("td", {}, x.procNo || x.pid), o("td", { dir: "auto" }, planName(x)), o("td", {}, x.projectId ? "linked — kept" : ""))))) : null,
       o("h4", {}, "What should happen?"), mode], [{ label: "Cancel", value: !1 }, { label: "Apply", primary: !0, value: !0 }]);
     if (!res) return;
     const m = (mode.querySelector("input:checked") || {}).value || "update";
     save(() => {
       need("projects");
       const before = JSON.parse(JSON.stringify(cur)); let nAdd = 0, nUpd = 0, nDel = 0;
-      const add = v => { const id = Math.max(Z().nextPlanId || 1, ...(Z().plan || []).map(k => k.id + 1)); Z().nextPlanId = id + 1; Z().plan.push({ ...v, id, pid: v.pid && !(Z().plan || []).some(k => k.pid === v.pid) ? v.pid : nextPid(yr), year: Number(yr), projectId: null }); nAdd++; };
       Z().plan = Z().plan || [];
+      const add = v => { const id = Math.max(Z().nextPlanId || 1, ...Z().plan.map(k => k.id + 1)); Z().nextPlanId = id + 1; Z().plan.push({ status: "Planned", unit: "", notes: "", ...v, id, pid: nextPid(yr), year: Number(yr), procNo: v.procNo || nextProcNo(yr, v.type), projectId: null }); nAdd++; };
       NEW.forEach(({ r }) => add(r.v));
-      CHG.forEach(c => { if (c.how === "name" && !c.confirm.checked) { add(c.r.v); return; } if (m === "add") return; const { pid, ...rest } = c.r.v; void pid; Object.assign(c.x, rest); nUpd++; });
+      CHG.forEach(c => { if (c.how === "name" && !c.confirm.checked) { add(c.r.v); return; } if (m === "add") return; const { year, ...rest } = c.r.v; void year; Object.assign(c.x, rest, { q: null }); nUpd++; });
       if (m === "replace") { const gone = new Set(MISS.filter(x => !x.projectId)); nDel = gone.size; Z().plan = Z().plan.filter(x => !gone.has(x)); }
       Z().planImports.unshift({ id: uid(), year: Number(yr), at: Vt(), by: me(), file: f.name, mode: m, counts: { added: nAdd, updated: nUpd, removed: nDel, errors: bad.length }, before });
       Z().planImports = Z().planImports.slice(0, 30);
@@ -143,5 +201,24 @@ async function planImport(yr) {
 }
 async function planHistory(yr) {
   const H = Z().planImports.filter(h => String(h.year) === String(yr));
-  await Mt("Plan import history " + yr, [tbl(["When", "By", "File", "Mode", "Result", ""], H.map((h, i) => o("tr", {}, o("td", { class: "nowrap" }, fd(String(h.at).slice(0, 10)) + " " + String(h.at).slice(11, 16)), o("td", {}, h.by), o("td", {}, h.file), o("td", {}, { add: "Add new only", update: "Add + update", replace: "Replace whole year" }[h.mode]), o("td", { class: "small" }, `${h.counts.added} added, ${h.counts.updated} updated, ${h.counts.removed} removed, ${h.counts.errors} errors`), o("td", {}, can("projects") ? btn("Roll back", async () => { if (!(await jt(`Put the ${yr} plan back to how it was before this import${i ? ` (this also undoes the ${i} later import${i === 1 ? "" : "s"})` : ""}?`, "Roll back"))) return; save(() => { need("projects"); const keepLinked = planYear(yr).filter(x => x.projectId && !h.before.some(b => b.id === x.id)); Z().plan = (Z().plan || []).filter(x => String(x.year) !== String(yr)).concat(JSON.parse(JSON.stringify(h.before)), keepLinked); Z().planImports = Z().planImports.filter(x => !(String(x.year) === String(yr) && Z().planImports.indexOf(x) <= Z().planImports.indexOf(h))); document.querySelector(".modal-back") && document.querySelector(".modal-back").click(); }, "Plan rolled back"); }, "small") : null))))], [{ label: "Close", primary: !0, value: !1 }]);
+  await Mt("Plan import history " + yr, [tbl(["When", "By", "File", "Mode", "Result", ""], H.map((h, i) => o("tr", {}, o("td", { class: "nowrap" }, fd(String(h.at).slice(0, 10)) + " " + String(h.at).slice(11, 16)), o("td", {}, h.by), o("td", {}, h.file), o("td", {}, { add: "Add new only", update: "Add + update", replace: "Replace whole year" }[h.mode]), o("td", { class: "small" }, `${h.counts.added} added, ${h.counts.updated} updated, ${h.counts.removed} removed, ${h.counts.errors} errors`), o("td", {}, can("projects") ? btn("Roll back", async () => { if (!(await jt(`Put the ${yr} plan back to how it was before this import${i ? ` (this also undoes the ${i} later import${i === 1 ? "" : "s"})` : ""}?`, "Roll back"))) return; save(() => { need("projects"); const keepLinked = planYear(yr).filter(x => x.projectId && !h.before.some(b => b.id === x.id)); Z().plan = (Z().plan || []).filter(x => String(x.year) !== String(yr)).concat(JSON.parse(JSON.stringify(h.before)), keepLinked); const idx = Z().planImports.indexOf(h); Z().planImports = Z().planImports.filter((x, j) => !(String(x.year) === String(yr) && j <= idx)); document.querySelector(".modal-back") && document.querySelector(".modal-back").click(); }, "Plan rolled back"); }, "small") : null))))], [{ label: "Close", primary: !0, value: !1 }]);
+}
+
+// ---------- the council's PR-09 2026 plan, loaded once into the portal ----------
+function loadPR09(z) {
+  const D = window.__PCC_PR09 || [];
+  if (z.pr09Loaded || !D.length) return false;
+  z.plan = z.plan || [];
+  D.forEach(it => {
+    let x = z.plan.find(k => k.procNo && lc(k.procNo) === lc(it.procNo));
+    if (!x) { const id = Math.max(z.nextPlanId || 1, ...z.plan.map(k => k.id + 1)); z.nextPlanId = id + 1; x = { id, pid: nextPid(it.year), year: it.year, procNo: it.procNo, type: it.type, item: it.itemDv, itemDv: it.itemDv, estimate: it.estimate, funding: it.funding, method: it.method, budget: it.budget, dates: it.dates, remarks: it.remarks, status: "Planned", unit: "", notes: "", projectId: null, src: "PR-09" }; z.plan.push(x); }
+    if (!x.projectId && !PRJ().some(p => p.ref === it.procNo)) {
+      const id = Math.max(z.nextProjectId || 1, ...PRJ().map(k => k.id + 1)); z.nextProjectId = id + 1;
+      const p = { id, ref: it.procNo, ...planProjectFields(x), logs: [], cases: [], bidders: [], committees: { bid: [], eval: [] }, reports: [], checklist: defaultChecklist(x.type), letters: [], payments: [], eots: [], activity: [], retReports: [], dueOriginal: "", due: "", createdAt: Vt(), src: "PR-09" };
+      audit(p, "Created from the PR-09 procurement plan " + it.year, it.procNo);
+      PRJ().push(p); x.projectId = id;
+    }
+  });
+  z.pr09Loaded = Vt();
+  return true;
 }

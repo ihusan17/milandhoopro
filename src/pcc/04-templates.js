@@ -9,7 +9,7 @@ function seedDemoTemplates() {
   const meta = window.__PCC_DEMO_META || [], z = Z(); let ch = false;
   meta.forEach(m => {
     if (z.ptemplates.some(t => t.code === m.code)) return;
-    z.ptemplates.push({ id: uid(), code: m.code, nameEn: m.nameEn, nameDv: m.nameDv || "", group: m.group, type: m.type, perMember: m.perMember || "", inPack: !!m.inPack, order: m.order || 0, active: true, version: 1, versions: [{ v: 1, fileId: "demo:" + m.code, name: m.file, size: m.size || 0, at: Vt(), by: "Built-in demo", tags: m.tags || null, sheets: m.sheets || [] }], mapping: {}, custom: {}, cellMap: [], demo: true });
+    z.ptemplates.push({ id: uid(), code: m.code, nameEn: m.nameEn, nameDv: m.nameDv || "", group: m.group, type: m.type, perMember: m.perMember || "", inPack: !!m.inPack, order: m.order || 0, active: true, version: 1, versions: [{ v: 1, fileId: "demo:" + m.code, name: m.file, size: m.size || 0, at: Vt(), by: "Built-in demo", tags: m.tags || null, sheets: m.sheets || [] }], mapping: {}, custom: {}, cellMap: [], demo: !m.official });
     ch = true;
   });
   return ch;

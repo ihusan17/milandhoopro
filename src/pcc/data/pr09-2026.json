@@ -1,0 +1,462 @@
+[
+ {
+  "procNo": "PC-284/2026/G-01",
+  "year": 2026,
+  "type": "Goods",
+  "itemDv": "ސެޓްލައިޓް ޕޮއިންޓިން ސިސްޓަމެއް ގަތުން",
+  "estimate": 15000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   15000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-02-15",
+   "opening": "2026-02-25",
+   "award": "2026-03-04"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/G-02",
+  "year": 2026,
+  "type": "Goods",
+  "itemDv": "ކައުންސިލްގެ އިދާރާ މުވައްޒަފުން އަދި ކުނި ކޮށީ މުވައްޒަފުންގެ ޔުނީފޯމް ފެހުން",
+  "estimate": 2500000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   2500000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-02-15",
+   "opening": "2026-02-15",
+   "award": "2026-02-15"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/G-03",
+  "year": 2026,
+  "type": "Goods",
+  "itemDv": "މަގުތައް ފެހި ކުރުމުގެ ޕްރޮގުރާމަށް ގަސް ހޯދުން",
+  "estimate": 10000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   10000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-08-10",
+   "opening": "2026-08-19",
+   "award": "2026-08-26"
+  },
+  "remarks": "J-LCL"
+ },
+ {
+  "procNo": "PC-284/2026/G-04",
+  "year": 2026,
+  "type": "Goods",
+  "itemDv": "ހާއްސަ އެހީއަށް ބޭނުންވާ ކުދިންނަށް ގިފްޓްޕެކް ހެދުން",
+  "estimate": 2500000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   2500000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-09-21",
+   "opening": "2026-09-30",
+   "award": "2026-10-01"
+  },
+  "remarks": "J-LCL"
+ },
+ {
+  "procNo": "PC-284/2026/W-01",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "މިސްކިތް މަރާމާތުކުރުން",
+  "estimate": 25000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   25000000,
+   25000000,
+   25000000
+  ],
+  "dates": {
+   "ifb": "2026-01-19",
+   "opening": "2026-01-28",
+   "award": "2026-01-29"
+  },
+  "remarks": "J-LCL"
+ },
+ {
+  "procNo": "PC-284/2026/W-02",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ވަގުތީ ހިނަވާގެ ތަރައްޤީ ކުރުން",
+  "estimate": 5000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   5000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-01-19",
+   "opening": "2026-01-28",
+   "award": "2026-01-29"
+  },
+  "remarks": "J-LCL"
+ },
+ {
+  "procNo": "PC-284/2026/W-03",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "މަގުބައްތި ތަކަށް ބޭނުންވާ ޑީ-ބޯޑް ހަރުކުރުން",
+  "estimate": 25000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   25000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-01-22",
+   "opening": "2026-02-02",
+   "award": "2026-02-05"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/W-04",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ކައުންސިލް އިދާރާގެ ބެލުމުގެ ދަށުގައިވާ މަގުބައްތިތައް ބެލެހެއްޓުން",
+  "estimate": 20000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   20000000,
+   20000000,
+   20000000
+  ],
+  "dates": {
+   "ifb": "2026-02-02",
+   "opening": "2026-02-11",
+   "award": "2026-02-16"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/W-05",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ސިކުނޑިކުޅި ތަރައްޤީ ކުރުން",
+  "estimate": 40000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   40000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-03-26",
+   "opening": "2026-04-06",
+   "award": "2026-04-09"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/W-06",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "މަސް ކަނޑާއަށި ތަރައްޤީ ކުރުން",
+  "estimate": 25000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   25000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-03-26",
+   "opening": "2026-04-06",
+   "award": "2026-04-09"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/W-07",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ސަހަރާ ހިޔާ ގަނޑު  /  ލައިޓް",
+  "estimate": 15000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   15000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-04-16",
+   "opening": "2026-04-27",
+   "award": "2026-04-30"
+  },
+  "remarks": "J-LCL"
+ },
+ {
+  "procNo": "PC-284/2026/W-08",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ކައުންސިލް އިދާރާ މަރާމާތުކުރުމާއި ލޭންޑް ސްކޭޕިންގ",
+  "estimate": 50000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   50000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-04-16",
+   "opening": "2026-04-27",
+   "award": "2026-04-30"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/W-09",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ސަރުދާރު މައިޒާން މަރާމާތުކުރުން",
+  "estimate": 5000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   5000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-05-10",
+   "opening": "2026-05-19",
+   "award": "2026-05-24"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/W-10",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "އިޖުތިމާޢީ ސަރަޙައްދުތައް ކުނިކަހާ ސާފުކުރުން",
+  "estimate": 64006800,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   64006800,
+   64006800,
+   64006800
+  ],
+  "dates": {
+   "ifb": "2026-05-10",
+   "opening": "2026-05-19",
+   "award": "2026-05-24"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/W-11",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ޕާރކް ފޭސް 3 ތަރައްޤީ ކުރުން",
+  "estimate": 115000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   115000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-06-11",
+   "opening": "2026-06-23",
+   "award": "2026-06-28"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/W-12",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ހޭންޑްބޯލް ކޯޓް ތަރައްޤީ ކުރުން",
+  "estimate": 70000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   70000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-07-09",
+   "opening": "2026-07-20",
+   "award": "2026-07-23"
+  },
+  "remarks": "J-LCL"
+ },
+ {
+  "procNo": "PC-284/2026/W-13",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ބަނދަރުމަތި ތަރައްޤީ ކުރުން",
+  "estimate": 30000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   30000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-09-14",
+   "opening": "2026-09-23",
+   "award": "2026-09-28"
+  },
+  "remarks": "J-LCL"
+ },
+ {
+  "procNo": "PC-284/2026/W-14",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ބަނދަރާއި ރަށުތެރޭގައި ކެމެރާ ހަރުކުރުން",
+  "estimate": 20000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   20000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-10-15",
+   "opening": "2026-10-26",
+   "award": "2026-10-29"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/W-15",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ކުނިކޮށްޓައް ބޭނުންވާ ސާމާނު ހޯދުމާއި މަރާމާތު",
+  "estimate": 15000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   15000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-11-08",
+   "opening": "2026-11-18",
+   "award": "2026-11-23"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/W-16",
+  "year": 2026,
+  "type": "Works",
+  "itemDv": "ރަންފަސް ބީޗް ތަރައްޤީ ކުރުން",
+  "estimate": 20000000,
+  "funding": "Domestic",
+  "method": "NCB",
+  "budget": [
+   20000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-11-08",
+   "opening": "2026-11-18",
+   "award": "2026-11-23"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/NC-01",
+  "year": 2026,
+  "type": "Non-consultancy",
+  "itemDv": "ޙާފިޒުންގެ ހުރުމާއި ކެއުން ހަމަޖެއްސުން",
+  "estimate": 5000000,
+  "funding": "",
+  "method": "NCB",
+  "budget": [
+   5000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-01-25",
+   "opening": "2026-02-03",
+   "eval": "2026-02-08"
+  },
+  "remarks": "J-LCL"
+ },
+ {
+  "procNo": "PC-284/2026/NC-02",
+  "year": 2026,
+  "type": "Non-consultancy",
+  "itemDv": "ކައުންސިލްގެ ޚިދުމަތްތައް ޑިޖިޓަލައިޒްކުރުން",
+  "estimate": 15000000,
+  "funding": "",
+  "method": "NCB",
+  "budget": [
+   15000000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-03-26",
+   "opening": "2026-03-06",
+   "eval": "2026-03-09"
+  },
+  "remarks": "J-GOM"
+ },
+ {
+  "procNo": "PC-284/2026/NC-03",
+  "year": 2026,
+  "type": "Non-consultancy",
+  "itemDv": "ކައުންސިލް ކަޕް ރެފްރީން ހޯދުން",
+  "estimate": 6500000,
+  "funding": "",
+  "method": "NCB",
+  "budget": [
+   6500000,
+   null,
+   null
+  ],
+  "dates": {
+   "ifb": "2026-08-09",
+   "opening": "2026-08-18",
+   "eval": "2026-08-23"
+  },
+  "remarks": "J-LCL"
+ }
+]

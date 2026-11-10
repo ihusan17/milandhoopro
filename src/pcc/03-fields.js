@@ -9,7 +9,7 @@ const MONEYF = [["estimated_cost", "Estimated cost", "estimate"], ["contract_val
 const FIELDS = [
   ["Project", [
     ["ref_no", "Project reference", "MC-PRJ/2026/004"], ["project_name", "Project name (main)", "Harbour wall repair"], ["project_name_dv", "Project name in Dhivehi", "ބަނދަރުގެ ފާރު މަރާމާތުކުރުން"], ["project_name_en", "Project name in English", "Harbour wall repair"],
-    ["type", "Goods / Services / Works", "Works"], ["type_dv", "Type in Dhivehi", "މަސައްކަތް"], ["category", "Category", "Construction"], ["location", "Location / island", "Sh. Milandhoo"], ["description", "Scope (English)", ""], ["description_dv", "Scope (Dhivehi)", ""],
+    ["type", "Goods / Works / Non-consultancy / Consultancy", "Works"], ["type_dv", "Type in Dhivehi", "މަސައްކަތް"], ["category", "Category", "Construction"], ["location", "Location / island", "Sh. Milandhoo"], ["description", "Scope (English)", ""], ["description_dv", "Scope (Dhivehi)", ""],
     ["status", "Status", "Ongoing"], ["pr_number", "PR number", "181/2026"], ["advertisement_no", "Advertisement number", "(IUL)351-PRO/2026/12"], ["budget_code", "Budget code", "CC2026"], ["budget_name", "Budget line description", ""], ["unit", "Unit / section", "Procurement"],
     ["duration_days", "Contract duration (days)", "120"], ["extension_days", "Extensions granted (days)", "15"], ["percent_complete", "Physical progress %", "65"], ["days_left", "Days left to the due date", "42"], ["retention_percent", "Retention %", "5"], ["retention_period_days", "Retention period (days)", "365"],
     ["project_officer", "Project officer", "Ahmed Ali"], ["project_officer_designation", "Officer designation", ""], ["year", "Current year", "2026"],
@@ -30,13 +30,13 @@ const FIELDS = [
     ["{#payments}…{/payments}", "no, kind, amount, status, invoice_no, memo_ref, paid_date", ""],
     ["{#checklist}…{/checklist}", "no, item, done (✓), date, by", ""],
     ["{#logs}…{/logs}", "date, activity, workers, materials, weather, issues, by", ""],
-    ["{#items}…{/items}", "Procurement plan export: no, plan_id, description, description_dv, type, quantity, unit, estimate, quarter, method, funding, budget_code, section, status", ""],
+    ["{#goods}…{/goods}", "PR-09 plan (also {#works}, {#noncons}, {#cons}): no, year, proc_no, name, name_en, estimate, funded, method, budget_y1, budget_y2, budget_y3, d_ifb, d_opening, d_eval, d_award, d_reoi, d_rfp_issue, d_rfp_sub, d_tech, d_fin_open, d_combined, remarks; outside the loops: year, y1, y2, y3", ""],
   ]],
 ];
 const FIELDKEYS = () => FIELDS.flatMap(g => g[1].map(f => f[0])).filter(k => !k.startsWith("{"));
 
 const ROLEDV = { Chair: "ރައީސް", Member: "މެމްބަރު", Secretary: "ސެކްރެޓަރީ" };
-const TYPEDV = { Goods: "ސާމާނު", Services: "ޚިދުމަތް", Works: "މަސައްކަތް" };
+const TYPEDV = Object.fromEntries(PTYPES.map(t => [t[1], t[2]]));
 const rf = v => (v == null || v === "" ? null : Math.round(Number(v)) / 100);
 
 function vendorOf(p) { return (Z().vendors || []).find(v => v.name === p.vendor) || {}; }

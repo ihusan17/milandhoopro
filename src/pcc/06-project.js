@@ -8,7 +8,7 @@ function recalcDue(p) {
   if (p.done && p.retentionDays) p.retentionEnd = dAdd(p.done, Number(p.retentionDays));
 }
 
-async function PEDIT2(p, type, pre) {
+async function PEDIT2(p, type, pre, ref) {
   const v = p || pre || {}, staff = (K.STF() || []).filter(s => s.status !== "Disabled");
   const f = {
     nameEn: I(v.nameEn || (v.nameDv ? "" : v.name) || ""), nameDv: DVI(v.nameDv), type: S(PTYPES.map(x => x[1]), v.type || type || "Works"), category: I(v.category, { placeholder: "e.g. Construction, IT" }), status: S(PST, v.status || "Planned"), location: I(v.location || "", { placeholder: "e.g. Sh. Milandhoo harbour" }),
@@ -50,7 +50,7 @@ async function PEDIT2(p, type, pre) {
     need("projects");
     let q = p;
     if (q) { const ch = Object.keys(out).filter(k => String(q[k] ?? "") !== String(out[k] ?? "")); Object.assign(q, out); recalcDue(q); audit(q, "Project details changed", ch.join(", ")); }
-    else { const id = Math.max(Z().nextProjectId || 1, ...PRJ().map(x => x.id + 1)); Z().nextProjectId = id + 1; q = { id, ...out, logs: [], cases: [], bidders: [], committees: { bid: [], eval: [] }, reports: [], checklist: defaultChecklist(out.type), letters: [], payments: [], eots: [], activity: [], retReports: [], createdAt: Vt() }; q.ref = refNext("project", q); recalcDue(q); audit(q, "Project created", q.ref); PRJ().push(q); setTimeout(() => nav("#/project/" + id), 0); }
+    else { const id = Math.max(Z().nextProjectId || 1, ...PRJ().map(x => x.id + 1)); Z().nextProjectId = id + 1; q = { id, ...out, logs: [], cases: [], bidders: [], committees: { bid: [], eval: [] }, reports: [], checklist: defaultChecklist(out.type), letters: [], payments: [], eots: [], activity: [], retReports: [], createdAt: Vt() }; q.ref = ref && !PRJ().some(x => x.ref === ref) ? ref : refNext("project", q); recalcDue(q); audit(q, "Project created", q.ref); PRJ().push(q); setTimeout(() => nav("#/project/" + id), 0); }
     (Z().plan || []).forEach(x => { if (x.projectId === q.id && x.id !== q.planId) x.projectId = null; if (x.id === q.planId) { x.projectId = q.id; x.status === "Planned" && (x.status = "In progress"); } });
   }, p ? "Project saved" : "Project created");
 }
