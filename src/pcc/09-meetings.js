@@ -27,6 +27,8 @@ const mItems = m => (Array.isArray(m.items) && m.items.length ? m.items : (m.pro
 const mSummary = m => { const c = {}; mItems(m).forEach(it => { c[it.type] = (c[it.type] || 0) + 1; }); return Object.entries(c).map(([t, n]) => [t, n, mtype(m.kind, t)]); };
 const mChip = (k, t) => o("span", { class: "pcc-mt t-" + t }, mtype(k, t)[1]);
 const mYear = m => String(m.date || m.at || "").slice(0, 4);
+// Variation amount: a minus sign (- or −) means an omission.
+const signedMoney = (el, name) => { const v = String(el.value || "").trim(), neg = /^[-−]/.test(v), x = yn(v.replace(/^[-−+]\s*/, "")); if (x == null || Number.isNaN(x)) throw err(name + ": type an amount like 12500.00 (or -12500.00 for an omission)"); return neg ? -x : x; };
 const mSeq = m => Number(((m.ref || "").match(/(\d+)\D*$/) || [])[1] || 0);
 
 async function meetingEdit(m, k, p, pre) {
@@ -44,12 +46,12 @@ async function meetingEdit(m, k, p, pre) {
     const L2 = [...items.values()];
     agenda.replaceChildren(...(L2.length ? L2.map((it, i) => {
       const x = prj(it.projectId), ty = S(MTYPES[k].map(t => [t[0], t[1]]), it.type), note = I(it.note || "", { dir: "auto", placeholder: "Decision / subject (optional)" });
-      const amt = MI(it.amount == null ? "" : it.amount), days = I(it.days ?? "", { inputmode: "numeric", placeholder: "days", style: { width: "80px" } });
+      const amt = MI(it.amount == null ? "" : it.amount < 0 ? -it.amount : it.amount), days = I(it.days ?? "", { inputmode: "numeric", placeholder: "days", style: { width: "80px" } });
       const va = o("span", { class: "pcc-ag-f" }, o("label", {}, "Amount (MVR, − for omission)"), amt), vd = o("span", { class: "pcc-ag-f" }, o("label", {}, "Extra days"), days), vbox = o("div", { class: "pcc-ag-var" }, va, vd);
       const sync = () => { vbox.style.display = ty.value === "variation" || ty.value === "extension" ? "" : "none"; va.style.display = ty.value === "variation" ? "" : "none"; };
       ty.onchange = () => { it.type = ty.value; sync(); }; note.oninput = () => { it.note = note.value; };
       amt.oninput = () => { it._amt = amt.value; }; days.oninput = () => { it.days = days.value.trim() === "" ? null : Number(days.value) || 0; };
-      it._amtEl = amt;
+      it.amount < 0 && (amt.value = "-" + amt.value); it._amtEl = amt;
       const row = o("div", { class: "pcc-ag-row" }, o("b", { class: "pcc-ag-n" }, i + 1), o("div", { class: "pcc-ag-p" }, o("b", {}, x.ref), o("div", { dir: "auto", class: "small" }, x.nameDv || x.name)), ty, note, vbox);
       sync(); return row;
     }) : [o("p", { class: "muted small" }, "Tick the projects decided at this meeting.")]));
@@ -62,13 +64,13 @@ async function meetingEdit(m, k, p, pre) {
   drawList(); drawAgenda(); drawSrc();
   const ok = await form((m ? "Edit " : "New ") + KLAB[k] + " meeting", [["Meeting date", date], ["Meeting no.", ref], ["Starts", time], ["Ends", end], o("div", { style: { gridColumn: "1/-1" } }, L("Place", place), o("label", { style: { marginTop: "10px" } }, "Projects at this meeting"), q, list, o("label", { style: { marginTop: "10px" } }, "Agenda — what each project is for"), agenda, L("Committee members", src), mprev, L("Notes", notes))], {
     check: () => { if (!date.value) throw err("Choose the meeting date"); if (items.size < 1) throw err("Tick at least one project"); if (!mrows.length) throw err(`Add ${KLAB[k]} members first`);
-      items.forEach(it => { if (it.type === "variation" && it._amtEl && it._amtEl.value.trim()) parseMoney(it._amtEl, "Variation amount"); }); },
+      items.forEach(it => { if (it.type === "variation" && it._amtEl && it._amtEl.value.trim()) signedMoney(it._amtEl, "Variation amount"); }); },
   });
   if (!ok) return;
   save(() => {
     need("pdocs");
     const members = mrows.map(({ x, lf }) => ({ ...JSON.parse(JSON.stringify(x)), ...lf.read() }));
-    const its = [...items.values()].filter(it => prj(it.projectId)).map(it => { const r = { projectId: it.projectId, type: it.type }; it.note && it.note.trim() && (r.note = it.note.trim()); if (it.type === "variation" && it._amtEl && it._amtEl.value.trim()) r.amount = parseMoney(it._amtEl, "Variation amount"); else if (it.type === "variation" && it.amount != null && !it._amtEl) r.amount = it.amount; if ((it.type === "variation" || it.type === "extension") && it.days != null) r.days = it.days; return r; });
+    const its = [...items.values()].filter(it => prj(it.projectId)).map(it => { const r = { projectId: it.projectId, type: it.type }; it.note && it.note.trim() && (r.note = it.note.trim()); if (it.type === "variation" && it._amtEl && it._amtEl.value.trim()) r.amount = signedMoney(it._amtEl, "Variation amount"); else if (it.type === "variation" && it.amount != null && !it._amtEl) r.amount = it.amount; if ((it.type === "variation" || it.type === "extension") && it.days != null) r.days = it.days; return r; });
     const o2 = { kind: k, date: date.value, time: time.value.trim(), start: time.value.trim(), end: end.value.trim(), place: place.value.trim(), notes: notes.value.trim(), items: its, projectIds: its.map(it => it.projectId), members };
     let mm = m;
     if (m) Object.assign(m, o2, ref.value.trim() ? { ref: ref.value.trim() } : {}); else { mm = { id: uid(), ref: ref.value.trim() || refNext(kind, null, date.value.slice(0, 4)), ...o2, by: me(), at: Vt() }; MEETS().push(mm); }
@@ -122,8 +124,8 @@ function MEETPAGE(n, [y, kf]) {
       tbl(["Committee", "Meeting no.", "Date", "Projects", ""], loose.sort((a, b) => String(a.date).localeCompare(String(b.date))).map(g => o("tr", {}, o("td", {}, KLAB[g.k]), o("td", {}, g.no), o("td", {}, fd(g.date)), o("td", {}, g.P.map(p => o("div", { class: "small" }, p.ref, " ", o("span", { dir: "auto" }, p.nameDv || p.name)))),
         o("td", {}, ed ? btn("Add to register", () => save(() => { need("pdocs"); const pre = g.k === "eval" ? "evalMeeting" : "bidMeeting", src = g.P.find(p => (p.committees[g.k] || []).length); const mm = { id: uid(), ref: g.no, kind: g.k, date: g.date || "", time: g.time, start: g.time, end: g.P[0][pre + "End"] || "", place: "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", notes: "", items: g.P.map(p => ({ projectId: p.id, type: g.k === "eval" ? "evaluation" : "award" })), projectIds: g.P.map(p => p.id), members: JSON.parse(JSON.stringify(src ? src.committees[g.k] : STAND()[g.k] || [])), by: me(), at: Vt() }; MEETS().push(mm); g.P.forEach(p => { p[pre + "Id"] = mm.id; }); }, "Added to the register"), "small") : null))))) : null);
 }
-function meetingData(m) {
-  const P = mItems(m).map(it => prj(it.projectId)).filter(Boolean), first = P[0];
+function meetingData(m, focus) {
+  const P = mItems(m).map(it => prj(it.projectId)).filter(Boolean), first = focus || P[0];
   const mem = m.members.map(memberData);
   const d = dataFor(first, { meeting_ref: m.ref || "", meeting_date: Xt(m.date), meeting_date_dv: dvDate(m.date), meeting_date_en: enDate(m.date), meeting_date_hijri: hijri(m.date), meeting_time: m.time || "", meeting_place: m.place || "", meeting_notes: m.notes || "", project_count: P.length, letter_date: Xt(m.date), letter_date_dv: dvDate(m.date), letter_date_hijri: hijri(m.date) });
   d[m.kind + "_members"] = mem; numberedMembers(d, m.kind, mem);
@@ -136,6 +138,8 @@ function meetingData(m) {
       contract_after_variation: it.amount != null && p.contract != null ? ht(p.contract + it.amount) : "" };
     return r; });
   ["award", "variation", "extension", "evaluation"].forEach(t => { const L3 = d.projects.filter(r => r.item_code === t || (t === "evaluation" && r.item_code === "reeval")).map((r, i) => ({ ...r, no: i + 1 })); d[t === "evaluation" ? "evaluations" : t + "s"] = L3; d[t + "_count"] = L3.length; });
+  const mine = d.projects.find(r => r.ref_no === first.ref) || d.projects[P.indexOf(first)] || {};
+  ["item_type", "item_type_dv", "item_code", "item_note", "is_award", "is_variation", "is_extension", "variation_amount", "variation_kind_dv", "variation_amount_words_dv", "variation_days", "contract_after_variation"].forEach(k => { k in mine && (d[k] = mine[k]); });
   d.agenda_dv = mSummary(m).map(([t, c, ty]) => c + " " + ty[2]).join("، "); d.agenda = mSummary(m).map(([t, c, ty]) => c + " " + ty[1]).join(", "); d.meeting_seq = String(mSeq(m) || ""); d.meeting_year = mYear(m);
   d.meeting_date_dv_ymd = dvYMD(m.date); d[m.kind + "_meeting_date_dv_ymd"] = dvYMD(m.date); d.meeting_date_dv_dmy = dvDMY(m.date); d[m.kind + "_meeting_date_dv_dmy"] = dvDMY(m.date); d[m.kind + "_meeting_date_dv_both"] = dvBoth(m.date);
   return addYMD(d);
@@ -147,23 +151,42 @@ async function meetingGen(m) {
     const P = mItems(m).map(it => prj(it.projectId)).filter(Boolean);
     if (!P.length) throw err("The meeting has no projects");
     const group = KLAB[m.kind], cands = [];
-    for (const t of TPL().filter(x => x.active !== false && x.group === group)) if (await meetingTpl(t)) cands.push(t);
-    if (!cands.length) throw err(`No meeting template in the ${group} group. A meeting template repeats a block per project between {#projects} and {/projects}.`);
-    const cbs = cands.map(() => o("input", { type: "checkbox", checked: true }));
+    // Every template of the committee's group. A template that repeats a block per project
+    // ({#projects}…{/projects}) makes one document for the whole meeting; any other template
+    // (your own one-project formats) makes one document per project, filled with this meeting's
+    // number, date, time and members.
+    for (const t of TPL().filter(x => x.active !== false && x.group === group).sort((a, b) => (a.order || 0) - (b.order || 0))) cands.push({ t, multi: await meetingTpl(t), own: !String((curVer(t) || {}).fileId || "").startsWith("demo:") });
+    if (!cands.length) throw err(`No templates in the ${group} group yet — upload them under Templates.`);
+    const hasOwn = cands.some(c => c.own);
+    const cbs = cands.map(c => o("input", { type: "checkbox", checked: hasOwn ? c.own : c.multi }));
     // Members with their leave status: leave marked on any of the meeting's projects is picked up here too.
     const same = (a, b) => (a.nameDv && a.nameDv === b.nameDv) || (a.name && a.name === b.name);
     const mrows = m.members.map(x => { const src = P.map(p => (p.committees[m.kind] || []).find(y => same(x, y))).find(y => y && y.onLeave); return { x, lf: leaveFields(src && !x.onLeave ? { onLeave: true, leaveText: src.leaveText } : x) }; });
-    if (!(await Mt(`Documents for the ${group} meeting of ${fd(m.date)}`, [o("p", {}, `${P.length} projects: ${P.map(p => p.ref).join(", ")}`), o("h4", {}, "Members at this meeting"), o("div", { class: "pcc-mmem" }, mrows.map(({ x, lf }) => o("div", { class: "pcc-mrow2" }, o("span", { dir: "auto", lang: x.nameDv ? "dv" : null }, (x.nameDv || x.name) + " · " + (x.role || "Member")), lf.el))), o("h4", {}, "Documents"), ...cands.map((t, i) => o("label", { class: "pcc-chk", style: { display: "flex", margin: "6px 0" } }, cbs[i], o("span", { class: "pcc-fmt f-" + t.type }, t.type === "xlsx" ? "XLSX" : "DOCX"), o("span", {}, o("b", {}, t.code), " ", t.nameEn, t.perMember ? o("span", { class: "muted small" }, " · one per member present") : null)))], [{ label: "Cancel", value: !1 }, { label: "Generate", primary: !0, value: !0 }]))) return;
+    const how = c => c.multi ? "one for the whole meeting" : P.length > 1 ? `one per project (${P.length})` : "for this project";
+    if (!(await Mt(`Documents for ${m.ref || "the meeting"} · ${fd(m.date)}`, [o("p", {}, `${P.length} project${P.length === 1 ? "" : "s"}: ${P.map(p => p.ref).join(", ")}`), o("h4", {}, "Members at this meeting"), o("div", { class: "pcc-mmem" }, mrows.map(({ x, lf }) => o("div", { class: "pcc-mrow2" }, o("span", { dir: "auto", lang: x.nameDv ? "dv" : null }, (x.nameDv || x.name) + " · " + (x.role || "Member")), lf.el))),
+      o("h4", {}, "Documents"), o("p", { class: "muted small" }, "Your uploaded templates are ticked. Each is filled with this meeting's number, date, time and members. A template with {#projects}…{/projects} makes one document listing every project; other templates make one document per project."),
+      ...cands.map((c, i) => o("label", { class: "pcc-chk", style: { display: "flex", margin: "6px 0", gap: "8px", alignItems: "center" } }, cbs[i], o("span", { class: "pcc-fmt f-" + c.t.type }, c.t.type === "xlsx" ? "XLSX" : "DOCX"), o("span", {}, o("b", {}, c.t.code), " ", c.t.nameEn, o("span", { class: "muted small" }, " · " + how(c) + (c.t.perMember ? " · one per member present" : "") + (c.own ? "" : " · built-in sample format")))))], [{ label: "Cancel", value: !1 }, { label: "Generate", primary: !0, value: !0 }]))) return;
     m.members = mrows.map(({ x, lf }) => Object.assign(x, lf.read()));
-    const data = meetingData(m), all = [];
-    for (const [i, t] of cands.entries()) {
+    const all = [];
+    for (const [i, c] of cands.entries()) {
       if (!cbs[i].checked) continue;
-      const out = await generateDocs(P[0], t, applyMap(t, data, t.custom || {}), { key: "meet" + m.id, ref: m.ref });
-      out.forEach(f => {
-        f.doc.meetingId = m.id; f.doc.title = `${f.doc.title} — meeting ${fd(m.date)} (${P.length} projects)`;
-        P.slice(1).forEach(p => { Z().pdocs.push({ ...f.doc, id: uid(), projectId: p.id, snapshot: {} }); audit(p, "Generated " + t.code + " for the meeting of " + fd(m.date)); });
-      });
-      all.push(...out);
+      const t = c.t;
+      if (c.multi) {
+        const data = meetingData(m);
+        const out = await generateDocs(P[0], t, applyMap(t, data, t.custom || {}), { key: "meet" + m.id, ref: m.ref });
+        out.forEach(f => {
+          f.doc.meetingId = m.id; f.doc.title = `${f.doc.title} — meeting ${fd(m.date)} (${P.length} projects)`;
+          P.slice(1).forEach(p => { Z().pdocs.push({ ...f.doc, id: uid(), projectId: p.id, snapshot: {} }); audit(p, "Generated " + t.code + " for the meeting of " + fd(m.date)); });
+        });
+        all.push(...out);
+      } else {
+        for (const p of P) {
+          const data = meetingData(m, p);
+          const out = await generateDocs(p, t, applyMap(t, data, t.custom || {}), { key: "meet" + m.id, ref: m.ref });
+          out.forEach(f => { f.doc.meetingId = m.id; f.doc.title = `${f.doc.title} — meeting ${fd(m.date)}`; });
+          all.push(...out);
+        }
+      }
     }
     if (!all.length) return;
     K.Qt();
