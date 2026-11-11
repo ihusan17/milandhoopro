@@ -459,7 +459,7 @@ input.pcc-req-miss{border-color:#dc2626!important;box-shadow:0 0 0 2px color-mix
 html.pcc-ui-dv .pcm-row .pcm-tags{order:3}
 html.pcc-ui-dv .pcm-row .pcm-who{align-items:flex-start}
 .pcc-bulk{overflow-x:auto;border:1px solid var(--line);border-radius:10px}.pcc-bulk .t td{padding:4px 6px}.pcc-bulk .t input[type=text],.pcc-bulk .t input:not([type]){min-height:34px;padding:4px 8px}
-.modal:has(.pcc-bulk){width:min(1100px,96vw);max-width:96vw}
+.modal:has(.pcc-bulk){width:98vw;max-width:98vw;max-height:96vh;height:96vh;display:flex;flex-direction:column}.modal:has(.pcc-bulk) .modal-body{flex:1;overflow:auto}.modal:has(.pcc-bulk) .pcc-bulk{max-height:calc(96vh - 290px);overflow:auto}
 .pcc-bulk .t th{font-size:11px;white-space:normal}
 .pcc-bulk td:last-child .btn{padding:2px 8px;min-height:28px}.pcc-bulk .t th,.pcc-bulk .t td{padding-inline:5px}
 /* evaluation criteria */
@@ -474,3 +474,7 @@ html.pcc-ui-dv .pcm-row .pcm-who{align-items:flex-start}
 td.pcc-pt{text-align:center}
 .pcc-evd-w{display:inline-flex;gap:6px;align-items:center}.pcc-evd{width:auto;min-height:34px;padding:4px 8px;font-size:13px}
 .pcc-crit-need{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,#d97706 10%,var(--card));border:1px solid color-mix(in srgb,#d97706 35%,var(--line));color:#92400e;font-weight:600;margin-top:8px}
+.pcc-bulk thead th{position:sticky;top:0;z-index:1;background:var(--card);vertical-align:top}
+.pcc-bk-c{text-align:center}.pcc-bk-h{min-width:84px;width:84px;text-align:center}.pcc-bk-h>div:first-child{margin-bottom:4px}
+.pcc-bk-doc{width:100%;min-width:78px;font-size:11px;line-height:1.25;font-weight:700;padding:3px 4px!important;min-height:36px!important;height:38px;resize:none;text-align:center;border-style:dashed!important;overflow:hidden;white-space:normal}
+.pcc-bk-hr{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:4px}.pcc-bk-x{border:0;background:none;color:#b91c1c;cursor:pointer;font-size:12px;padding:0 4px}

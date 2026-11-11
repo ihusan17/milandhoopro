@@ -452,3 +452,9 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
   - Total score and rank are not asked; they are worked out from the criteria.
   - This applies to *Add bid*, the *Add several bids* table, the paste order and the Excel template.
   - Example: Price · Duration · Experience gives Bidder, Bid amount, Days, Validity and Experience (docs).
+- **Bids table (add / update).** *Add several bids* (or *Bids table* once bids exist) opens a full-screen table listing the existing bids, which can be changed, plus empty rows for new ones.
+  - **Document columns:** one tick-box column per document. Click a heading to rename it (e.g. in Dhivehi), ✕ removes the column and *+ Document* adds one. The list is kept per project and existing ticks follow a renamed heading.
+  - **Tick / untick all:** a box under each heading (and under *Responsive*) ticks or unticks the whole column.
+  - **Update, not duplicate:** importing an Excel file or pasting rows updates a bidder already in the table (matched by name) instead of adding them twice; the message says how many were added and updated. A row removed with ✕ is removed when saved.
+  - **Excel template:** has one Yes/No column per document, using the project's names, and is read back the same way.
+  - **Checklist PDF** (in the table and on Bids received): opens a printable landscape checklist with the council header, project and Iulaan number. It shows each bidder's amount, ✓ / ✗ for every document, the count (e.g. 7 / 9), responsive or not and remarks, with the Evaluation Committee's names to sign. Choose "Save as PDF" in the print window.
