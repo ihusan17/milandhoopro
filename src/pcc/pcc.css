@@ -429,9 +429,9 @@ input.pcc-req-miss{border-color:#dc2626!important;box-shadow:0 0 0 2px color-mix
 
 @media (max-width:700px){.pnv-a .pnv-grp{width:100%}.pnv-a .pnv-seg{flex-wrap:nowrap;overflow-x:auto}}
 .pnv.pcc-subnav{flex-wrap:wrap;overflow:visible;padding-bottom:0}
-/* ===== Summary detail cards: trial designs (localStorage mq-psum = A | B | C) ===== */
+/* ===== Summary detail cards (tiles) ===== */
 .ps-names{margin:2px 0 14px}.ps-dv{font-size:22px;font-weight:700;line-height:1.5}.ps-en{color:var(--muted,#64748b);font-weight:600}
-.ps-a h4,.ps-b h4,.ps-c h4{margin:16px 0 8px}
+.ps-a h4{margin:16px 0 8px}
 .ps-money b small,.ps-kpis b small,.ps-r b small{font-size:11px;font-weight:600;color:var(--muted,#64748b)}
 /* A — tiles */
 .ps-a .ps-money{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
@@ -441,25 +441,5 @@ input.pcc-req-miss{border-color:#dc2626!important;box-shadow:0 0 0 2px color-mix
 .ps-a .ps-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
 .ps-a .ps-tile{padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);min-width:0}.ps-a .ps-tile b{display:block;margin-top:3px;font-size:14px;overflow-wrap:anywhere}
 .ps-a .ps-tile.ref b{color:var(--brand)}
-/* B — sheet */
-.ps-b .ps-sec{margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.ps-b .ps-sh{display:flex;align-items:center;gap:8px;padding:8px 12px;font-weight:700;font-size:13px;background:color-mix(in srgb,var(--brand) 8%,var(--card));color:var(--brand)}
-.ps-b .ps-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-.ps-b .ps-r{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center;padding:9px 12px;border-top:1px solid var(--line)}
-.ps-b .ps-r:nth-child(4n+3),.ps-b .ps-r:nth-child(4n+4){background:color-mix(in srgb,var(--fg) 2.5%,transparent)}
-.ps-b .ps-r>span{color:var(--muted,#64748b);font-size:13px}.ps-b .ps-r b{font-weight:650;overflow-wrap:anywhere}
-.ps-b>.ps-rows{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:10px}.ps-b>.ps-rows .ps-r:nth-child(-n+2){border-top:0}
-@media (max-width:800px){.ps-b .ps-rows{grid-template-columns:1fr}}
-/* C — hero */
-.ps-c .ps-hero{display:flex;gap:18px;align-items:center;justify-content:space-between;padding:4px 0 14px;border-bottom:1px dashed var(--line)}
-.ps-c .ps-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ps-c .ps-chip{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--fg) 6%,transparent)}.ps-c .ps-chip.ref{background:var(--brand);color:#fff}
-.ps-c .ps-ring{--v:0;flex:none;width:92px;height:92px;border-radius:50%;display:grid;place-content:center;text-align:center;background:radial-gradient(closest-side,var(--card) 76%,transparent 77%),conic-gradient(var(--brand) calc(var(--v)*1%),color-mix(in srgb,var(--fg) 8%,transparent) 0)}
-.ps-c .ps-ring b{font-size:20px}.ps-c .ps-ring span{font-size:10.5px;color:var(--muted,#64748b)}
-.ps-c .ps-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0;margin:14px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.ps-c .ps-k{padding:12px 14px}.ps-c .ps-k+.ps-k{border-inline-start:1px solid var(--line)}.ps-c .ps-k>span{display:block;font-size:12px;color:var(--muted,#64748b)}.ps-c .ps-k b{font-size:18px}
-.ps-c .ps-k.k1 b{color:var(--brand)}.ps-c .ps-k.k3 b{color:#b45309}
-.ps-c .ps-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px 18px}
-.ps-c .ps-f{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.ps-c .ps-f>span{color:var(--muted,#64748b);font-size:13px}.ps-c .ps-f b{text-align:end}
-.ps-b .ps-rows.one{grid-template-columns:1fr}.ps-b .ps-rows.one .ps-r:nth-child(odd){background:color-mix(in srgb,var(--fg) 2.5%,transparent)}.ps-b .ps-rows.one .ps-r:nth-child(even){background:none}
-.ps-c .ps-facts.one{grid-template-columns:1fr}
-.split.stack>div>.card.ps-a,.split.stack>div>.card.ps-b,.split.stack>div>.card.ps-c{margin-bottom:16px}
+.split.stack>div>.card.ps-a{margin-bottom:16px}
+.ps-a .ps-tiles.wide{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
