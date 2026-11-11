@@ -116,6 +116,7 @@ const DV_DICT = {
   "Committee": "ކޮމިޓީ", "New Bid Committee meeting for these": "މިއަށް ބިޑް ކޮމިޓީގެ ބައްދަލުވުމެއް", "Agenda — what each project is for": "އެޖެންޑާ — ކޮންމެ މަޝްރޫޢެއް ހިމެނީ ކީއްވެގެން", "Projects at this meeting": "މި ބައްދަލުވުމުގައި ހިމެނޭ މަޝްރޫޢުތައް", "Starts": "ފަށާ ގަޑި", "Ends": "ނިމޭ ގަޑި", "Extra days": "އިތުރު ދުވަސް",
   "Workspace": "މަސައްކަތުގެ ބައިތައް",
   "Project work": "މަޝްރޫޢުގެ މަސައްކަތް", "Records": "ރެކޯޑުތައް",
+  "No meeting recorded yet": "އަދި ބައްދަލުވުމެއް ރެކޯޑުކޮށްފައެއް ނުވޭ", "Chair": "ރައީސް", "On leave": "ޗުއްޓީގައި",
   "Page not found": "ޞަފްޙާ ނުފެނުނު", "ledger balanced": "ލެޖަރ ބެލެންސް",
   "Just now": "މިހާރު", "Plan": "ޕްލޭން", "Project reference": "މަޝްރޫޢުގެ ނަންބަރު", "Language": "ބަސް", "Translations": "ތަރުޖަމާ"
 };
@@ -124,7 +125,7 @@ const DV_MONS = { Jan: "ޖަނަވަރީ", Feb: "ފެބްރުއަރީ", Mar: "މ
 // Patterns for texts that carry a value (the value is kept as it is).
 const DV_PAT = [
   [/^Edit project (.+)$/, "މަޝްރޫޢު ބަދަލުކުރޭ $1"], [/^Good (morning|afternoon|evening), (.+)$/, (m, a, n) => ({ morning: "ބާއްޖަވެރި ހެނދުނެއް", afternoon: "ބާއްޖަވެރި މެންދުރެއް", evening: "ބާއްޖަވެރި ހަވީރެއް" })[a] + "، " + n],
-  [/^(\d+)% done$/, "$1% ނިމިފައި"],
+  [/^(\d+)% done$/, "$1% ނިމިފައި"], [/^(\d+) members?$/, "$1 މެންބަރުން"],
   [/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat), (\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})$/, (m, w, d, mo, y) => DV_DAYS[w] + "، " + d + " " + DV_MONS[mo] + " " + y],
   [/^(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})$/, (m, d, mo, y) => d + " " + DV_MONS[mo] + " " + y],
   [/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})(: .*)?$/, (m, mo, y, rest) => DV_MONS[mo] + " " + y + (rest || "")],

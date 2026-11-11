@@ -132,24 +132,21 @@ function psumPeriod(p, V) {
 function psumBox(V, title, ic, L, extra) {
   return o("div", { class: "card ps-a" }, o("h3", {}, title), o("div", { class: "ps-tiles" + (ic === "meet" ? " wide" : "") }, L.map(([l, v]) => o("div", { class: "ps-tile" }, o("span", {}, l), o("b", { dir: "auto" }, has(v) ? v : o("i", { class: "muted" }, "Not set"))))), ...(extra || []));
 }
-// Committees card: trial designs (localStorage "mq-pcom" = A | B | C).
-function commView(p, V) {
+// Committees card: numbered member lists (names aligned to the right, Chair / On leave tags to the left)
+// and the project's meeting from the Committee meetings register.
+function commView(p) {
   const K2 = [["bid", "Bid Committee", "#0f766e"], ["eval", "Evaluation Committee", "#7c3aed"]];
   const meetOf = k => MEETS().filter(m => m.kind === k && mItems(m).some(it => it.projectId === p.id)).sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
-  const ini = m => { const t = noTitle(m.nameDv || m.name || "?").trim(); return /[\u0780-\u07A5]/.test(t[0] || "") ? t.slice(0, /[\u07A6-\u07B0]/.test(t[1] || "") ? 2 : 1) : (t[0] || "?").toUpperCase(); };
-  const meetLine = (k, m) => m ? o("div", { class: "pcm-meet" }, nvIco("meet"), o("b", {}, m.ref), mChip(k, (mItems(m).find(it => it.projectId === p.id) || {}).type), o("span", {}, fd(m.date) + ((m.start || m.time) ? " · " + (m.start || m.time) : ""))) : o("div", { class: "pcm-meet none" }, nvIco("meet"), o("span", {}, "No meeting recorded yet"));
+  const meetLine = (k, m) => m ? o("div", { class: "pcm-meet" }, nvIco("meet"), o("b", { dir: "ltr" }, m.ref), mChip(k, (mItems(m).find(it => it.projectId === p.id) || {}).type), o("span", {}, fd(m.date) + ((m.start || m.time) ? " · " + (m.start || m.time) : ""))) : o("div", { class: "pcm-meet none" }, nvIco("meet"), o("span", {}, "No meeting recorded yet"));
   const role = m => /chair/i.test(m.role || "") ? o("span", { class: "pcm-role" }, "Chair") : null;
   const leave = m => m.onLeave ? o("span", { class: "pcm-leave" }, "On leave") : null;
   const col = ([k, t, c]) => {
     const L = (p.committees[k] || []).slice().sort((a, b) => (/chair/i.test(b.role || "") - /chair/i.test(a.role || ""))), mt = meetOf(k);
     const head = o("div", { class: "pcm-h" }, o("span", { class: "pcm-dot" }), o("b", {}, t), o("span", { class: "pcm-n" }, L.length + " members"));
-    let body;
-    if (V === "A") body = o("div", { class: "pcm-chips" }, L.map(m => o("span", { class: "pcm-chip" + (m.onLeave ? " off" : "") }, o("i", {}, ini(m)), o("span", { dir: "rtl", lang: "dv" }, noTitle(m.nameDv || m.name || "")), role(m))));
-    else if (V === "B") body = o("div", { class: "pcm-list" }, L.map((m, i) => o("div", { class: "pcm-row" }, o("span", { class: "pcm-no" }, i + 1), o("div", { class: "pcm-who" }, o("b", { dir: "rtl", lang: "dv" }, noTitle(m.nameDv || m.name || "")), o("span", { dir: "rtl", lang: "dv" }, m.designationDv || m.designation || "")), role(m), leave(m))));
-    else body = o("div", { class: "pcm-stack" }, o("div", { class: "pcm-avs" }, L.map(m => o("i", { title: noTitle(m.nameDv || m.name || "") + (m.designationDv ? " — " + m.designationDv : ""), class: /chair/i.test(m.role || "") ? "ch" : "" }, ini(m)))), o("div", { class: "pcm-names", dir: "rtl", lang: "dv" }, L.map(m => noTitle(m.nameDv || m.name || "")).join("، ")));
+    const body = o("div", { class: "pcm-list" }, L.map((m, i) => o("div", { class: "pcm-row" }, o("span", { class: "pcm-no" }, i + 1), o("div", { class: "pcm-who" }, o("b", { dir: "rtl", lang: "dv" }, noTitle(m.nameDv || m.name || "")), o("span", { dir: "rtl", lang: "dv" }, m.designationDv || m.designation || "")), o("span", { class: "pcm-tags" }, role(m), leave(m)))));
     const el = o("div", { class: "pcm-col" }, head, L.length ? body : o("p", { class: "muted small" }, "No members set."), meetLine(k, mt)); el.style.setProperty("--c", c); return el;
   };
-  return o("div", { class: "card pcm pcm-" + V }, o("h3", {}, "Committees"), o("div", { class: "pcm-cols" }, K2.map(col)));
+  return o("div", { class: "card pcm" }, o("h3", {}, "Committees"), o("div", { class: "pcm-cols" }, K2.map(col)));
 }
 function tSummary(n, p) {
   const b = p.budgetId ? K.Kt(Z(), p.budgetId) : null, v = (Z().vendors || []).find(x => x.name === p.vendor) || {};
@@ -162,7 +159,7 @@ function tSummary(n, p) {
     (() => { const V = "A", pt = payTotals(p), mn = k => (p.committees[k] || []).map(m => m.nameDv || m.name).filter(Boolean).join("، ");
       return o("div", {}, psumBox(V, "Contractor", "cons", [["Name", p.vendor], ["Contact person", v.contact], ["Phone", v.phone], ["E-mail", v.email], ["Address", v.address], ["Registration no.", v.reg]], p.vendor && v.name ? [o("a", { href: "#/vendor/" + encodeURIComponent(v.name), class: "small" }, "Open vendor →")] : []),
         psumBox(V, "Payments", "payments", [["Contract value", psMoney(p.contract)], ["Paid (net)", psMoney(pt.totalPaid)], ["Balance", psMoney(pt.balance)], ["Retention held", psMoney(pt.retentionHeld)]]),
-        (() => { let cv = ""; try { cv = localStorage.getItem("mq-pcom") || ""; } catch (e) {} return cv ? commView(p, cv) : psumBox(V, "Committees", "meet", [["Bid Committee", o("span", { dir: "rtl", lang: "dv" }, mn("bid"))], ["Evaluation Committee", o("span", { dir: "rtl", lang: "dv" }, mn("eval"))]]); })(),
+        commView(p),
         card("Purchase cases", cs.length ? tbl(["Request", "Status"], cs.map(c => o("tr", {}, o("td", {}, o("a", { href: "#/case/" + c.id }, K.Gt(c) || "Draft #" + c.id)), o("td", {}, K.sn(c.status))))) : o("p", { class: "muted" }, "No purchase cases linked."), linkCase(p))); })()));
   n.append(bidsCard(p));
 }
