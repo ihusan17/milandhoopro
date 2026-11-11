@@ -387,3 +387,7 @@ a.pcc-mi:hover{box-shadow:0 4px 14px -8px rgba(0,0,0,.3)}
 .pcc-planstate{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center}.pcc-ps-k{display:flex;align-items:center;gap:8px}.pcc-ps-k b{font-size:18px}
 .pcc-ps-list{flex-basis:100%}.pcc-ps-list summary{cursor:pointer;font-weight:700;margin-bottom:8px}
 tr.pcc-cancelled td{opacity:.6}tr.pcc-cancelled td:nth-child(3) b,tr.pcc-cancelled td:nth-child(3) div{text-decoration:line-through}
+.pcc-mi>.grow{flex:1 1 auto;min-width:0}.pcc-mi .pcc-mname{text-align:start}
+.pcc-mchips{flex:0 0 auto;margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.pcc-mchips>*{white-space:nowrap}
+.pcc-mi .grow>.small{overflow:hidden;text-overflow:ellipsis}.pcc-mi .pcc-mref{white-space:nowrap}
