@@ -334,7 +334,7 @@ async function bidsBulk(p) {
       const M = best.map, DQ = /disqualif|ޑިސްކޮލިފައި|ޑިސްކޮލިފައިކުރެވިފައި|not responsive|rejected/i;
       const data0 = best.sh.rows.slice(best.start).filter(r => r && isText(r[M.vendor]));
       // Document columns: headings whose values are Yes / No. Their names become this table's documents.
-      const YN = /^(yes|no|y|n|✓|✗|x|ހުށަހަޅާފައި|ނެތް)$/i, ynCols = best.H.map((h, c) => c).filter(c => best.H[c] && data0.some(r => String(r[c] ?? "").trim()) && data0.every(r => { const v = String(r[c] ?? "").trim(); return !v || YN.test(v); }));
+      const YN = /^(yes|no|y|n|true|false|✓|✔|✗|✘|x|☑|☐|ހުށަހަޅާފައި|ނެތް|އާނ|ނޫން)$/i, ynCols = best.H.map((h, c) => c).filter(c => best.H[c] && data0.some(r => String(r[c] ?? "").trim()) && data0.every(r => { const v = String(r[c] ?? "").trim(); return !v || YN.test(v); }));
       Object.keys(M).forEach(k => { if (!["responsive", "alldocs", "vendor"].includes(k) && ynCols.includes(M[k])) delete M[k]; });
       const docCols = ynCols.filter(c => c !== M.responsive && c !== M.alldocs && c !== M.vendor && !/responsive|qualified|all documents/i.test(best.H[c]));
       if (docCols.length) {
@@ -344,7 +344,7 @@ async function bidsBulk(p) {
       const data = best.sh.rows.slice(best.start).filter(r => r && isText(r[M.vendor]) && !/^(grand )?total|^sub ?total|^ޖުމްލަ|^ޖުމުލަ|^ނަން:|^ސޮއި/i.test(String(r[M.vendor]).trim()) && (/\d/.test(String(r[M.amount] || "")) || r.some(v => DQ.test(String(v || "")))));
       if (!data.length) throw err("No bidder rows found under the headings in sheet " + best.sh.name);
       const numv = (v, d = 2) => { const t = String(v ?? "").replace(/^(MVR|Rf\.?|ރ\.)\s*/i, "").replace(/,/g, "").trim(); return t !== "" && !Number.isNaN(Number(t)) ? String(Math.round(Number(t) * 10 ** d) / 10 ** d) : t; };
-      const yes = (r, k) => k in M ? (s2 => s2 !== "" && !/^(no|n|false|0|✗|x|ނޫން)$/i.test(s2))(String(r[M[k]] ?? "").trim()) : null;
+      const yes = (r, k) => k in M ? (s2 => s2 !== "" && !/^(no|n|false|0|✗|✘|x|☐|ނޫން|ނެތް)$/i.test(s2))(String(r[M[k]] ?? "").trim()) : null;
       const list = data.map(r => { const dq = r.some(v => DQ.test(String(v || ""))), vals = Object.fromEntries(COLS.map(([k]) => [k, k in M ? (k === "vendor" || k === "validity" ? String(r[M[k]] ?? "").trim() : numv(r[M[k]])) : ""]));
         "responsive" in M && String(r[M.responsive] ?? "").trim() && (vals.responsive = yes(r, "responsive")); dq && (vals.responsive = false); vals.responsive === false && (vals.dq = true);
         "alldocs" in M && (vals.alldocs = !!yes(r, "alldocs"));

@@ -468,3 +468,4 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
   - A heading ending in `*` is compulsory, and the downloaded template already marks compulsory documents with `*`.
   - A file without Yes/No document columns (e.g. the Bid Evaluation Form) keeps the current list.
 - **Compulsory documents are set in the template only.** The bids table no longer has a *Compulsory* tick. A heading ending in `*` in the uploaded Excel template makes that document compulsory, shown with ★ and a red top line, and Responsive follows those documents.
+- **Tick values in Excel.** Document and Responsive cells can be Yes / No, TRUE / FALSE (including Excel's tick-box cells), Y / N or ✓ / ✗. Empty, No, FALSE or ✗ means not submitted.

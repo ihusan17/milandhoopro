@@ -179,6 +179,7 @@ function cellText(c, ss) {
   const t = c.getAttribute("t"), v = kid(c, "v");
   if (t === "s") return ss[Number(v && v.textContent)] ?? "";
   if (t === "inlineStr") { const is = kid(c, "is"); return is ? [...is.getElementsByTagName("t")].map(x => x.textContent).join("") : ""; }
+  if (t === "b") return v ? (v.textContent === "1" ? "TRUE" : "FALSE") : ""; // Excel TRUE / FALSE (also its tick boxes)
   return v ? v.textContent : "";
 }
 function setCell(doc, c, val) {
