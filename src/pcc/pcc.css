@@ -458,3 +458,7 @@ input.pcc-req-miss{border-color:#dc2626!important;box-shadow:0 0 0 2px color-mix
 .pcm-row .pcm-no{order:0}.pcm-row .pcm-tags{order:1;display:flex;gap:4px;flex:none}.pcm-row .pcm-who{order:2;text-align:right;align-items:flex-end}
 html.pcc-ui-dv .pcm-row .pcm-tags{order:3}
 html.pcc-ui-dv .pcm-row .pcm-who{align-items:flex-start}
+.pcc-bulk{overflow-x:auto;border:1px solid var(--line);border-radius:10px}.pcc-bulk .t td{padding:4px 6px}.pcc-bulk .t input[type=text],.pcc-bulk .t input:not([type]){min-height:34px;padding:4px 8px}
+.modal:has(.pcc-bulk){width:min(1100px,96vw);max-width:96vw}
+.pcc-bulk .t th{font-size:11px;white-space:normal}
+.pcc-bulk td:last-child .btn{padding:2px 8px;min-height:28px}.pcc-bulk .t th,.pcc-bulk .t td{padding-inline:5px}
