@@ -1,6 +1,6 @@
 // Project form and the project detail page (banner, sub-tab bar, Summary, Plan, Bid, Evaluation).
 
-const SUBTABS = [["summary", "Summary"], ["plan", "Procurement plan"], ["bid", "Bid Documents"], ["eval", "Evaluation"], ["logs", "Work Logs"], ["progress", "Progress Reports"], ["checklist", "Checklist"], ["completion", "Completion"], ["retention", "Retention"], ["letters", "Letters & Memos"], ["payments", "Payments"], ["files", "Files"], ["activity", "Activity"]];
+const SUBTABS = [["summary", "Summary"], ["bid", "Bid Documents"], ["eval", "Evaluation"], ["logs", "Work Logs"], ["progress", "Progress Reports"], ["checklist", "Checklist"], ["completion", "Completion"], ["retention", "Retention"], ["letters", "Letters & Memos"], ["payments", "Payments"], ["files", "Files"], ["activity", "Activity"]];
 const extDays = p => (p.eots || []).reduce((a, e) => a + (Number(e.days) || 0), 0);
 function recalcDue(p) {
   if (p.handover && p.duration && !p.dueManual) p.dueOriginal = dAdd(p.handover, Number(p.duration));
@@ -85,7 +85,7 @@ function PDETAIL(n, [id, tab = "summary"]) {
       o("div", { class: "pcc-b-acts" }, can("projects") ? btn("Edit", () => PEDIT2(p), "small") : null, btn("Print summary", () => printSummary(p), "small"), K.LV5() ? btn("Delete", async () => { if (await jt(`Delete ${p.ref} and everything recorded under it? Generated files stay in storage but are no longer listed.`, "Delete")) save(() => { need("projects"); Z().projects = PRJ().filter(x => x !== p); (Z().plan || []).forEach(x => { x.projectId === p.id && (x.projectId = null); }); Z().pdocs = Z().pdocs.filter(x => x.projectId !== p.id); Z().pfiles = Z().pfiles.filter(x => x.projectId !== p.id); nav("#/projects"); }, "Project deleted"); }, "small danger") : null))),
     o("div", { class: "pills pcc-subnav", role: "tablist" }, SUBTABS.map(([k, l]) => o("a", { href: `#/project/${p.id}/${k}`, class: "pill" + (k === tab ? " on" : ""), role: "tab", "aria-selected": String(k === tab) }, l, tabCount(p, k)))));
   const body = o("div", { class: "pcc-tab" }); n.append(body);
-  const fn = { summary: tSummary, plan: tPlan, bid: tBid, eval: tEval, logs: tLogs, progress: tProgress, checklist: tChecklist, completion: tCompletion, retention: tRetention, letters: tLetters, payments: tPayments, files: tFiles, activity: tActivity }[tab] || tSummary;
+  const fn = { summary: tSummary, bid: tBid, eval: tEval, logs: tLogs, progress: tProgress, checklist: tChecklist, completion: tCompletion, retention: tRetention, letters: tLetters, payments: tPayments, files: tFiles, activity: tActivity }[tab] || tSummary;
   fn(body, p);
   requestAnimationFrame(() => { const on = n.querySelector(".pcc-subnav .on"); on && on.scrollIntoView({ block: "nearest", inline: "center" }); });
   void w;
