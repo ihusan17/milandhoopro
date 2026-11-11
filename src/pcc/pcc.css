@@ -295,3 +295,33 @@ html.pcc-ui-dv table.t th,html.pcc-ui-dv table.t td,html.pcc-ui-dv .tb-me .nm,ht
 
 html.pcc-ui-dv header#top nav .grp .car{transform:rotate(90deg)}
 html.pcc-ui-dv header#top nav .grp.open .car{transform:rotate(0)}
+/* ===== Page banner designs (html[data-banner]) ===== */
+html[data-banner] .screen>h1:first-child::before,html[data-banner] .screen>.row:first-child h1::before{content:attr(data-eyebrow);display:block;font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;opacity:.75}
+/* 1: soft card with accent bar */
+html[data-banner="1"] .screen>h1:first-child,html[data-banner="1"] .screen>.row:first-child{background:var(--card,#fff)!important;color:var(--fg)!important;border:1px solid var(--line);border-inline-start:6px solid var(--brand);box-shadow:0 10px 30px -22px rgba(8,86,75,.6)!important;padding:22px 26px!important}
+html[data-banner="1"] .screen>h1:first-child,html[data-banner="1"] .screen>.row:first-child h1{color:var(--brand-d,#0a5c4f)!important;font-size:28px}
+html[data-banner="1"] .screen>h1:first-child::after,html[data-banner="1"] .screen>.row:first-child::after{left:auto;right:-30px;inset-inline-end:-30px;inset-inline-start:auto;top:-40px;width:260px;height:180px;background:radial-gradient(circle,color-mix(in srgb,var(--brand) 22%,transparent) 1.5px,transparent 2px) 0 0/16px 16px!important;opacity:.8;-webkit-mask:linear-gradient(to left,#000,transparent);mask:linear-gradient(to left,#000,transparent)}
+html[dir=rtl][data-banner="1"] .screen>h1:first-child::after,html[dir=rtl][data-banner="1"] .screen>.row:first-child::after{right:auto;left:-30px;-webkit-mask:linear-gradient(to right,#000,transparent);mask:linear-gradient(to right,#000,transparent)}
+html[data-banner="1"] .screen>.row:first-child .muted,html[data-banner="1"] .screen>.row:first-child p{color:var(--muted)!important}
+html[data-banner="1"] .screen>.row:first-child .btn{background:var(--card)!important;color:var(--fg)!important;border:1px solid var(--line)!important;box-shadow:none!important}
+html[data-banner="1"] .screen>.row:first-child .btn.primary,html[data-banner="1"] .screen>.row:first-child .btn:last-child{background:linear-gradient(135deg,var(--brand),var(--brand-d,#0a5c4f))!important;color:#fff!important;border-color:transparent!important;box-shadow:0 8px 18px -10px color-mix(in srgb,var(--brand) 80%,transparent)!important}
+html[data-banner="1"] .screen>.row:first-child .datechip{background:color-mix(in srgb,var(--brand) 8%,transparent)!important;color:var(--brand-d,#0a5c4f)!important;border-color:color-mix(in srgb,var(--brand) 25%,transparent)!important}
+html[data-banner="1"] .screen>.row:first-child .datechip svg{color:var(--brand)!important}
+/* 2: deep green with waves */
+html[data-banner="2"] .screen>h1:first-child,html[data-banner="2"] .screen>.row:first-child{background:linear-gradient(120deg,#053B33 0%,#08564B 45%,#0B7F6D 100%)!important;padding:30px 32px 38px!important;border-radius:20px!important}
+html[data-banner="2"] .screen>h1:first-child::after,html[data-banner="2"] .screen>.row:first-child::after{display:block!important;left:0!important;right:0!important;top:auto!important;bottom:0;width:100%!important;height:70px!important;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 70' preserveAspectRatio='none'%3E%3Cpath d='M0 40 C200 10 400 70 600 40 S1000 10 1200 40 V70 H0Z' fill='%2314b8a6' fill-opacity='.28'/%3E%3Cpath d='M0 52 C250 30 450 72 700 50 S1050 30 1200 52 V70 H0Z' fill='%2390e1ce' fill-opacity='.22'/%3E%3C/svg%3E") bottom/100% 100% no-repeat!important;-webkit-mask:none;mask:none}
+html[data-banner="2"] .screen>h1:first-child,html[data-banner="2"] .screen>.row:first-child h1{font-size:30px;padding-bottom:10px;background:linear-gradient(90deg,#5eead4,#5eead4) left bottom/56px 3px no-repeat}
+html[dir=rtl][data-banner="2"] .screen>.row:first-child h1,html[dir=rtl][data-banner="2"] .screen>h1:first-child{background-position:right bottom}
+html[data-banner="2"] .screen>.row:first-child .btn{background:rgba(255,255,255,.1)!important;color:#fff!important;border:1px solid rgba(255,255,255,.35)!important;box-shadow:none!important;backdrop-filter:blur(6px)}
+html[data-banner="2"] .screen>.row:first-child .btn:hover{background:rgba(255,255,255,.2)!important}
+html[data-banner="2"] .screen>.row:first-child .btn:last-child{background:#fff!important;color:#064E3B!important;border-color:#fff!important}
+/* 3: light mint with large title and gradient line */
+html[data-banner="3"] .screen>h1:first-child,html[data-banner="3"] .screen>.row:first-child{background:linear-gradient(135deg,#ECF8F4 0%,#DDF3EC 60%,#C9EDE2 100%)!important;color:var(--fg)!important;box-shadow:none!important;border:1px solid #CDEAE1;padding:24px 28px 28px!important}
+html[data-banner="3"] .screen>h1:first-child::before,html[data-banner="3"] .screen>.row:first-child h1::before{display:table;padding:3px 10px;border-radius:999px;background:#fff;color:var(--brand);opacity:1;font-size:11px;margin-bottom:10px;box-shadow:0 2px 6px -2px rgba(8,86,75,.25)}
+html[data-banner="3"] .screen>h1:first-child,html[data-banner="3"] .screen>.row:first-child h1{color:#063F37!important;font-size:30px;font-weight:800}
+html[data-banner="3"] .screen>h1:first-child::after,html[data-banner="3"] .screen>.row:first-child::after{display:block!important;left:0!important;right:0!important;top:auto!important;bottom:0;width:100%!important;height:4px!important;background:linear-gradient(90deg,var(--brand),#14b8a6,#90E1CE)!important;-webkit-mask:none;mask:none}
+html[data-banner="3"] .screen>.row:first-child .muted,html[data-banner="3"] .screen>.row:first-child p{color:#3d5a53!important}
+html[data-banner="3"] .screen>.row:first-child .btn{background:#fff!important;color:#064E3B!important;border:1px solid #BFE3D8!important;box-shadow:0 2px 8px -4px rgba(8,86,75,.35)!important}
+html[data-banner="3"] .screen>.row:first-child .btn:last-child{background:var(--brand)!important;color:#fff!important;border-color:var(--brand)!important}
+html[data-banner="3"] .screen>.row:first-child .datechip{background:#fff!important;color:#064E3B!important;border-color:#BFE3D8!important}
+html[data-banner="3"] .screen>.row:first-child .datechip svg{color:var(--brand)!important}
