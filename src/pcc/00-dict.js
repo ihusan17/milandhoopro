@@ -109,6 +109,8 @@ const DV_DICT = {
   "Dates": "ތާރީޚުތައް", "Construction": "އިމާރާތްކުރުން", "Not in a template yet": "އަދި ޓެމްޕްލޭޓެއްގައި ނެތް", "Quantity": "އަދަދު", "Units and their ICPCF code": "ޔުނިޓްތަކާއި އެއިގެ ICPCF ކޯޑު",
   "case": "މައްސަލަ", "Search ref no., name (English or Dhivehi), contractor, place": "ނަންބަރު، ނަން (އިނގިރޭސި ނުވަތަ ދިވެހި)، ފަރާތް، ތަން ހޯދާ", "Remarks": "ރިމާކްސް", "(optional)": "(ބޭނުންނަމަ)",
   "Jan": "ޖަނަވަރީ", "Feb": "ފެބްރުއަރީ", "Mar": "މާރިޗު", "Apr": "އޭޕްރިލް", "May": "މެއި", "Jun": "ޖޫން", "Jul": "ޖުލައި", "Aug": "އޮގަސްޓު", "Sep": "ސެޕްޓެމްބަރު", "Oct": "އޮކްޓޯބަރު", "Nov": "ނޮވެމްބަރު", "Dec": "ޑިސެމްބަރު", "cases": "މައްސަލަ",
+  "Monthly": "މަހުން މަހަށް", "Iulaan date": "އިޢުލާން ތާރީޚު", "Planned (PR-09)": "ރާވާފައި (PR-09)", "No procurement this month.": "މި މަހު އެއްވެސް ޕްރޮކިއުމަންޓެއް ނެތް.", "Not started": "އަދި ނުފެށޭ",
+  "January": "ޖަނަވަރީ", "February": "ފެބްރުއަރީ", "March": "މާރިޗު", "April": "އޭޕްރިލް", "June": "ޖޫން", "July": "ޖުލައި", "August": "އޮގަސްޓު", "September": "ސެޕްޓެމްބަރު", "October": "އޮކްޓޯބަރު", "November": "ނޮވެމްބަރު", "December": "ޑިސެމްބަރު",
   "Page not found": "ޞަފްޙާ ނުފެނުނު", "ledger balanced": "ލެޖަރ ބެލެންސް",
   "Just now": "މިހާރު", "Plan": "ޕްލޭން", "Project reference": "މަޝްރޫޢުގެ ނަންބަރު", "Language": "ބަސް", "Translations": "ތަރުޖަމާ"
 };

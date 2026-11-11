@@ -298,3 +298,7 @@ Templates › **Delete** on the template's row (administrators). Documents alrea
 Press **ދިވެހި** in the top bar (next to the dark-mode button) to switch the portal to Dhivehi: right-to-left layout, Faruma for Thaana. Press **EN** to switch back. The choice is remembered on each device.
 
 Only interface wording is translated — names, amounts, reference numbers and anything staff type stay exactly as entered. Administrators can correct wording or translate texts still in English: Projects › Templates › **Translations** (or right-click the language button). Texts seen in English on the pages you opened are listed first; corrections are shared with all staff.
+
+## Monthly view (procurements by Iulaan month)
+
+Projects › **Monthly** (next to Table / Cards / Timeline) groups every procurement by the month its Iulaan is announced, January to December, with ‹ › to change year and a bar chart of how many start each month (click a bar to jump to that month). The date is the project's **Iulaan date**, or — if that is not set yet — the planned IFB/REOI date of its PR-09 plan item (shown with a dashed border). PR-09 plan items not yet started as projects are included ("Not started"). The category tabs (Goods, Works…) and filters apply. Procurements with no date are listed under "No Iulaan date yet".

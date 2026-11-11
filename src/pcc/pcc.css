@@ -357,3 +357,26 @@ html[data-banner="6"] .screen>.row:first-child .btn{background:rgba(255,255,255,
 html[data-banner="6"] .screen>.row:first-child .btn:last-child{background:linear-gradient(135deg,#0d9488,#059669)!important;color:#fff!important;border-color:transparent!important}
 html[data-banner="6"] .screen>.row:first-child .datechip{background:rgba(255,255,255,.75)!important;color:#0f3d37!important;border-color:#fff!important}
 html[data-banner="6"] .screen>.row:first-child .datechip svg{color:#0d9488!important}
+/* ===== Projects: monthly view ===== */
+.pcc-mhead{display:flex;align-items:center;gap:10px;padding:12px 16px!important}.pcc-mhead h3{margin:0;font-size:16px}
+.pcc-mkey{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}.pcc-mkey i{display:inline-block;width:14px;height:10px;border-radius:3px;margin-inline-start:8px}
+.pcc-mkey .k-iulaan{background:var(--brand)}.pcc-mkey .k-plan{border:2px dashed var(--brand);box-sizing:border-box}
+.pcc-mbars{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;align-items:end;height:120px;padding:10px 16px 8px;margin:12px 0;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.pcc-mbar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;text-decoration:none;color:var(--muted);font-size:12px;gap:4px}
+.pcc-mbar i{display:block;width:70%;min-height:3px;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#34d399,var(--brand))}
+.pcc-mbar b{font-size:12px;color:var(--fg)}.pcc-mbar.now span{color:var(--brand);font-weight:800}.pcc-mbar:hover i{filter:brightness(1.1)}
+.pcc-months{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pcc-month{padding:14px!important;scroll-margin-top:90px;display:flex;flex-direction:column;gap:8px}
+.pcc-month.now{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 15%,transparent)}
+.pcc-month.empty{opacity:.75}
+.pcc-month-h{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:2px}.pcc-month-h h3{margin:0;font-size:15px}
+.pcc-cnt{font-size:12px;font-weight:800;border-radius:999px;padding:2px 9px;background:var(--bg,#f4f6f5);color:var(--muted)}.pcc-cnt.full{background:color-mix(in srgb,var(--brand) 14%,transparent);color:var(--brand-d,#0a5c4f)}
+.pcc-mi{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);border-inline-start:4px solid var(--brand);text-decoration:none;color:var(--fg);background:var(--card)}
+a.pcc-mi:hover{box-shadow:0 4px 14px -8px rgba(0,0,0,.3)}
+.pcc-mi.planned{border-style:dashed;border-inline-start-style:solid;background:color-mix(in srgb,var(--bg,#f4f6f5) 60%,var(--card))}
+.pcc-mi.t-goods{border-inline-start-color:#2563EB}.pcc-mi.t-works{border-inline-start-color:#D97706}.pcc-mi.t-nonconsultancy{border-inline-start-color:#7C3AED}.pcc-mi.t-consultancy{border-inline-start-color:#DB2777}
+.pcc-mday{display:flex;flex-direction:column;align-items:center;min-width:34px;line-height:1.1}.pcc-mday b{font-size:17px}.pcc-mday span{font-size:10.5px;color:var(--muted);text-transform:uppercase}
+.pcc-mname{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcc-mnone summary{cursor:pointer;font-weight:700}.pcc-mlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+@media (max-width:1100px){.pcc-months{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.pcc-months,.pcc-mlist{grid-template-columns:1fr}.pcc-mkey{display:none}}

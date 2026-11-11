@@ -60,11 +60,11 @@ function OVERVIEW(n, type) {
   }
   function draw() {
     stSel.value = F.status; odChk.checked = F.overdue;
-    views.replaceChildren(...[["table", "Table"], ["card", "Cards"], ["timeline", "Timeline"]].map(([k, l]) => o("button", { type: "button", class: F.view === k ? "on" : "", onclick: () => { F.view = k; setViewPref(k); draw(); } }, l)));
+    views.replaceChildren(...[["table", "Table"], ["card", "Cards"], ["timeline", "Timeline"], ["monthly", "Monthly"]].map(([k, l]) => o("button", { type: "button", class: F.view === k ? "on" : "", onclick: () => { F.view = k; setViewPref(k); draw(); } }, l)));
     const L2 = list();
     if (!L2.length) { body.replaceChildren(o("div", { class: "card" }, empty(all.length ? "No projects match these filters." : "No projects yet. Add the first one, or start one from a procurement plan item.", can("projects") && !all.length ? btn("New project", () => PEDIT2(null, T && T[1]), "primary") : null))); return; }
     const mobile = matchMedia("(max-width:760px)").matches;
-    body.replaceChildren(F.view === "timeline" ? timeline(L2) : F.view === "card" || mobile ? o("div", { class: "pcc-cards" }, L2.map(pcard)) : o("div", { class: "card flush" }, ptable(L2)));
+    body.replaceChildren(F.view === "monthly" ? monthly(L2, F, T) : F.view === "timeline" ? timeline(L2) : F.view === "card" || mobile ? o("div", { class: "pcc-cards" }, L2.map(pcard)) : o("div", { class: "card flush" }, ptable(L2)));
   }
   draw();
 }
@@ -75,6 +75,37 @@ function ptable(L2) {
 }
 function pcard(p) {
   return o("a", { class: "card pcc-pc", href: "#/project/" + p.id }, o("div", { class: "pcc-hc-top" }, o("span", { class: "muted small" }, p.ref + " · " + p.type), stChip(p.status)), pName(p), o("div", { class: "small muted", dir: "auto" }, [p.vendor, p.location].filter(Boolean).join(" · ") || "—"), o("div", { class: "pcc-hc-kv" }, o("span", {}, "Contract"), o("b", {}, mvr(p.contract)), o("span", {}, "Due"), o("b", {}, fd(p.due))), o("div", { class: "row", style: { alignItems: "center", gap: "10px" } }, cdChip(p)), dualBar(p));
+}
+// Monthly view: procurements grouped by the month their Iulaan is (or is planned to be) announced.
+// Date: the project's Iulaan date, else the linked PR-09 item's planned IFB / REOI date. Plan items
+// not yet started as projects are included so the whole year's procurement shows in one place.
+const planOf = p => (Z().plan || []).find(x => (p.planId && x.id === p.planId) || x.projectId === p.id);
+function startOf(p) { if (isISO(p.advertised)) return { d: p.advertised, src: "iulaan" }; const x = planOf(p), d = x && x.dates ? x.dates.ifb || x.dates.reoi : null; return isISO(d) ? { d, src: "plan" } : null; }
+function monthly(L2, F, T) {
+  const items = L2.map(p => ({ p, s: startOf(p) }));
+  (Z().plan || []).filter(x => !x.projectId && (!T || x.type === T[1])).forEach(x => { const d = x.dates ? x.dates.ifb || x.dates.reoi : null; items.push({ x, s: isISO(d) ? { d, src: "plan" } : null }); });
+  const years = [...new Set(items.filter(i => i.s).map(i => i.s.d.slice(0, 4)))].sort();
+  let yr = F.year || F.mYear || (years.includes(today().slice(0, 4)) ? today().slice(0, 4) : years[years.length - 1]) || today().slice(0, 4);
+  const box = o("div", {});
+  const draw = () => {
+    const inYear = items.filter(i => i.s && i.s.d.startsWith(yr)), none = items.filter(i => !i.s), cm = today().slice(0, 7);
+    const head = o("div", { class: "card pcc-mhead" }, o("button", { type: "button", class: "btn small", onclick: () => { yr = String(Number(yr) - 1); F.mYear = yr; draw(); } }, "‹"), o("h3", {}, "Procurements by Iulaan month — " + yr), o("button", { type: "button", class: "btn small", onclick: () => { yr = String(Number(yr) + 1); F.mYear = yr; draw(); } }, "›"), o("span", { class: "grow" }),
+      o("span", { class: "pcc-mkey" }, o("i", { class: "k-iulaan" }), "Iulaan date", o("i", { class: "k-plan" }), "Planned (PR-09)"));
+    const bars = o("div", { class: "pcc-mbars" }, ENMON.map((mn, i) => { const k = yr + "-" + String(i + 1).padStart(2, "0"), n = inYear.filter(it => it.s.d.startsWith(k)).length, mx = Math.max(1, ...ENMON.map((_, j) => inYear.filter(it => it.s.d.startsWith(yr + "-" + String(j + 1).padStart(2, "0"))).length));
+      return o("a", { href: "#", class: "pcc-mbar" + (k === cm ? " now" : ""), onclick: e => { e.preventDefault(); const t = box.querySelector("#m-" + k); t && t.scrollIntoView({ behavior: "smooth", block: "start" }); } }, o("b", {}, n || ""), o("i", { style: { height: (n / mx * 100) + "%" } }), o("span", {}, mn.slice(0, 3))); }));
+    const card = it => {
+      const d = it.s.d, p = it.p, x = it.x, type = p ? p.type : x.type, name = p ? (p.nameDv || p.name) : planName(x), ref = p ? p.ref : (x.procNo || x.pid || "Plan item");
+      return o(p ? "a" : "div", { class: "pcc-mi t-" + String(type || "").replace(/\W/g, "").toLowerCase() + (it.s.src === "plan" ? " planned" : ""), href: p ? "#/project/" + p.id : undefined },
+        o("div", { class: "pcc-mday" }, o("b", {}, String(Number(d.slice(8)))), o("span", {}, ENMON[Number(d.slice(5, 7)) - 1].slice(0, 3))),
+        o("div", { class: "grow", style: { minWidth: 0 } }, o("div", { class: "pcc-mname", dir: "auto" }, name), o("div", { class: "muted small" }, ref + " · " + (type || ""), p && p.advertNo ? " · " + p.advertNo : "")),
+        p ? stChip(p.status) : o("span", { class: "pcc-tag" }, "Not started"));
+    };
+    const months = o("div", { class: "pcc-months" }, ENMON.map((mn, i) => { const k = yr + "-" + String(i + 1).padStart(2, "0"), L3 = inYear.filter(it => it.s.d.startsWith(k)).sort((a, b) => a.s.d.localeCompare(b.s.d));
+      return o("section", { class: "card pcc-month" + (k === cm ? " now" : "") + (L3.length ? "" : " empty"), id: "m-" + k }, o("div", { class: "pcc-month-h" }, o("h3", {}, mn), o("span", { class: "pcc-cnt" + (L3.length ? " full" : "") }, String(L3.length))), L3.length ? L3.map(card) : o("p", { class: "muted small" }, "No procurement this month.")); }));
+    box.replaceChildren(head, bars, months, none.length ? o("details", { class: "card pcc-mnone" }, o("summary", {}, `No Iulaan date yet (${none.length})`), o("p", { class: "muted small" }, "Set the Iulaan date on the project (Edit › Procurement), or the planned IFB date on its PR-09 plan item, to place it in a month."), o("div", { class: "pcc-mlist" }, none.map(it => { const p = it.p, x = it.x; return o(p ? "a" : "div", { class: "pcc-mi", href: p ? "#/project/" + p.id : undefined }, o("div", { class: "grow" }, o("div", { class: "pcc-mname", dir: "auto" }, p ? (p.nameDv || p.name) : planName(x)), o("div", { class: "muted small" }, (p ? p.ref : (x.procNo || x.pid || "")) + " · " + ((p ? p.type : x.type) || ""))), p ? stChip(p.status) : o("span", { class: "pcc-tag" }, "Not started")); }))) : null);
+  };
+  draw();
+  return box;
 }
 function timeline(L2) {
   const st = p => p.handover || p.agreement || p.award || p.advertised || p.start || (p.createdAt || "").slice(0, 10);
