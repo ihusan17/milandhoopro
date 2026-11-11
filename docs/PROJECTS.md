@@ -335,3 +335,8 @@ Projects → **Committee meetings** (`#/projects/meetings/<year>/<bid|eval>`) li
   - Loops of one kind only: `{#awards}`, `{#variations}`, `{#extensions}`, `{#evaluations}`.
 - **Documents from a meeting use your own templates.** Every template in the committee's group is offered, and uploaded ones are ticked first; built-in samples are marked as such. A template with `{#projects}` (or `{#awards}`…) makes one document for the whole meeting. Any other template makes one document per project, filled with the meeting's no., date, time, members and that project's agenda fields. A variation amount may be typed with a minus sign for an omission.
 - **No duplicate dates in Edit project.** The evaluation date and time come from the Evaluation Committee meeting, and the award date from the Bid Committee meeting. Procurement no longer asks for them, and the meeting "Time" field is merged into "Started at". Existing values are carried over when the form opens, and meetings in the register fill them too. The placeholders `{evaluation_date}`, `{evaluation_time}` and `{award_date}` keep working.
+- **Edit project, simplified.**
+  - The Committee meetings section is read-only. It shows the register's meetings for the project (no., decision type, date, start–end) with *Open meeting*, or *New … meeting* when none is recorded.
+  - PR number is taken from the linked plan item's procurement no. and locked.
+  - Removed from the form, with stored values kept: Unit / section, Project officer, Not-in-plan reason, Replaces cancelled plan item, Budget line, Funding source.
+  - In the meeting form, clicking a project in the agenda opens its Edit box on top.

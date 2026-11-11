@@ -33,7 +33,7 @@ const mSeq = m => Number(((m.ref || "").match(/(\d+)\D*$/) || [])[1] || 0);
 
 async function meetingEdit(m, k, p, pre) {
   const v = m || {}, date = D(v.date || today()), time = I(v.time || "", { placeholder: "e.g. 10:00" }), end = I(v.end || "", { placeholder: "e.g. 11:30" }), place = I(v.place || "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { dir: "auto" }), notes = o("textarea", { rows: 2, dir: "auto" });
-  const kind = k === "eval" ? "evalmeeting" : "meeting", ref = I(v.ref || "", { placeholder: "Given automatically: " + refPeek(kind) });
+  const kind = k === "eval" ? "evalmeeting" : "meeting", ref = I(v.ref || "", { placeholder: refPeek(kind), title: "Leave empty: the next number is given automatically" });
   notes.value = v.notes || "";
   const items = new Map(mItems(v).map(it => [it.projectId, { ...it }]));
   if (!m && p) items.set(p.id, { projectId: p.id, type: k === "eval" ? "evaluation" : "award" });
@@ -52,7 +52,7 @@ async function meetingEdit(m, k, p, pre) {
       ty.onchange = () => { it.type = ty.value; sync(); }; note.oninput = () => { it.note = note.value; };
       amt.oninput = () => { it._amt = amt.value; }; days.oninput = () => { it.days = days.value.trim() === "" ? null : Number(days.value) || 0; };
       it.amount < 0 && (amt.value = "-" + amt.value); it._amtEl = amt;
-      const row = o("div", { class: "pcc-ag-row" }, o("b", { class: "pcc-ag-n" }, i + 1), o("div", { class: "pcc-ag-p" }, o("b", {}, x.ref), o("div", { dir: "auto", class: "small" }, x.nameDv || x.name)), ty, note, vbox);
+      const row = o("div", { class: "pcc-ag-row" }, o("b", { class: "pcc-ag-n" }, i + 1), o("div", { class: "pcc-ag-p" }, o("a", { href: "#", class: "pcc-ag-link", title: "Open this project's Edit box", onclick: e => { e.preventDefault(); PEDIT2(x); } }, o("b", {}, x.ref), o("div", { dir: "auto", class: "small" }, x.nameDv || x.name))), ty, note, vbox);
       sync(); return row;
     }) : [o("p", { class: "muted small" }, "Tick the projects decided at this meeting.")]));
   };
@@ -62,7 +62,7 @@ async function meetingEdit(m, k, p, pre) {
   const showPrev = () => { const L2 = src.value === "@keep" ? v.members || [] : src.value === "@stand" ? stand() : ((prj(src.value) || {}).committees || {})[k] || []; mrows = L2.map(x => ({ x, lf: leaveFields(x) })); mprev.replaceChildren(...(L2.length ? mrows.map(({ x, lf }) => o("div", { class: "pcc-mrow2" }, o("span", { dir: "auto" }, (x.nameDv || x.name) + " · " + (x.role || "Member")), lf.el)) : [o("p", { class: "muted small" }, `No ${KLAB[k]} members yet — add the standing committee under Templates › Standing committees, or on a project.`)])); };
   src.addEventListener("change", showPrev);
   drawList(); drawAgenda(); drawSrc();
-  const ok = await form((m ? "Edit " : "New ") + KLAB[k] + " meeting", [["Meeting date", date], ["Meeting no.", ref], ["Starts", time], ["Ends", end], o("div", { style: { gridColumn: "1/-1" } }, L("Place", place), o("label", { style: { marginTop: "10px" } }, "Projects at this meeting"), q, list, o("label", { style: { marginTop: "10px" } }, "Agenda — what each project is for"), agenda, L("Committee members", src), mprev, L("Notes", notes))], {
+  const ok = await form((m ? "Edit " : "New ") + KLAB[k] + " meeting", [["Meeting date", date], ["Meeting no. (automatic if empty)", ref], ["Starts", time], ["Ends", end], o("div", { style: { gridColumn: "1/-1" } }, L("Place", place), o("label", { style: { marginTop: "10px" } }, "Projects at this meeting"), q, list, o("label", { style: { marginTop: "10px" } }, "Agenda — what each project is for"), agenda, L("Committee members", src), mprev, L("Notes", notes))], {
     check: () => { if (!date.value) throw err("Choose the meeting date"); if (items.size < 1) throw err("Tick at least one project"); if (!mrows.length) throw err(`Add ${KLAB[k]} members first`);
       items.forEach(it => { if (it.type === "variation" && it._amtEl && it._amtEl.value.trim()) signedMoney(it._amtEl, "Variation amount"); }); },
   });
