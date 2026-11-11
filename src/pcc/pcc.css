@@ -488,3 +488,6 @@ td.pcc-pt{text-align:center}
 .pcc-bulk th.pcc-bk-h.req .pcc-bk-doc{border-color:#fca5a5!important;background:#fff5f5}
 .pcc-bulk td.pcc-bk-c.req{background:color-mix(in srgb,#dc2626 4%,transparent)}
 .pcc-bulk tr.pcc-bk-dq td{background:color-mix(in srgb,#dc2626 6%,transparent)}
+.pcc-bk-name{height:40px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;line-height:1.25;color:var(--fg);overflow:hidden;text-align:center;padding:0 2px}
+.pcc-bulk input[type=checkbox]:focus,.pcc-bulk input[type=checkbox]:focus-visible{outline:none!important;box-shadow:none!important}
+.pcc-bulk th .pcc-bk-name{text-transform:none;letter-spacing:0}

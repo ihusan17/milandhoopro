@@ -241,7 +241,7 @@ const bidGet = (b, k) => (k.startsWith("sc:") ? (b.scores || {})[k.slice(3)] : k
 async function bidsTemplate(p, docNames) {
   if (needCrit(p)) return;
   const B = (p.bidders || []).slice().sort((a, b) => (a.rank || 99) - (b.rank || 99)), FL = bidFields(p), DN = docNames || docsOf(p);
-  const head = [...FL.map(f => f[1]), "Responsive (Yes/No)", ...DN, "Remarks"];
+  const RQ = reqDocsOf(p), head = [...FL.map(f => f[1]), "Responsive (Yes/No)", ...DN.map(d => RQ.includes(d) ? d + " *" : d), "Remarks"];
   const rows = B.length ? B.map(b => [...FL.map(([k]) => bidGet(b, k) ?? ""), b.responsive === false ? "No" : "Yes", ...DN.map(d => (b.docs || {})[d] ? "Yes" : "No"), b.remarks || ""]) : Array.from({ length: 10 }, () => [...FL.map(() => ""), "Yes", ...DN.map(() => "No"), ""]);
   const u8 = await xlsxSimple({ sheet: "Bids", title: [`Bids received — ${p.ref}`, (p.nameDv || p.name || "") + (p.advertNo ? "  ·  Iulaan " + p.advertNo : "") + "  ·  " + critLine(p)], head, rows, widths: [...FL.map(f => f[2]), 16, ...DN.map(() => 14), 30], yesNo: [FL.length, ...DN.map((_, i) => FL.length + 1 + i)] });
   ii(new Blob([u8], { type: MIME.xlsx }), `Bids_${safeName(p.ref)}.xlsx`);
@@ -285,11 +285,10 @@ async function bidsBulk(p) {
   const merge = list => { dropEmpty(); let up = 0, add = 0; list.forEach(v => { const r = findRow(v.vendor); if (r) { fill(r, v); v.responsive === false && v.dq && (r.manualOff = true); autoResp(r); up++; } else { addRow(v); add++; } }); renum(); return [up, add]; };
   // Heading: tick-all boxes, and document names that can be renamed or removed.
   const tickAll = get => { const cb = o("input", { type: "checkbox", title: "Tick / untick all" }); cb.onchange = () => { rows.forEach(r => { const x = get(r); x && (x.checked = cb.checked); x && x === r.resp && (r.manualOff = false); }); autoAll(); }; return cb; };
-  const drawHead = () => head.replaceChildren(o("tr", {}, o("th", {}, "#"), COLS.map(([, l]) => o("th", {}, l)), o("th", { class: "pcc-bk-h" }, o("div", { class: "pcc-bk-lab" }, "Responsive"), o("div", { class: "pcc-bk-hr" }, tickAll(r => r.resp))),
-    DOCS.map(d => { const nm = o("textarea", { rows: 2, class: "pcc-bk-doc", title: "Document name — click to rename", dir: "auto" }); nm.value = d.name; nm.oninput = () => { d.name = nm.value.replace(/\s*\n\s*/g, " "); };
-      const rq = o("input", { type: "checkbox", checked: !!d.req }); rq.onchange = () => { d.req = rq.checked; redraw(); autoAll(); };
-      return o("th", { class: "pcc-bk-h" + (d.req ? " req" : "") }, nm, o("div", { class: "pcc-bk-hr" }, tickAll(r => r.dk[d.id]), o("button", { type: "button", class: "pcc-bk-x", title: "Remove this document column", onclick: () => { DOCS = DOCS.filter(x => x !== d); redraw(); autoAll(); } }, "✕")), o("label", { class: "pcc-bk-req", title: "A bid missing a compulsory document is not responsive" }, rq, d.req ? " ★ Compulsory" : " Compulsory")); }),
-    o("th", {}, o("button", { type: "button", class: "btn small", title: "Add a document column", onclick: () => { DOCS.push({ id: uid(), name: "New document", orig: "" }); redraw(); setTimeout(() => { const L = head.querySelectorAll(".pcc-bk-doc"); L[L.length - 1] && (L[L.length - 1].select(), L[L.length - 1].focus()); }); } }, "+ Document"))));
+  const drawHead = () => head.replaceChildren(o("tr", {}, o("th", {}, "#"), COLS.map(([, l]) => o("th", {}, l)), o("th", { class: "pcc-bk-h" }, o("div", { class: "pcc-bk-lab" }, "Responsive")),
+    DOCS.map(d => { const rq = o("input", { type: "checkbox", checked: !!d.req }); rq.onchange = () => { d.req = rq.checked; redraw(); autoAll(); };
+      return o("th", { class: "pcc-bk-h" + (d.req ? " req" : "") }, o("div", { class: "pcc-bk-name", dir: "auto", title: d.name }, d.name), o("label", { class: "pcc-bk-req", title: "A bid missing a compulsory document is not responsive" }, rq, d.req ? " ★ Compulsory" : " Compulsory")); }),
+    o("th", {})));
   const redraw = () => { drawHead(); body.replaceChildren(...rows.map(rowEl)); rows.forEach(r => r.tr.classList.toggle("pcc-bk-dq", !r.resp.checked)); renum(); };
   // Existing bids first (they are updated on save), then empty rows.
   (p.bidders || []).forEach(b => addRow({ ...Object.fromEntries(COLS.map(([k]) => [k, bidGet(b, k) ?? ""])), responsive: b.responsive !== false, dq: b.responsive === false && docsComplete(p, b.docs), docs: b.docs || {}, remarks: b.remarks || "" }, b));
@@ -306,7 +305,7 @@ async function bidsBulk(p) {
   // heading rows, merged headings); document columns by their names. Points columns are skipped.
   // A row marked disqualified becomes "not responsive". Bidders already in the table are updated.
   const PTS = /ޕޮއިންޓް|point|score|marks/i;
-  const HDR = () => [...DOCS.map(d => ["doc:" + d.id, h => docKey(h) === docKey(d.name)]),
+  const HDR = () => [
     ["vendor", h => /bidder|company|contractor|supplier|party|firm|name|ނަން|ފަރާތ|ކުންފުނި/i.test(h) && !/designation|signature|ސޮއި/i.test(h)],
     ["total", h => /total score|overall|grand total|މުޅި ޖުމްލަ/i.test(h)],
     ["amount", h => !PTS.test(h) && /amount|price|quoted|quotation|bid ?value|mvr|އަގު/i.test(h)],
@@ -321,7 +320,7 @@ async function bidsBulk(p) {
     const H = []; let parentL = "";
     for (let c = 0; c < n; c++) { const t = isText(top[c]) ? String(top[c]).trim() : ""; const parent = t || (sub && isText(sub[c]) ? (isText(top[c - 1]) ? String(top[c - 1]).trim() : parentL) : ""); t && (parentL = t); H[c] = (parent + " " + (sub && isText(sub[c]) ? String(sub[c]).trim() : "")).trim(); }
     const map = {}; HDR().forEach(([k, f]) => { const c = H.findIndex((h, ci) => h && f(h) && !Object.values(map).includes(ci)); c >= 0 && (map[k] = c); });
-    return { map, start: ri + (sub ? 2 : 1) };
+    return { map, H, start: ri + (sub ? 2 : 1) };
   };
   const fromExcel = async () => {
     const f = await pickFile(".xlsx"); if (!f) return;
@@ -332,6 +331,15 @@ async function bidsBulk(p) {
       let best = cands[0];
       if (cands.length > 1) { const sel = S(cands.map((c, i) => [i, c.sh.name]), 0); if (!(await form("Which sheet?", [["Sheet", sel]], { ok: "Use this sheet" }))) return; best = cands[Number(sel.value)]; }
       const M = best.map, DQ = /disqualif|ޑިސްކޮލިފައި|ޑިސްކޮލިފައިކުރެވިފައި|not responsive|rejected/i;
+      const data0 = best.sh.rows.slice(best.start).filter(r => r && isText(r[M.vendor]));
+      // Document columns: headings whose values are Yes / No. Their names become this table's documents.
+      const YN = /^(yes|no|y|n|✓|✗|x|ހުށަހަޅާފައި|ނެތް)$/i, ynCols = best.H.map((h, c) => c).filter(c => best.H[c] && data0.some(r => String(r[c] ?? "").trim()) && data0.every(r => { const v = String(r[c] ?? "").trim(); return !v || YN.test(v); }));
+      Object.keys(M).forEach(k => { if (!["responsive", "alldocs", "vendor"].includes(k) && ynCols.includes(M[k])) delete M[k]; });
+      const docCols = ynCols.filter(c => c !== M.responsive && c !== M.alldocs && c !== M.vendor && !/responsive|qualified|all documents/i.test(best.H[c]));
+      if (docCols.length) {
+        const old = DOCS; DOCS = docCols.map(c => { const raw = String(best.H[c]).trim(), star = /[*★]\s*$/.test(raw), name = raw.replace(/\s*[*★]\s*$/, ""), prev = old.find(d => docKey(d.name) === docKey(name)); return prev ? { ...prev, name, req: star || prev.req } : { id: uid(), name, orig: name, req: star }; });
+        docCols.forEach((c, i) => { M["doc:" + DOCS[i].id] = c; }); redraw();
+      }
       const data = best.sh.rows.slice(best.start).filter(r => r && isText(r[M.vendor]) && !/^(grand )?total|^sub ?total|^ޖުމްލަ|^ޖުމުލަ|^ނަން:|^ސޮއި/i.test(String(r[M.vendor]).trim()) && (/\d/.test(String(r[M.amount] || "")) || r.some(v => DQ.test(String(v || "")))));
       if (!data.length) throw err("No bidder rows found under the headings in sheet " + best.sh.name);
       const numv = (v, d = 2) => { const t = String(v ?? "").replace(/^(MVR|Rf\.?|ރ\.)\s*/i, "").replace(/,/g, "").trim(); return t !== "" && !Number.isNaN(Number(t)) ? String(Math.round(Number(t) * 10 ** d) / 10 ** d) : t; };
@@ -347,9 +355,9 @@ async function bidsBulk(p) {
   };
   const ok = await form("Bids received — " + p.ref, [o("div", { style: { gridColumn: "1/-1" } },
     o("datalist", { id: "pcc-vendors3" }, K.sa().map(v => o("option", { value: v }))),
-    o("p", { class: "muted small" }, "One row per bidder; existing bids are listed and can be changed. Empty rows are ignored. Tick the documents each bidder submitted — click a document heading to rename it, ✕ removes the column, + Document adds one; the box under a heading ticks or unticks the whole column. Mark a document Compulsory and Responsive is ticked automatically only when all compulsory documents are ticked (untick Responsive by hand for other reasons, e.g. a late bid, and type the reason in Remarks). Importing or pasting a bidder already listed updates that row."),
+    o("p", { class: "muted small" }, "One row per bidder; existing bids are listed and can be changed. Empty rows are ignored. Tick the documents each bidder submitted. The document columns come from the Excel template: change, add or remove document headings in the template and upload it (a heading ending in * is compulsory). Mark a document Compulsory and Responsive is ticked automatically only when all compulsory documents are ticked (untick Responsive by hand for other reasons, e.g. a late bid, and type the reason in Remarks). Importing or pasting a bidder already listed updates that row."),
     o("div", { class: "pcc-bulk" }, o("table", { class: "t" }, head, body)),
-    o("div", { class: "row", style: { marginTop: "8px", gap: "8px", flexWrap: "wrap" } }, btn("+ Add row", () => addRow(), "small"), btn("Download Excel template", () => bidsTemplate(p, DOCS.map(d => d.name)).catch(e => xt(e.message, "err")), "small"), btn("Upload Excel file…", fromExcel, "small primary"), btn("Checklist PDF", () => bidsChecklist(p), "small"), o("span", { class: "muted small" }, "Upload reads your Bid Evaluation Form or the template; a bidder already listed is updated.")),
+    o("div", { class: "row", style: { marginTop: "8px", gap: "8px", flexWrap: "wrap" } }, btn("+ Add row", () => addRow(), "small"), btn("Download Excel template", () => { const keep = p.bidDocsReq; p.bidDocsReq = DOCS.filter(d => d.req).map(d => d.name); bidsTemplate(p, DOCS.map(d => d.name)).catch(e => xt(e.message, "err")).finally(() => { p.bidDocsReq = keep; }); }, "small"), btn("Upload Excel file…", fromExcel, "small primary"), btn("Checklist PDF", () => bidsChecklist(p), "small"), o("span", { class: "muted small" }, "Upload reads your Bid Evaluation Form or the template; a bidder already listed is updated.")),
     o("details", { style: { marginTop: "10px" } }, o("summary", { style: { cursor: "pointer", fontWeight: 600 } }, "Paste from Excel"), paste, o("div", { class: "row", style: { marginTop: "6px" } }, btn("Add the pasted rows", usePaste, "small"))))], { one: true, ok: "Save bids",
     check: () => { autoAll(); const L = rows.filter(r => r.els.vendor.value.trim()); if (!L.length) throw err("Type at least one bidder"); L.forEach(r => parseMoney(r.els.amount, r.els.vendor.value.trim() + ": bid amount")); if (rows.some(r => !r.els.vendor.value.trim() && Object.values(r.els).some(e => e.value.trim()))) throw err("A row has values but no bidder name"); if (DOCS.some(d => !d.name.trim())) throw err("A document column has no name"); const seen = new Set(); L.forEach(r => { const k = docKey(r.els.vendor.value); if (seen.has(k)) throw err(r.els.vendor.value.trim() + " is listed twice"); seen.add(k); }); } });
   if (!ok) return;

@@ -462,3 +462,8 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
   - **Automatic Responsive:** a bid is ticked Responsive only when all compulsory documents are ticked. It updates as documents are ticked, as columns are made compulsory or not, and after an import. Rows that are not responsive are shaded.
   - **By hand:** Responsive can still be unticked for another reason (e.g. a late bid; type the reason in Remarks); that choice is kept. A bid imported as disqualified stays not responsive.
   - **Elsewhere:** the single *Add bid* form marks compulsory documents with ★ and switches Responsive as they are ticked. The checklist PDF marks compulsory headings with ★ in a darker colour and explains it in the legend.
+- **Document columns come from the Excel template.**
+  - The headings in the bids table are plain names: no rename, tick-all, ✕ or + Document. Only the *Compulsory* tick stays.
+  - To change the documents, download the template, rename, add or remove document headings (any Yes/No column after *Responsive*), and upload it. Those headings become the project's document columns.
+  - A heading ending in `*` is compulsory, and the downloaded template already marks compulsory documents with `*`.
+  - A file without Yes/No document columns (e.g. the Bid Evaluation Form) keeps the current list.
