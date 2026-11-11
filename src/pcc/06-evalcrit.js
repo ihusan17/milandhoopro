@@ -100,7 +100,7 @@ function critData(p, d) {
 // right to left (#, name, then for each criterion the value and the points, then the total), two
 // heading rows, live formulas (MIN(...)/value × weight, MIN(documents × marks, weight), SUM), the
 // date and the Evaluation Committee's signature block. Four designs: original, emerald, navy, scorecard.
-const EVAL_DESIGNS = [["original", "Original (council form)"], ["styled", "Original — restyled (teal)"], ["royal", "Original — royal (navy & gold)"], ["minimal", "Original — minimal"], ["ocean", "Original — ocean"], ["evreport", "Evaluation report (stages, compliance, recommendation)"], ["evform", "Official evaluation form (numbered sections)"], ["award", "Award recommendation (summary panel)"], ["report", "Formal report"], ["calc", "Step-by-step calculation"], ["matrix", "Comparison matrix"]];
+const EVAL_DESIGNS = [["original", "Original (council form)"], ["polished", "Original — polished"], ["styled", "Original — restyled (teal)"], ["royal", "Original — royal (navy & gold)"], ["minimal", "Original — minimal"], ["ocean", "Original — ocean"], ["evreport", "Evaluation report (stages, compliance, recommendation)"], ["evform", "Official evaluation form (numbered sections)"], ["award", "Award recommendation (summary panel)"], ["report", "Formal report"], ["calc", "Step-by-step calculation"], ["matrix", "Comparison matrix"]];
 const evalDesign = () => Z().evalDesign || "original";
 async function critSheet(p, design) {
   const C = critsOf(p); if (!C.length) throw err("Set the evaluation criteria first");
@@ -210,7 +210,7 @@ async function critSheet(p, design) {
       W.set(r, cc, "ސޮއި:", { ...sg, ...(orig ? {} : { border: undefined }) }); W.set(r + 1, cc, "ނަން: " + noTitle(m.nameDv || m.name || ""), sg); W.set(r + 2, cc, "މަޤާމް: " + (m.designationDv || m.designation || ""), sg); W.set(r + 3, cc, "ތާރީޚް: " + dvDate(today()), sg); });
     [0, 1, 2, 3].forEach(k => { H[r + k] = 21.75; }); r += 3;
   }
-  const u8 = await xlsxBuild({ name: orig ? "AB" : "Evaluation", sheet: W, widths: WD, heights: H, landscape: true, font: "Faruma", area: [2, first, r, last] });
+  const u8 = await xlsxBuild({ images: orig ? [emblemAt(WD, first, last, 3)] : [], name: orig ? "AB" : "Evaluation", sheet: W, widths: WD, heights: H, landscape: true, font: "Faruma", area: [2, first, r, last] });
   ii(new Blob([u8], { type: MIME.xlsx }), `Evaluation_${safeName(p.ref)}${orig ? "" : "_" + D}.xlsx`);
   audit(p, "Evaluation sheet generated", critLine(p) + " · " + D);
 }
@@ -360,6 +360,8 @@ async function evalSheetPro(p, D) {
 //   minimal : white, fine rules, large light weights over the criteria, black total for the winner
 //   ocean   : layered blue bands, project name in a framed panel, aqua winner row, framed signature boxes
 const STYLED = {
+  polished: { deep: "000000", acc: "000000", gold: "000000", zeb: null, line: "8C8C8C", win: null, winTot: "D9D9D9", winTotC: "000000", tot: "F2F2F2", totC: "000000",
+    cc: { price: ["000000", "EEF3F9"], duration: ["000000", "EEF3F9"], experience: ["000000", "EEF3F9"], technical: ["000000", "EEF3F9"], financial: ["000000", "EEF3F9"], other: ["000000", "EEF3F9"] } },
   styled: { deep: "0B4F5C", acc: "0F766E", gold: "C8961E", zeb: "F8FAFC", line: "E2E8F0", win: "FFF7E0", winTot: "C8961E", tot: "E3F3EF", totC: "0B4F5C",
     cc: { price: ["0F766E", "E3F3EF"], duration: ["1D4ED8", "E6EEFC"], experience: ["C2410C", "FDEEE3"], technical: ["7C3AED", "F0E9FD"], financial: ["BE185D", "FCE7F1"], other: ["475569", "EEF1F5"] } },
   royal: { deep: "14234B", acc: "14234B", gold: "B8902F", zeb: null, line: "E8E1CC", win: "FBF6E8", winTot: "14234B", winTotC: "E9C46A", tot: "FFFFFF", totC: "14234B",
@@ -386,7 +388,15 @@ async function evalSheetStyled(p, V = "styled") {
   const title2 = "ކޮށްދޭނެ ފަރާތެއް ހޯދުމަށްކުރި އިޢުލާނާ ގުޅިގެން ބީލަން ހުށައެޅުއްވި ފަރާތްތަކަށް ޕޮއިންޓް ލިބިފައިވާގޮތުގެ ތަފްޞީލް" + (p.advertNo ? "   ·   " + p.advertNo : "");
   H[1] = 8; let r = 2;
   // ----- Header -----
-  if (V === "styled") {
+  if (V === "polished") {
+    W.set(2, c1, "`", { ...b0, sz: 16, h: "center" }).merge(2, c1, 2, cN); H[2] = 30;
+    W.set(3, c1, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ / މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 12, h: "right" }).merge(3, c1, 3, cN); H[3] = 30;
+    W.set(4, c1, "ށ.މިލަންދޫ / ދިވެހިރާއްޖެ", { ...b0, sz: 11, color: "404040", h: "right" }).merge(4, c1, 4, cN); H[4] = 30;
+    rule(5, "000000", "thin"); H[6] = 10;
+    W.set(7, c1, `${p.nameDv || p.name || ""} ކޮށްދޭނެ ފަރާތެއް ހޯދުމަށްކުރި އިޢުލާނާ ގުޅިގެން ބީލަން ހުށައެޅުއްވި ފަރާތްތަކަށް ޕޮއިންޓް ލިބިފައިވާގޮތުގެ ތަފްޞީލް`, { ...b0, b: true, sz: 14, h: "center", wrap: true }).merge(7, c1, 7, cN); H[7] = 48;
+    if (p.advertNo) { W.set(8, c1, "އިޢުލާން ނަންބަރު: " + p.advertNo, { ...b0, sz: 10, color: "595959", h: "center" }).merge(8, c1, 8, cN); H[8] = 18; }
+    r = 9;
+  } else if (V === "styled") {
     band(2, "`", { ...b0, sz: 18, color: "FFFFFF", fill: DEEP, h: "center" }, 30);
     band(3, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 17, color: "FFFFFF", fill: DEEP, h: "center" }, 30);
     band(4, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ   ·   ށ. މިލަންދޫ، ދިވެހިރާއްޖެ", { ...b0, sz: 11, color: "D7F2EE", fill: T.acc, h: "center" }, 22);
@@ -419,22 +429,22 @@ async function evalSheetStyled(p, V = "styled") {
     W.set(9, c1, title2, { ...b0, sz: 11, color: "0369A1", fill: "F0F9FF", h: "center" }).merge(9, c1, 9, cN); H[9] = 22; outline(8, c1, 9, cN, "thin", "7DD3FC"); r = 11;
   }
   // ----- Tags / weights over each criterion's columns -----
-  const tr = r; H[tr] = V === "minimal" ? 34 : 26;
-  C.forEach(cr => { const a = at("pts", cr), b = at("val", cr) || a, [fg, bg] = col(cr), s1 = Math.min(a, b), e1 = Math.max(a, b);
+  const tr = r; H[tr] = V === "minimal" ? 34 : V === "polished" ? 4 : 26;
+  if (V !== "polished") C.forEach(cr => { const a = at("pts", cr), b = at("val", cr) || a, [fg, bg] = col(cr), s1 = Math.min(a, b), e1 = Math.max(a, b);
     if (V === "minimal") { W.set(tr, s1, `${cr.weight}%`, { ...b0, b: true, sz: 22, color: "D1D5DB", h: "center" }).merge(tr, s1, tr, e1); return; }
     if (V === "royal") { W.set(tr, s1, `${lab(cr)}  ·  ${cr.weight}%` + (critType(cr.type)[3] === "per" ? `  ·  ${cr.per || 1} / ލިޔުން` : ""), { ...b0, b: true, sz: 11, color: GOLD, h: "center", border: { style: "thin", color: GOLD, only: "bottom" } }).merge(tr, s1, tr, e1); W.box(tr, s1, tr, e1, { border: { style: "thin", color: GOLD, only: "bottom" } }); return; }
     W.set(tr, s1, `${lab(cr)}  ${cr.weight}%` + (critType(cr.type)[3] === "per" ? `  ·  ${cr.per || 1} މާކްސް / ލިޔުމަކަށް` : ""), { ...b0, b: true, sz: 11, color: fg, fill: bg, h: "center" }).merge(tr, s1, tr, e1); W.box(tr, s1, tr, e1, { fill: bg }); });
-  V === "minimal" ? W.set(tr, at("total"), "100%", { ...b0, b: true, sz: 22, color: "9CA3AF", h: "center" }) : W.set(tr, at("total"), "100%", { ...b0, b: true, sz: 11, color: V === "royal" ? "E9C46A" : "FFFFFF", fill: DEEP, h: "center" });
-  W.set(tr, at("name"), `ބީލަން ހުށައެޅި ފަރާތްތައް: ${B.length}`, { ...b0, sz: 10, color: MUTE, h: "right" });
+  if (V !== "polished") V === "minimal" ? W.set(tr, at("total"), "100%", { ...b0, b: true, sz: 22, color: "9CA3AF", h: "center" }) : W.set(tr, at("total"), "100%", { ...b0, b: true, sz: 11, color: V === "royal" ? "E9C46A" : "FFFFFF", fill: DEEP, h: "center" });
+  V !== "polished" && W.set(tr, at("name"), `ބީލަން ހުށައެޅި ފަރާތްތައް: ${B.length}`, { ...b0, sz: 10, color: MUTE, h: "right" });
   H[tr + 1] = 6;
   // ----- Two heading rows -----
   const h1 = tr + 2, h2 = tr + 3; H[h1] = 34; H[h2] = 30;
   const wline = { style: "thin", color: "FFFFFF" };
-  const dark = V === "minimal" ? { ...b0, b: true, sz: 12, color: DEEP, h: "center", wrap: true, border: { style: "medium", color: DEEP, only: "bottom" } } : { ...b0, b: true, sz: 12, color: V === "royal" ? "E9C46A" : "FFFFFF", fill: DEEP, h: "center", wrap: true, border: wline };
+  const dark = V === "polished" ? { ...b0, b: true, sz: 12, fill: "DCE6F1", h: "center", wrap: true, border: { style: "thin", color: "000000" } } : V === "minimal" ? { ...b0, b: true, sz: 12, color: DEEP, h: "center", wrap: true, border: { style: "medium", color: DEEP, only: "bottom" } } : { ...b0, b: true, sz: 12, color: V === "royal" ? "E9C46A" : "FFFFFF", fill: DEEP, h: "center", wrap: true, border: wline };
   [["total", "މުޅި ޖުމްލަ"], ["name", "ނަން"], ["no", "#"]].forEach(([k, t]) => { W.set(h1, at(k), t, dark).merge(h1, at(k), h2, at(k)); W.box(h1, at(k), h2, at(k), dark); });
   C.forEach(cr => { const a = at("pts", cr), v = at("val", cr), [fg, bg] = col(cr), s1 = Math.min(a, v || a), e1 = Math.max(a, v || a);
-    const hd = V === "minimal" ? { ...b0, b: true, sz: 12, color: DEEP, h: "center", border: { style: "thin", color: "D1D5DB", only: "bottom" } } : V === "royal" ? { ...b0, b: true, sz: 12, color: "FFFFFF", fill: DEEP, h: "center", border: { style: "medium", color: GOLD, only: "bottom" } } : { ...b0, b: true, sz: 12, color: "FFFFFF", fill: fg, h: "center", border: wline };
-    const sb = V === "minimal" ? { ...b0, sz: 10, color: MUTE, h: "center", wrap: true, border: { style: "medium", color: DEEP, only: "bottom" } } : { ...b0, b: true, sz: 10, color: fg, fill: bg, h: "center", wrap: true, border: V === "royal" ? { style: "thin", color: "E8E1CC" } : wline };
+    const hd = V === "polished" ? { ...b0, b: true, sz: 12, fill: "DCE6F1", h: "center", border: { style: "thin", color: "000000" } } : V === "minimal" ? { ...b0, b: true, sz: 12, color: DEEP, h: "center", border: { style: "thin", color: "D1D5DB", only: "bottom" } } : V === "royal" ? { ...b0, b: true, sz: 12, color: "FFFFFF", fill: DEEP, h: "center", border: { style: "medium", color: GOLD, only: "bottom" } } : { ...b0, b: true, sz: 12, color: "FFFFFF", fill: fg, h: "center", border: wline };
+    const sb = V === "polished" ? { ...b0, b: true, sz: 11, fill: "EEF3F9", h: "center", wrap: true, border: { style: "thin", color: "000000" } } : V === "minimal" ? { ...b0, sz: 10, color: MUTE, h: "center", wrap: true, border: { style: "medium", color: DEEP, only: "bottom" } } : { ...b0, b: true, sz: 10, color: fg, fill: bg, h: "center", wrap: true, border: V === "royal" ? { style: "thin", color: "E8E1CC" } : wline };
     W.set(h1, s1, `${lab(cr)} %${cr.weight}`, hd).merge(h1, s1, h1, e1); W.box(h1, s1, h1, e1, hd);
     W.set(h2, a, "ލިބުނު ޕޮއިންޓް", sb); v && W.set(h2, v, cr.type === "price" ? "ހުށައެޅި އަގު" : "ޖުމްލަ", sb); });
   // ----- Data rows (same formulas as the form) -----
@@ -445,7 +455,7 @@ async function evalSheetStyled(p, V = "styled") {
     const fill = isDq ? (V === "minimal" ? null : "FEF2F2") : win && T.win ? T.win : T.zeb && i % 2 ? T.zeb : null;
     const base = { ...b0, sz: 12, h: "center", border, ...(fill ? { fill } : {}), ...(isDq ? (V === "minimal" ? { color: "9CA3AF", strike: true } : { color: "B91C1C", i: true }) : {}), ...(win && V === "minimal" ? { b: true } : {}) };
     W.set(rr, at("no"), i + 1, { ...base, b: true, color: isDq ? base.color : MUTE });
-    W.set(rr, at("name"), (win ? (V === "royal" ? "◆  " : V === "minimal" ? "" : "★  ") : "") + (b.vendor || ""), { ...base, h: "right", b: win, indent: 1 });
+    W.set(rr, at("name"), (win ? (V === "royal" ? "◆  " : V === "minimal" || V === "polished" ? "" : "★  ") : "") + (b.vendor || ""), { ...base, h: "right", b: win, indent: 1 });
     C.forEach(cr => { const pc = at("pts", cr), vc = at("val", cr), [fg] = col(cr), v = critValue(b, cr), pt = (b.points || {})[cr.key];
       vc && W.set(rr, vc, v ?? "", { ...base, fmt: cr.type === "price" ? "#,##0.00" : cr.type === "duration" ? '0" ދުވަސް"' : "0" });
       if (isDq) return W.set(rr, pc, "", base);
@@ -457,19 +467,29 @@ async function evalSheetStyled(p, V = "styled") {
       : W.set(rr, tc, b.total ?? 0, { ...base, b: true, sz: 13, fmt: "0.00", ...(win ? { fill: T.winTot, color: T.winTotC || "FFFFFF" } : T.tot ? { fill: T.tot, color: T.totC } : { color: T.totC }) }, `SUM(${cols.filter(x => x.k === "pts").map(x => xref(rr, x.c)).join(",")})`);
   });
   if (V === "ocean") outline(h1, c1, r0 + B.length - 1, cN, "medium", "0284C7");
+  if (V === "polished") outline(h1, c1, r0 + B.length - 1, cN, "medium", "000000");
   if (V === "royal") outline(h1, c1, r0 + B.length - 1, cN, "medium", DEEP);
   r = r0 + B.length;
   // ----- How points are worked out, result -----
   r++; W.set(r, c1, "ޕޮއިންޓް ހިސާބުކުރާ ގޮތް:  " + C.map(cr => `${lab(cr)} — ` + (critType(cr.type)[3] === "lowest" ? `އެންމެ ދަށް ÷ ހުށަހެޅި × ${cr.weight}` : critType(cr.type)[3] === "per" ? `ލިޔުން × ${cr.per || 1} (އެންމެ ގިނަވެގެން ${cr.weight})` : `ކޮމިޓީން ދޭ ޕޮއިންޓް (${cr.weight} އިން)`)).join("   ·   "), { ...b0, sz: 10, color: MUTE, h: "right" }).merge(r, c1, r, cN); H[r] = 20;
-  if (top) { r++; const rs = V === "royal" ? { color: DEEP, fill: "FBF6E8", border: { style: "thin", color: GOLD, only: ["top", "bottom"] } } : V === "minimal" ? { color: DEEP, border: { style: "thin", color: DEEP, only: ["top", "bottom"] } } : V === "ocean" ? { color: "FFFFFF", fill: "0D9488" } : { color: "7A5A0C", fill: "FFF7E0" };
+  if (top && V !== "polished") { r++; const rs = V === "royal" ? { color: DEEP, fill: "FBF6E8", border: { style: "thin", color: GOLD, only: ["top", "bottom"] } } : V === "minimal" ? { color: DEEP, border: { style: "thin", color: DEEP, only: ["top", "bottom"] } } : V === "ocean" ? { color: "FFFFFF", fill: "0D9488" } : { color: "7A5A0C", fill: "FFF7E0" };
     W.set(r, c1, `${V === "royal" ? "◆" : V === "minimal" ? "→" : "★"}  އެންމެ މަތިން ޕޮއިންޓް ލިބުނީ:  ${top.vendor}  —  ${Number(top.total || 0).toFixed(2)} ޕޮއިންޓް`, { ...b0, b: true, sz: 12, h: "right", indent: 1, ...rs }).merge(r, c1, r, cN); W.box(r, c1, r, cN, rs); H[r] = 26; }
-  if (V !== "royal" && V !== "minimal") { r += 2; const mid = Math.floor((c1 + cN) / 2), df = V === "ocean" ? "E0F2FE" : "EEF6F5"; W.set(r, mid - 1, "ތާރީޚް:  " + dvDate(today()), { ...b0, b: true, sz: 12, color: DEEP, fill: df, h: "center" }).merge(r, mid - 1, r, mid + 1); W.box(r, mid - 1, r, mid + 1, { fill: df }); H[r] = 24; }
+  if (V === "polished") { r += 2; W.set(r, c1, dvDate(today()), { ...b0, sz: 12, h: "center" }).merge(r, c1, r, cN); H[r] = 22; }
+  if (V !== "royal" && V !== "minimal" && V !== "polished") { r += 2; const mid = Math.floor((c1 + cN) / 2), df = V === "ocean" ? "E0F2FE" : "EEF6F5"; W.set(r, mid - 1, "ތާރީޚް:  " + dvDate(today()), { ...b0, b: true, sz: 12, color: DEEP, fill: df, h: "center" }).merge(r, mid - 1, r, mid + 1); W.box(r, mid - 1, r, mid + 1, { fill: df }); H[r] = 24; }
   // ----- Signatures -----
   const mem = (p.committees.eval || []).filter(m => !m.onLeave), per = 3, span = cN - c1 + 1, w3 = Math.floor(span / per);
   for (let g = 0; g < mem.length; g += per) {
     r += 2;
     mem.slice(g, g + per).forEach((m, k) => {
       const e1 = cN - k * w3, s1 = Math.max(c1, e1 - w3 + 2);
+      if (V === "polished") {
+        const sg = { ...b0, sz: 12, h: "right" };
+        W.set(r, s1, "ސޮއި:  ..................................", sg).merge(r, s1, r, e1);
+        W.set(r + 1, s1, "ނަން: " + noTitle(m.nameDv || m.name || ""), sg).merge(r + 1, s1, r + 1, e1);
+        W.set(r + 2, s1, "މަޤާމް: " + (m.designationDv || m.designation || ""), sg).merge(r + 2, s1, r + 2, e1);
+        W.set(r + 3, s1, "ތާރީޚް: " + dvDate(today()), sg).merge(r + 3, s1, r + 3, e1);
+        return;
+      }
       if (V === "royal" || V === "minimal") {
         // Signature line above the name, centred
         H[r] = 36; const ln = { style: V === "royal" ? "medium" : "thin", color: V === "royal" ? DEEP : "6B7280", only: "bottom" };
@@ -489,7 +509,8 @@ async function evalSheetStyled(p, V = "styled") {
       for (let q = 1; q <= 5; q++) W.box(r + q, s1, r + q, e1, { fill: card.fill });
       if (V === "ocean") outline(r + 1, s1, r + 5, e1, "medium", "38BDF8");
     });
-    if (V === "royal" || V === "minimal") { H[r + 1] = 22; H[r + 2] = 20; H[r + 3] = 18; r += 3; }
+    if (V === "polished") { H[r] = 30; H[r + 1] = 22; H[r + 2] = 22; H[r + 3] = 22; r += 3; }
+    else if (V === "royal" || V === "minimal") { H[r + 1] = 22; H[r + 2] = 20; H[r + 3] = 18; r += 3; }
     else { H[r] = 4; H[r + 1] = 20; H[r + 2] = 34; H[r + 3] = 22; H[r + 4] = 20; H[r + 5] = 18; r += 5; }
   }
   // ----- Footer -----
@@ -497,8 +518,9 @@ async function evalSheetStyled(p, V = "styled") {
   if (V === "styled") { band(r, "", { fill: GOLD }, 3); band(r + 1, "", { fill: DEEP }, 6); r += 1; }
   else if (V === "royal") { rule(r, DEEP, "thin"); rule(r + 1, GOLD, "thick"); r += 1; }
   else if (V === "minimal") { rule(r, DEEP, "thin"); }
+  else if (V === "polished") { r -= 1; }
   else { band(r, "", { fill: "99F6E4" }, 3); band(r + 1, "", { fill: "38BDF8" }, 4); band(r + 2, "", { fill: "0C4A6E" }, 6); r += 2; }
-  const u8 = await xlsxBuild({ name: "AB", sheet: W, widths: WD, heights: H, landscape: true, onePage: true, font: F, area: [1, 1, r, cN + 1] });
+  const u8 = await xlsxBuild({ name: "AB", sheet: W, widths: WD, heights: H, landscape: true, onePage: true, font: F, area: [1, 1, r, cN + 1], images: V === "polished" ? [emblemAt(WD, c1, cN, 3)] : [] });
   ii(new Blob([u8], { type: MIME.xlsx }), `Evaluation_${safeName(p.ref)}_${V}.xlsx`);
   audit(p, "Evaluation sheet generated", critLine(p) + " · " + V);
 }

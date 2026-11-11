@@ -391,7 +391,12 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
   - the date and the Evaluation Committee's signature block (ސޮއި / ނަން / މަޤާމް / ތާރީޚް), printing on landscape A4.
 
   Choose the layout next to the button:
-  - **Original (council form)**: your form's layout.
+  - **Original (council form)**: your form's layout. It now includes the State Emblem in the header, as on the form.
+  - **Original — polished**: the form lightly refined:
+    - the same layout, wording, Faruma font and black text, with the State Emblem centred and a thin rule under the header;
+    - grey-blue heading rows, a firm frame around the table, and the total column in bold on light grey;
+    - consistent number formats and row heights, and the disqualified row in red;
+    - a small "how points are worked out" line, the date centred, and signature blocks with dotted signing lines.
   - **Original — restyled**: the same columns, order and formulas as the form, with:
     - a deep-teal title band (Bismillah, council name, committee) above a gold line;
     - the project name large, with the Iulaan number;
