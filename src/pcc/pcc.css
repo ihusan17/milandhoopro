@@ -428,3 +428,4 @@ input.pcc-req-miss{border-color:#dc2626!important;box-shadow:0 0 0 2px color-mix
 .pnv-a .pnv-i.on{background:var(--c,var(--brand));color:#fff!important;box-shadow:0 6px 14px -8px var(--c,var(--brand))}.pnv-a .pnv-i.on .pnv-ic{color:#fff}.pnv-a .pnv-i.on .pnv-n{background:rgba(255,255,255,.25);color:#fff}
 
 @media (max-width:700px){.pnv-a .pnv-grp{width:100%}.pnv-a .pnv-seg{flex-wrap:nowrap;overflow-x:auto}}
+.pnv.pcc-subnav{flex-wrap:wrap;overflow:visible;padding-bottom:0}

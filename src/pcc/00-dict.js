@@ -115,6 +115,7 @@ const DV_DICT = {
   "Committee meetings": "ކޮމިޓީ ބައްދަލުވުންތައް", "New Bid Committee meeting": "ބިޑް ކޮމިޓީގެ އާ ބައްދަލުވުމެއް", "New Evaluation meeting": "އިވެލުއޭޝަން ކޮމިޓީގެ އާ ބައްދަލުވުމެއް", "All meetings": "ހުރިހާ ބައްދަލުވުމެއް", "Bid Committee": "ބިޑް ކޮމިޓީ", "Evaluation Committee": "އިވެލުއޭޝަން ކޮމިޓީ", "Bid Committee meetings": "ބިޑް ކޮމިޓީގެ ބައްދަލުވުންތައް", "Evaluation meetings": "އިވެލުއޭޝަން ބައްދަލުވުންތައް", "Awards decided": "ހަވާލުކުރި", "Variations decided": "ވޭރިއޭޝަން", "Agenda": "އެޖެންޑާ", "Award": "ހަވާލުކުރުން", "Variation": "ވޭރިއޭޝަން", "Time extension": "މުއްދަތު އިތުރުކުރުން", "Re-tender": "އަލުން އިޢުލާނުކުރުން", "Cancellation": "ބާތިލްކުރުން", "Bid evaluation": "ބިޑް ވަޒަންކުރުން", "Re-evaluation": "އަލުން ވަޒަންކުރުން", "Evaluation": "އިވެލުއޭޝަން", "Meeting no.": "ބައްދަލުވުމުގެ ނަންބަރު", "Add to register": "ރަޖިސްޓަރަށް",
   "Committee": "ކޮމިޓީ", "New Bid Committee meeting for these": "މިއަށް ބިޑް ކޮމިޓީގެ ބައްދަލުވުމެއް", "Agenda — what each project is for": "އެޖެންޑާ — ކޮންމެ މަޝްރޫޢެއް ހިމެނީ ކީއްވެގެން", "Projects at this meeting": "މި ބައްދަލުވުމުގައި ހިމެނޭ މަޝްރޫޢުތައް", "Starts": "ފަށާ ގަޑި", "Ends": "ނިމޭ ގަޑި", "Extra days": "އިތުރު ދުވަސް",
   "Workspace": "މަސައްކަތުގެ ބައިތައް",
+  "Project work": "މަޝްރޫޢުގެ މަސައްކަތް", "Records": "ރެކޯޑުތައް",
   "Page not found": "ޞަފްޙާ ނުފެނުނު", "ledger balanced": "ލެޖަރ ބެލެންސް",
   "Just now": "މިހާރު", "Plan": "ޕްލޭން", "Project reference": "މަޝްރޫޢުގެ ނަންބަރު", "Language": "ބަސް", "Translations": "ތަރުޖަމާ"
 };
