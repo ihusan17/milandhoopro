@@ -415,7 +415,7 @@ a.pcc-ag-link{color:inherit;text-decoration:none;display:block}a.pcc-ag-link:hov
 .pcc-ag-req{grid-column:2/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px 10px;padding-top:6px;border-top:1px dashed var(--line)}
 .pcc-ag-rf{display:flex;flex-direction:column;gap:3px;margin:0;font-size:12px;font-weight:600}.pcc-ag-rf input{width:100%}
 input.pcc-req-miss{border-color:#dc2626!important;box-shadow:0 0 0 2px color-mix(in srgb,#dc2626 15%,transparent);background:color-mix(in srgb,#dc2626 4%,var(--card))}
-/* ===== Projects navigation trial designs (html localStorage mq-pnav = A | B | C) ===== */
+/* ===== Projects navigation (grouped bars) ===== */
 .pnv{margin:0 0 18px}.pnv a{text-decoration:none!important;color:var(--fg)}
 .pnv .pnv-ic{display:inline-grid;place-items:center;flex:none}.pnv .pnv-n{font-size:11.5px;font-weight:700;min-width:22px;padding:1px 7px;border-radius:999px;text-align:center;background:color-mix(in srgb,var(--fg) 8%,transparent);color:var(--muted,#64748b)}
 /* A — grouped segmented bar */
@@ -426,24 +426,5 @@ input.pcc-req-miss{border-color:#dc2626!important;box-shadow:0 0 0 2px color-mix
 .pnv-a .pnv-i .pnv-ic{color:var(--c,var(--brand))}
 .pnv-a .pnv-i:hover{background:color-mix(in srgb,var(--c,var(--brand)) 9%,transparent);color:var(--fg)!important}
 .pnv-a .pnv-i.on{background:var(--c,var(--brand));color:#fff!important;box-shadow:0 6px 14px -8px var(--c,var(--brand))}.pnv-a .pnv-i.on .pnv-ic{color:#fff}.pnv-a .pnv-i.on .pnv-n{background:rgba(255,255,255,.25);color:#fff}
-/* B — tiles */
-.pnv-b{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
-.pnv-b .pnv-sep{display:none}
-.pnv-b .pnv-t{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 12px 10px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-weight:650;font-size:13px;overflow:hidden;transition:transform .15s,box-shadow .15s}
-.pnv-b .pnv-t::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--c,var(--brand));opacity:.85}
-.pnv-b .pnv-t .pnv-ic{width:32px;height:32px;border-radius:10px;background:color-mix(in srgb,var(--c,var(--brand)) 12%,transparent);color:var(--c,var(--brand))}
-.pnv-b .pnv-t .pnv-n{position:absolute;top:12px;inset-inline-end:10px;font-size:15px;background:none;color:var(--fg);padding:0}
-.pnv-b .pnv-t:hover{transform:translateY(-2px);box-shadow:0 10px 22px -16px rgba(0,0,0,.45)}
-.pnv-b .pnv-t.on{background:linear-gradient(135deg,var(--c,var(--brand)),color-mix(in srgb,var(--c,var(--brand)) 70%,#000));color:#fff!important;border-color:transparent}
-.pnv-b .pnv-t.on .pnv-ic{background:rgba(255,255,255,.2);color:#fff}.pnv-b .pnv-t.on .pnv-n{color:#fff}.pnv-b .pnv-t.on::before{display:none}
-/* C — section tabs + type chips */
-.pnv-c .pnv-tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:2px solid var(--line)}
-.pnv-c .pnv-tab{display:flex;align-items:center;gap:7px;padding:10px 14px;margin-bottom:-2px;border-bottom:3px solid transparent;font-weight:650;font-size:14px;color:var(--muted,#64748b)!important}
-.pnv-c .pnv-tab:hover{color:var(--fg)!important;background:color-mix(in srgb,var(--brand) 5%,transparent);border-radius:8px 8px 0 0}
-.pnv-c .pnv-tab.on{color:var(--brand)!important;border-bottom-color:var(--brand)}
-.pnv-c .pnv-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
-.pnv-c .pnv-cap{font-size:12px;font-weight:700;color:var(--muted,#64748b);margin-inline-end:2px}
-.pnv-c .pnv-chip{display:flex;align-items:center;gap:6px;padding:5px 8px 5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:13px}
-.pnv-c .pnv-chip .pnv-ic{width:20px;height:20px;border-radius:50%;background:color-mix(in srgb,var(--c,var(--brand)) 14%,transparent);color:var(--c,var(--brand))}.pnv-c .pnv-chip .pnv-ic svg{width:13px;height:13px}
-.pnv-c .pnv-chip.on{background:var(--c,var(--brand));border-color:var(--c,var(--brand));color:#fff!important}.pnv-c .pnv-chip.on .pnv-ic{background:rgba(255,255,255,.25);color:#fff}.pnv-c .pnv-chip.on .pnv-n{background:rgba(255,255,255,.25);color:#fff}
-@media (max-width:700px){.pnv-a .pnv-seg,.pnv-c .pnv-tabs{flex-wrap:nowrap;overflow-x:auto}.pnv-b{grid-template-columns:repeat(3,1fr)}}
+
+@media (max-width:700px){.pnv-a .pnv-grp{width:100%}.pnv-a .pnv-seg{flex-wrap:nowrap;overflow-x:auto}}
