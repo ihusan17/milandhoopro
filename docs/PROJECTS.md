@@ -445,3 +445,10 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
 
   The new layouts are right-to-left sheets; the formal report and the matrix print on one landscape page.
   The choice is remembered.
+- **Criteria first.** Bids can only be added after the project's evaluation criteria are set. Until then, Bids received shows a notice with *Set criteria*, and *Add bid*, *Add several bids* and the Excel template open the criteria form first.
+- **Bid columns follow the criteria.**
+  - Always shown: bidder, bid amount and validity.
+  - Shown only when a criterion uses them: duration, experience (documents), technical points, financial points, and each "Other" criterion's points.
+  - Total score and rank are not asked; they are worked out from the criteria.
+  - This applies to *Add bid*, the *Add several bids* table, the paste order and the Excel template.
+  - Example: Price · Duration · Experience gives Bidder, Bid amount, Days, Validity and Experience (docs).
