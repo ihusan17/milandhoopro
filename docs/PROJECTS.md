@@ -399,6 +399,22 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
     - alternating rows, coloured points, and the top bidder marked ★ with a gold total;
     - the disqualified row in red;
     - a "how points are worked out" line, the date, and signature cards with a dashed signing line.
+  - Three more looks of the same form:
+    - **Original — royal (navy & gold)**:
+      - a split header, with the council on the right and a navy "ބިޑް އިވެލުއޭޝަން ޝީޓް" box with the date on the left;
+      - gold and navy lines, gold criterion captions, cream sub-headings and a framed table;
+      - the winner marked ◆ with a navy and gold total;
+      - centred signature lines with the name and designation below.
+    - **Original — minimal**:
+      - white, with fine rules and the council name large;
+      - big light-grey weights (75%, 15%, 10%) over the criteria;
+      - headings ruled underneath and the winner's total in black;
+      - signature lines above each name.
+    - **Original — ocean**:
+      - layered blue and aqua bands, with the project name in a framed light-blue panel;
+      - blue and aqua criterion colours and a framed table;
+      - an aqua winner row and result bar;
+      - framed signature boxes.
   - **Formal report**: a header with a document box; an information panel (Iulaan no., dates, number of bids, estimate, criteria); a result banner naming the top bidder with the total; the points table with formulas; the disqualified bidders with reasons; signature boxes for the Evaluation Committee.
   - **Step-by-step calculation**: one section per criterion showing the working for each bidder (e.g. 924,000 ÷ 966,600 × 75 = 71.69; 3 × 2 = 6), then a summary table that adds the points and ranks the bidders.
   - **Comparison matrix**: bidders across the top and criteria down the side, with a value row and a points row for each criterion; the total, the rank, a points bar, remarks and a result line.
