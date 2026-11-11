@@ -491,3 +491,5 @@ td.pcc-pt{text-align:center}
 .pcc-bk-name{height:40px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;line-height:1.25;color:var(--fg);overflow:hidden;text-align:center;padding:0 2px}
 .pcc-bulk input[type=checkbox]:focus,.pcc-bulk input[type=checkbox]:focus-visible{outline:none!important;box-shadow:none!important}
 .pcc-bulk th .pcc-bk-name{text-transform:none;letter-spacing:0}
+.pcc-bulk[dir=rtl] .t th{text-align:right}.pcc-bulk[dir=rtl] .t th.pcc-bk-h,.pcc-bulk[dir=rtl] .t td.pcc-bk-c{text-align:center!important}
+.pcc-bulk[dir=rtl] input[inputmode=decimal]{text-align:left;direction:ltr}
