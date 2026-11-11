@@ -493,3 +493,12 @@ td.pcc-pt{text-align:center}
 .pcc-bulk th .pcc-bk-name{text-transform:none;letter-spacing:0}
 .pcc-bulk[dir=rtl] .t th{text-align:right}.pcc-bulk[dir=rtl] .t th.pcc-bk-h,.pcc-bulk[dir=rtl] .t td.pcc-bk-c{text-align:center!important}
 .pcc-bulk[dir=rtl] input[inputmode=decimal]{text-align:left;direction:ltr}
+/* bids table alignment */
+.pcc-bulk .t th{vertical-align:middle!important;text-align:center!important;padding:8px 6px}
+.pcc-bulk .t td{vertical-align:middle;text-align:center;padding:6px}
+.pcc-bulk .t td input[type=text],.pcc-bulk .t td input:not([type]){margin:0 auto;display:block}
+.pcc-bulk .t td input.pcc-acc{text-align:right;direction:ltr;font-variant-numeric:tabular-nums}
+.pcc-bulk .t td input[inputmode=decimal]:not(.pcc-acc){text-align:center;direction:ltr}
+.pcc-bulk .pcc-bk-lab,.pcc-bulk .pcc-bk-name{height:auto;min-height:0!important}
+.pcc-bulk .pcc-bk-name,.pcc-bulk .pcc-bk-lab{font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--muted,#64748b)}
+.pcc-bulk th.pcc-bk-h .pcc-bk-name{color:var(--fg)}

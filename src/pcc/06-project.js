@@ -252,6 +252,8 @@ const docsOf = p => (Array.isArray(p.bidDocs) && p.bidDocs.length ? p.bidDocs : 
 // Compulsory documents: a bid missing any of them is not responsive.
 const reqDocsOf = p => (Array.isArray(p.bidDocsReq) ? p.bidDocsReq : []).filter(d => docsOf(p).includes(d));
 const docsComplete = (p, docs) => reqDocsOf(p).every(d => (docs || {})[d]);
+// Amounts in accounting format: 966,600.00
+const fmtAcc = v => { const t = String(v ?? "").replace(/[,\s]/g, "").replace(/^(MVR|Rf\.?|ރ\.)/i, ""); if (t === "") return ""; const n = Number(t); return Number.isNaN(n) ? String(v) : n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
 const docKey = s2 => String(s2 || "").toLowerCase().replace(/\s+/g, " ").trim();
 
 // Bids received for a project, as one table: existing bids are shown and can be changed, new rows
@@ -271,13 +273,13 @@ async function bidsBulk(p) {
   const docCell = (r, d) => { const cb = r.dk[d.id] || (r.dk[d.id] = o("input", { type: "checkbox", checked: !!r.init[d.orig] || !!r.init[d.name] })); cb.onchange = () => autoResp(r); return o("td", { class: "pcc-bk-c" + (d.req ? " req" : "") }, cb); };
   const rowEl = r => { const tr = o("tr", {}, o("td", { class: "muted small" }, ""), COLS.map(([k]) => o("td", {}, r.els[k])), o("td", { class: "pcc-bk-c" }, r.resp), DOCS.map(d => docCell(r, d)), o("td", {}, btn("✕", () => { r.tr.remove(); rows.splice(rows.indexOf(r), 1); renum(); }, "small"))); r.tr = tr; return tr; };
   const addRow = (vals = {}, b = null) => {
-    const els = {}; COLS.forEach(([k, , w]) => { els[k] = k === "vendor" ? I(vals[k] || "", { list: "pcc-vendors3", style: { width: w } }) : k === "amount" ? (() => { const e = MI(""); e.value = String(vals[k] ?? ""); e.style.width = w; return e; })() : I(vals[k] ?? "", { style: { width: w }, inputmode: k === "validity" ? "text" : "decimal" }); });
+    const els = {}; COLS.forEach(([k, , w]) => { els[k] = k === "vendor" ? I(vals[k] || "", { list: "pcc-vendors3", style: { width: w } }) : k === "amount" ? (() => { const e = MI(""); e.value = fmtAcc(vals[k]); e.style.width = w; e.classList.add("pcc-acc"); e.addEventListener("blur", () => { e.value = fmtAcc(e.value); }); return e; })() : I(vals[k] ?? "", { style: { width: w }, inputmode: k === "validity" ? "text" : "decimal" }); });
     const r = { b, els, resp: o("input", { type: "checkbox", checked: vals.responsive !== false }), dk: {}, init: vals.docs || {}, remarks: vals.remarks ?? (b ? b.remarks || "" : ""), manualOff: vals.responsive === false && !!vals.dq };
     r.resp.onchange = () => { r.manualOff = !r.resp.checked && DOCS.filter(d => d.req).every(d => r.dk[d.id] && r.dk[d.id].checked); r.tr && r.tr.classList.toggle("pcc-bk-dq", !r.resp.checked); };
     if (vals.alldocs) DOCS.forEach(d => { r.init[d.name] = true; });
     rows.push(r); body.append(rowEl(r)); renum(); if (vals.vendor || b) autoResp(r); return r;
   };
-  const fill = (r, vals) => { COLS.forEach(([k]) => { const v = vals[k]; if (v != null && String(v).trim() !== "") r.els[k].value = String(v); }); vals.responsive != null && (r.resp.checked = vals.responsive); vals.remarks && (r.remarks = vals.remarks);
+  const fill = (r, vals) => { COLS.forEach(([k]) => { const v = vals[k]; if (v != null && String(v).trim() !== "") r.els[k].value = k === "amount" ? fmtAcc(v) : String(v); }); vals.responsive != null && (r.resp.checked = vals.responsive); vals.remarks && (r.remarks = vals.remarks);
     DOCS.forEach(d => { const v = (vals.docs || {})[d.name]; if (v != null) (r.dk[d.id] || (r.dk[d.id] = o("input", { type: "checkbox" }))).checked = !!v; else if (vals.alldocs != null && r.dk[d.id]) r.dk[d.id].checked = !!vals.alldocs; }); };
   const findRow = name => rows.find(r => docKey(r.els.vendor.value) === docKey(name));
   const dropEmpty = () => rows.filter(r => !r.b && !Object.values(r.els).some(e => e.value.trim())).forEach(r => { r.tr.remove(); rows.splice(rows.indexOf(r), 1); });
