@@ -90,7 +90,7 @@ function refFormat(pat, n, yr, p) {
 }
 function refPeek(kind, p) { const z = Z(), yr = today().slice(0, 4), k = kind + ":" + yr; return refFormat(refPattern(kind), ((z.refSeq || {})[k] || 0) + 1, yr, p); }
 // Takes the next number. Numbers are never reused, even if the document is later deleted.
-function refNext(kind, p) { const z = Z(), yr = today().slice(0, 4), k = kind + ":" + yr; z.refSeq = z.refSeq || {}; z.refSeq[k] = (z.refSeq[k] || 0) + 1; return refFormat(refPattern(kind), z.refSeq[k], yr, p); }
+function refNext(kind, p, y) { const z = Z(), yr = /^\d{4}$/.test(y || "") ? y : today().slice(0, 4), k = kind + ":" + yr; z.refSeq = z.refSeq || {}; z.refSeq[k] = (z.refSeq[k] || 0) + 1; return refFormat(refPattern(kind), z.refSeq[k], yr, p); }
 
 // ---------- migration (idempotent; runs before every Projects page) ----------
 const NEWPERMS = [["plogs", "Work logs, progress reports and checklists"], ["pdocs", "Generate project documents, letters and memos"], ["payments", "Project payments and payment memos"], ["templates", "Manage document templates"]];

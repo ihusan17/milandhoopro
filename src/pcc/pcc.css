@@ -391,3 +391,19 @@ tr.pcc-cancelled td{opacity:.6}tr.pcc-cancelled td:nth-child(3) b,tr.pcc-cancell
 .pcc-mchips{flex:0 0 auto;margin-inline-start:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 .pcc-mchips>*{white-space:nowrap}
 .pcc-mi .grow>.small{overflow:hidden;text-overflow:ellipsis}.pcc-mi .pcc-mref{white-space:nowrap}
+/* committee meetings register */
+.pcc-mt{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap;background:color-mix(in srgb,#64748b 14%,transparent);color:#334155}
+.pcc-mt.t-award{background:color-mix(in srgb,#15803d 14%,transparent);color:#166534}.pcc-mt.t-variation{background:color-mix(in srgb,#d97706 16%,transparent);color:#92400e}
+.pcc-mt.t-extension{background:color-mix(in srgb,#2563eb 12%,transparent);color:#1d4ed8}.pcc-mt.t-retender,.pcc-mt.t-cancel{background:color-mix(in srgb,#b91c1c 12%,transparent);color:#991b1b}
+.pcc-mt.t-evaluation,.pcc-mt.t-reeval{background:color-mix(in srgb,#7c3aed 13%,transparent);color:#6d28d9}
+.pcc-mk{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:6px;white-space:nowrap}.pcc-mk.k-bid{background:var(--brand);color:#fff}.pcc-mk.k-eval{background:#7c3aed;color:#fff}
+.pcc-mproj{display:flex;flex-wrap:wrap;align-items:center;gap:4px 7px;padding:3px 0}.pcc-mproj+.pcc-mproj{border-top:1px dashed var(--line)}.pcc-mpn{flex-basis:100%}
+.pcc-mwait{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.pcc-agenda{display:flex;flex-direction:column;gap:8px;margin:6px 0 4px}
+.pcc-ag-row{display:grid;grid-template-columns:26px minmax(140px,1.3fr) 150px minmax(140px,1.2fr);gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.pcc-ag-n{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:12px}
+.pcc-ag-p{min-width:0}.pcc-ag-var{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:10px}.pcc-ag-f{display:flex;align-items:center;gap:6px}.pcc-ag-f label{margin:0;font-size:12px;white-space:nowrap}
+@media (max-width:700px){.pcc-ag-row{grid-template-columns:26px 1fr}.pcc-ag-row>select,.pcc-ag-row>input{grid-column:2}}
+.pcc-mpick{max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:4px 8px;margin:6px 0 10px}
+.pcc-mpick .pcc-mrow{grid-template-columns:auto 150px 1fr auto;align-items:center}.pcc-mpick .pcc-mrow>span[dir]{text-align:start}
+.pcc-macts{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:96px}

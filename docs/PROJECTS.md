@@ -314,3 +314,22 @@ Projects › **Monthly** (next to Table / Cards / Timeline) groups every procure
 - **Edit project → Project section**: *If not in the plan: reason* and *Replaces cancelled plan item*. The cancelled row then shows "Replaced by PC-…".
 - **Plan page summary**: counts for In plan, Added during the year, Cancelled and Projects not in plan, with a list of the unplanned projects and an *Add to plan* button. That button adds the project as an amendment, marked "Added later".
 - **Placeholders**: `{plan_status_dv}`, `{plan_status}`, `{in_plan}`, `{unplanned_reason_dv}`, `{replaces_plan_item}`, `{plan_cancel_reason_dv}`.
+
+## Committee meetings register
+
+Projects → **Committee meetings** (`#/projects/meetings/<year>/<bid|eval>`) lists every Bid Committee and Evaluation Committee meeting of the year in one table, sorted by date. It shows the meeting no., date and time, members present, the agenda counts, and each project with its decision type.
+
+- **New Bid Committee meeting / New Evaluation meeting.** The number is given automatically in order from the reference patterns: Bid Committee `…/BM001, BM002…`, Evaluation `…/EM001…`. It counts per year of the meeting date and can be overridden for past meetings.
+- **Agenda.** Tick the projects, then choose what each one is for:
+  - Bid Committee: Award, Variation (amount, with − for an omission, and extra days), Time extension (days), Re-tender, Cancellation or Other.
+  - Evaluation Committee: Bid evaluation, Re-evaluation or Other.
+  - Each item also takes an optional decision note.
+- **Members.** Taken from the Standing committee by default, or from one project's committee; leave status is marked per member.
+- **Linked to the projects.** A project awarded or evaluated at a meeting gets that meeting's no., date and times in its own fields (unless different ones were typed), so single-project documents use the same number.
+- **Evaluated, waiting for the Bid Committee.** Lists projects that have an evaluation meeting but no award yet, with a button that starts a Bid Committee meeting with them ticked.
+- **Meetings typed on projects only.** Meetings typed in a project's Edit form are listed with an *Add to register* button.
+- **Documents.** Generates the meeting templates (Yaumiyya, invitations) for the meeting.
+- **Template fields:**
+  - Meeting level: `{agenda_dv}`, `{agenda}`, `{award_count}`, `{variation_count}`, `{extension_count}`, `{evaluation_count}`.
+  - Inside `{#projects}`: `{item_type_dv}`, `{item_type}`, `{item_note}`, `{variation_amount}`, `{variation_kind_dv}`, `{variation_amount_words_dv}`, `{variation_days}`, `{contract_after_variation}`, and the switches `{#is_award}`, `{#is_variation}`, `{#is_extension}`.
+  - Loops of one kind only: `{#awards}`, `{#variations}`, `{#extensions}`, `{#evaluations}`.

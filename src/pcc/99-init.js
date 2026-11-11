@@ -99,8 +99,9 @@ window.__pcc = {
 };
 
 // ---------- routes ----------
-function ROUTE_PROJECTS(n, [sub]) {
+function ROUTE_PROJECTS(n, [sub, a, b]) {
   migrate();
+  if (sub === "meetings") return MEETPAGE(n, [a, b]);
   if (sub === "documents") return DOCSPAGE(n);
   if (sub === "templates") { if (!can("templates")) return K.Fa.projects && OVERVIEW(n, ""); TPLPAGE(n); REFSET(n); STANDCARD(n); return; }
   if (sub === "cheatsheet") return CHEAT(n);

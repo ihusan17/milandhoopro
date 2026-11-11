@@ -1,7 +1,7 @@
 // Projects list: Overview (KPIs, handed-over strip, table / card / timeline) and the Documents register.
 
 function PCNAV(cur) {
-  const T = [["#/projects", "Overview", "all"], ...PTYPES.map(([k, l]) => ["#/projects/" + k, l, k]), ["#/plan", "Procurement plan", "plan"], ["#/worklog", "Work Logs", "log"], ["#/projects/documents", "Documents", "docs"], ...(can("templates") ? [["#/projects/templates", "Templates", "templates"]] : [])];
+  const T = [["#/projects", "Overview", "all"], ...PTYPES.map(([k, l]) => ["#/projects/" + k, l, k]), ["#/plan", "Procurement plan", "plan"], ["#/projects/meetings", "Committee meetings", "meet"], ["#/worklog", "Work Logs", "log"], ["#/projects/documents", "Documents", "docs"], ...(can("templates") ? [["#/projects/templates", "Templates", "templates"]] : [])];
   return o("div", { class: "pills pcc-nav" }, T.map(([h, l, k]) => o("a", { href: h, class: "pill" + (k === cur ? " on" : "") }, l)));
 }
 const viewPref = () => { try { return localStorage.getItem("mq-pview") || "table"; } catch { return "table"; } };
