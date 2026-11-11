@@ -157,6 +157,7 @@ function meetingData(m, focus) {
       variation_amount: it.amount == null ? "" : ht(Math.abs(it.amount)), variation_kind_dv: it.amount == null ? "" : it.amount < 0 ? "ކުޑަކުރުން" : "އިތުރުކުރުން", variation_amount_words_dv: it.amount == null ? "" : dvMoneyWords(Math.abs(it.amount)), variation_days: it.days == null ? "" : String(it.days),
       contract_after_variation: it.amount != null && p.contract != null ? ht(p.contract + it.amount) : "" };
     return r; });
+  d.projects.forEach((r, i, A) => { r.is_first = i === 0; r.is_last = i === A.length - 1; r.is_middle = !r.is_first && !r.is_last; });
   ["award", "variation", "extension", "evaluation"].forEach(t => { const L3 = d.projects.filter(r => r.item_code === t || (t === "evaluation" && r.item_code === "reeval")).map((r, i) => ({ ...r, no: i + 1 })); d[t === "evaluation" ? "evaluations" : t + "s"] = L3; d[t + "_count"] = L3.length; });
   const mine = d.projects.find(r => r.ref_no === first.ref) || d.projects[P.indexOf(first)] || {};
   ["item_type", "item_type_dv", "item_code", "item_note", "is_award", "is_variation", "is_extension", "variation_amount", "variation_kind_dv", "variation_amount_words_dv", "variation_days", "contract_after_variation"].forEach(k => { k in mine && (d[k] = mine[k]); });
