@@ -98,6 +98,54 @@ function tabCount(p, k) {
 }
 
 // ----- Summary -----
+// Summary detail cards: trial designs chosen with localStorage "mq-psum" (A tiles, B sheet, C hero); empty = original.
+const psumVar = () => { try { return localStorage.getItem("mq-psum") || ""; } catch (e) { return ""; } };
+const has = v => !(v == null || v === "" || v === "—");
+function psumData(p) {
+  const b = p.budgetId ? K.Kt(Z(), p.budgetId) : null, pt = payTotals(p), plan = (Z().plan || []).find(x => x.id === p.planId || x.projectId === p.id);
+  return {
+    id: [["Reference", p.ref, "ref"], ["Type", p.type + (p.category ? " · " + p.category : "")], ["Status", stChip(p.status)], ["Plan", planChip(p)], ["Location", p.location], ["Unit / section", p.unit, "opt"], ["Project officer", p.officer, "opt"], ["Budget line", b && `${b.code} - ${b.description}`, "opt"], ["Funding source", p.fund || (plan && plan.funding)]],
+    proc: [["PR number", p.prNumber], ["Iulaan no.", p.advertNo], ["Iulaan date", fd(p.advertised)], ["Bid opening", fd(p.bidOpening)], ["Method", plan && plan.method]],
+    money: [["Estimated cost", p.estimate], ["Contract value", p.contract], ["Paid (net)", pt.totalPaid], ["Balance", pt.balance]],
+    period: [["Site handover", fd(p.handover)], ["Duration", p.duration ? p.duration + " days" : ""], ["Due date (as signed)", fd(p.dueOriginal)], ["Extensions", extDays(p) ? extDays(p) + " days" : "None"], ["Due date now", fd(p.due)], ["Actual completion", fd(p.done)]]
+  };
+}
+const psMoney = v => (v == null ? o("span", { class: "muted" }, "—") : o("span", {}, ht(v), o("small", {}, " MVR")));
+function psumProject(p, V) {
+  const D = psumData(p), names = o("div", { class: "ps-names" }, p.nameDv ? o("div", { class: "ps-dv", dir: "rtl", lang: "dv" }, p.nameDv) : null, (p.nameEn || (!p.nameDv && p.name)) ? o("div", { class: "ps-en" }, p.nameEn || p.name) : null);
+  const rows = L => L.filter(([, v, f]) => f !== "opt" || has(v));
+  const desc = [p.descDv ? o("p", { dir: "rtl", lang: "dv", class: "pcc-para" }, p.descDv) : null, p.desc ? o("p", { dir: "auto", class: "pcc-para" }, p.desc) : null, p.notes ? o("p", { class: "muted small pcc-para" }, p.notes) : null];
+  if (V === "A") {
+    const tile = ([l, v, f]) => o("div", { class: "ps-tile" + (f === "ref" ? " ref" : "") }, o("span", {}, l), o("b", { dir: "auto" }, has(v) ? v : o("i", { class: "muted" }, "Not set")));
+    return o("div", { class: "card ps-a" }, o("h3", {}, "Project"), names,
+      o("div", { class: "ps-money" }, D.money.map(([l, v], i) => o("div", { class: "ps-m m" + i }, o("span", {}, l), o("b", {}, psMoney(v))))),
+      o("h4", {}, "Details"), o("div", { class: "ps-tiles" }, rows(D.id).map(tile)), o("h4", {}, "Procurement"), o("div", { class: "ps-tiles" }, rows(D.proc).map(tile)), ...desc);
+  }
+  if (V === "B") {
+    const sec = (t, ic, L) => o("div", { class: "ps-sec" }, o("div", { class: "ps-sh" }, nvIco(ic), t), o("div", { class: "ps-rows" }, rows(L).map(([l, v]) => o("div", { class: "ps-r" }, o("span", {}, l), o("b", { dir: "auto" }, has(v) ? v : o("i", { class: "muted" }, "Not set"))))));
+    return o("div", { class: "card ps-b" }, o("h3", {}, "Project"), names, sec("Details", "summary", D.id), sec("Procurement", "docs", D.proc), sec("Money", "payments", D.money.map(([l, v]) => [l, psMoney(v)])), ...desc);
+  }
+  // C: hero
+  const tp = timePct(p), pc = clamp(Number(p.progress) || 0, 0, 100);
+  return o("div", { class: "card ps-c" },
+    o("div", { class: "ps-hero" }, o("div", { class: "ps-hl" }, names, o("div", { class: "ps-chips" }, o("span", { class: "ps-chip ref" }, p.ref), o("span", { class: "ps-chip" }, p.type), stChip(p.status), planChip(p), has(p.location) ? o("span", { class: "ps-chip" }, "📍 " + p.location) : null, has(p.advertNo) ? o("span", { class: "ps-chip" }, "Iulaan " + p.advertNo) : null)),
+      o("div", { class: "ps-ring", style: { "--v": pc } }, o("b", {}, pc + "%"), o("span", {}, "work done"))),
+    o("div", { class: "ps-kpis" }, D.money.map(([l, v], i) => o("div", { class: "ps-k k" + i }, o("span", {}, l), o("b", {}, psMoney(v))))),
+    o("div", { class: "ps-facts" }, rows([...D.id.filter(r => !["Reference", "Type", "Status", "Plan", "Location"].includes(r[0])), ...D.proc.filter(r => r[0] !== "Iulaan no.")]).map(([l, v]) => o("div", { class: "ps-f" }, o("span", {}, l), o("b", { dir: "auto" }, has(v) ? v : "—")))), ...desc);
+}
+function psumPeriod(p, V) {
+  const D = psumData(p);
+  const eot = [o("h4", {}, "Extensions of time"), (p.eots || []).length ? tbl(["Approved", "Days", "Reason", "Letter ref", ""], p.eots.map(e => o("tr", {}, o("td", {}, fd(e.approved)), o("td", {}, String(e.days)), o("td", { dir: "auto" }, e.reason || ""), o("td", {}, e.letterRef || ""), o("td", {}, can("projects") ? btn("Remove", async () => { (await jt("Remove this extension? The due date moves back.", "Remove")) && save(() => { p.eots = p.eots.filter(x => x !== e); recalcDue(p); audit(p, "Extension removed", e.days + " days"); }, "Extension removed"); }, "small") : null)))) : o("p", { class: "muted" }, "No extensions granted."), can("projects") ? btn("Grant extension of time…", () => eotAdd(p)) : null];
+  const cls = V === "A" ? "ps-a" : V === "B" ? "ps-b" : "ps-c";
+  const L = [...D.period, ["Time left", cdChip(p)]];
+  const body = V === "B" ? o("div", { class: "ps-rows" }, L.map(([l, v]) => o("div", { class: "ps-r" }, o("span", {}, l), o("b", {}, has(v) ? v : o("i", { class: "muted" }, "Not set"))))) : o("div", { class: V === "A" ? "ps-tiles" : "ps-facts" }, L.map(([l, v]) => o("div", { class: V === "A" ? "ps-tile" : "ps-f" }, o("span", {}, l), o("b", {}, has(v) ? v : "—"))));
+  return o("div", { class: "card " + cls }, o("h3", {}, "Contract period"), body, dualBar(p), ...eot);
+}
+function psumBox(V, title, ic, L, extra) {
+  if (V === "A") return o("div", { class: "card ps-a" }, o("h3", {}, title), o("div", { class: "ps-tiles" }, L.map(([l, v]) => o("div", { class: "ps-tile" }, o("span", {}, l), o("b", { dir: "auto" }, has(v) ? v : o("i", { class: "muted" }, "Not set"))))), ...(extra || []));
+  if (V === "B") return o("div", { class: "card ps-b" }, o("div", { class: "ps-sec", style: { marginTop: 0 } }, o("div", { class: "ps-sh" }, nvIco(ic), title), o("div", { class: "ps-rows one" }, L.map(([l, v]) => o("div", { class: "ps-r" }, o("span", {}, l), o("b", { dir: "auto" }, has(v) ? v : o("i", { class: "muted" }, "Not set")))))), ...(extra || []));
+  return o("div", { class: "card ps-c" }, o("h3", {}, title), o("div", { class: "ps-facts one" }, L.map(([l, v]) => o("div", { class: "ps-f" }, o("span", {}, l), o("b", { dir: "auto" }, has(v) ? v : "—")))), ...(extra || []));
+}
 function tSummary(n, p) {
   const b = p.budgetId ? K.Kt(Z(), p.budgetId) : null, v = (Z().vendors || []).find(x => x.name === p.vendor) || {};
   const steps = [["PR raised", p.prDate || (p.prNumber ? null : null), p.prNumber], ["Iulaan", p.advertised], ["Bid opening", p.bidOpening], ["Evaluation", p.evaluation], ["Award", p.award], ["Agreement", p.agreement], ["Handover", p.handover], ["Due date", p.due], ["Completion", p.done], ["Retention end", p.retentionEnd]];
@@ -105,14 +153,18 @@ function tSummary(n, p) {
   n.append(o("div", { class: "card pcc-steps-card" }, o("h3", {}, "Key dates"), o("div", { class: "pcc-steps" }, steps.map(([l, dt, extra]) => o("div", { class: "pcc-step" + (dt && dt <= t ? " done" : dt ? " next" : extra ? " done" : "") }, o("i", {}), o("b", {}, l), o("span", {}, dt ? fd(dt) : extra || "—"))))));
   const cs = (p.cases || []).map(i => Z().cases.find(c => c.id === i)).filter(Boolean);
   n.append(o("div", { class: "split stack" },
-    o("div", {},
+    psumVar() ? o("div", {}, psumProject(p, psumVar()), psumPeriod(p, psumVar())) : o("div", {},
       card("Project", kvs([["Reference", p.ref], ["Name (English)", p.nameEn || p.name], ["Name (Dhivehi)", p.nameDv ? o("span", { dir: "rtl", lang: "dv" }, p.nameDv) : ""], ["Type", p.type + (p.category ? " · " + p.category : "")], ["Status", stChip(p.status)], ["Location", p.location], ["Unit / section", p.unit], ["Project officer", p.officer], ["Budget line", b && `${b.code} - ${b.description}`], ["Funding source", p.fund], ["Estimated cost", p.estimate != null ? mvr(p.estimate) : ""], ["Contract value", p.contract != null ? mvr(p.contract) : ""], ["PR number", p.prNumber], ["Iulaan no.", p.advertNo]]), p.descDv ? o("p", { dir: "rtl", lang: "dv", class: "pcc-para" }, p.descDv) : null, p.desc ? o("p", { dir: "auto", class: "pcc-para" }, p.desc) : null, p.notes ? o("p", { class: "muted small pcc-para" }, p.notes) : null),
       card("Contract period", kvs([["Site handover", fd(p.handover)], ["Duration", p.duration ? p.duration + " days" : ""], ["Due date (as signed)", fd(p.dueOriginal)], ["Extensions", extDays(p) ? extDays(p) + " days" : "None"], ["Due date now", fd(p.due)], ["Time left", cdChip(p)], ["Actual completion", fd(p.done)], ["Progress", K.PBAR(p.progress)]]), dualBar(p),
         o("h4", {}, "Extensions of time"), (p.eots || []).length ? tbl(["Approved", "Days", "Reason", "Letter ref", ""], p.eots.map(e => o("tr", {}, o("td", {}, fd(e.approved)), o("td", {}, String(e.days)), o("td", { dir: "auto" }, e.reason || ""), o("td", {}, e.letterRef || ""), o("td", {}, can("projects") ? btn("Remove", async () => { (await jt("Remove this extension? The due date moves back.", "Remove")) && save(() => { p.eots = p.eots.filter(x => x !== e); recalcDue(p); audit(p, "Extension removed", e.days + " days"); }, "Extension removed"); }, "small") : null)))) : o("p", { class: "muted" }, "No extensions granted."),
         can("projects") ? btn("Grant extension of time…", () => eotAdd(p)) : null)),
-    o("div", {},
+    psumVar() ? (() => { const V = psumVar(), pt = payTotals(p), mn = k => (p.committees[k] || []).map(m => m.nameDv || m.name).filter(Boolean).join("، ");
+      return o("div", {}, psumBox(V, "Contractor", "cons", [["Name", p.vendor], ["Contact person", v.contact], ["Phone", v.phone], ["E-mail", v.email], ["Address", v.address], ["Registration no.", v.reg]], p.vendor && v.name ? [o("a", { href: "#/vendor/" + encodeURIComponent(v.name), class: "small" }, "Open vendor →")] : []),
+        psumBox(V, "Payments", "payments", [["Contract value", psMoney(p.contract)], ["Paid (net)", psMoney(pt.totalPaid)], ["Balance", psMoney(pt.balance)], ["Retention held", psMoney(pt.retentionHeld)]]),
+        psumBox(V, "Committees", "meet", [["Bid Committee", o("span", { dir: "rtl", lang: "dv" }, mn("bid"))], ["Evaluation Committee", o("span", { dir: "rtl", lang: "dv" }, mn("eval"))]]),
+        card("Purchase cases", cs.length ? tbl(["Request", "Status"], cs.map(c => o("tr", {}, o("td", {}, o("a", { href: "#/case/" + c.id }, K.Gt(c) || "Draft #" + c.id)), o("td", {}, K.sn(c.status))))) : o("p", { class: "muted" }, "No purchase cases linked."), linkCase(p))); })() : o("div", {},
       card("Contractor", p.vendor ? kvs([["Name", p.vendor], ["Contact person", v.contact], ["Phone", v.phone], ["E-mail", v.email], ["Address", v.address], ["Registration no.", v.reg]]) : o("p", { class: "muted" }, "Not set. Award a bidder under Evaluation, or edit the project."), p.vendor && v.name ? o("a", { href: "#/vendor/" + encodeURIComponent(v.name), class: "small" }, "Open vendor →") : null),
-      card("Committees", o("p", {}, `Bid Committee: ${(p.committees.bid || []).map(m => m.name).join(", ") || "not set"}`), o("p", {}, `Evaluation Committee: ${(p.committees.eval || []).map(m => m.name).join(", ") || "not set"}`)),
+      card("Committees", o("p", {}, `Bid Committee: ${(p.committees.bid || []).map(m => m.nameDv || m.name).filter(Boolean).join("، ") || "not set"}`), o("p", {}, `Evaluation Committee: ${(p.committees.eval || []).map(m => m.nameDv || m.name).filter(Boolean).join("، ") || "not set"}`)),
       card("Payments", (() => { const pt = payTotals(p); return kvs([["Contract value", mvr(p.contract)], ["Paid (net)", mvr(pt.totalPaid)], ["Balance", mvr(pt.balance)], ["Retention held", mvr(pt.retentionHeld)]]); })()),
       card("Purchase cases", cs.length ? tbl(["Request", "Status"], cs.map(c => o("tr", {}, o("td", {}, o("a", { href: "#/case/" + c.id }, K.Gt(c) || "Draft #" + c.id)), o("td", {}, K.sn(c.status))))) : o("p", { class: "muted" }, "No purchase cases linked."), linkCase(p)))));
   n.append(bidsCard(p));
