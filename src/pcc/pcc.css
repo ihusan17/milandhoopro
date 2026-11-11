@@ -472,3 +472,4 @@ html.pcc-ui-dv .pcm-row .pcm-who{align-items:flex-start}
 .pcc-crit-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
 .pcc-crit-row .pcc-chk{min-width:120px}.pcc-crit-w{display:inline-flex;align-items:center;gap:4px}
 td.pcc-pt{text-align:center}
+.pcc-evd-w{display:inline-flex;gap:6px;align-items:center}.pcc-evd{width:auto;min-height:34px;padding:4px 8px;font-size:13px}

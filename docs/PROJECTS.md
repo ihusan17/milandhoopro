@@ -384,3 +384,16 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
 **Template fields:**
 - Inside `{#bidders}`: `{price_points}`, `{duration_points}`, `{experience_points}`, `{technical_points}`, `{financial_points}`.
 - Elsewhere: `{criteria_text_dv}`, `{criteria_text}`, and the list `{#criteria}{label_dv} {weight}%{/criteria}`.
+- **Evaluation sheet designs.** The sheet now follows the council's Bid Evaluation Form:
+  - columns read from right to left: #, name, then for each criterion the value and ލިބުނު ޕޮއިންޓް, then މުޅި ޖުމްލަ;
+  - two heading rows and Faruma font;
+  - live formulas: `MIN(range)/value*weight` for price and duration, `MIN(docs*marks,weight)` for experience, `SUM` for the total, and `RANK` in the new designs;
+  - the date and the Evaluation Committee's signature block (ސޮއި / ނަން / މަޤާމް / ތާރީޚް), printing on landscape A4.
+
+  Choose the design next to the button:
+  - **Original (council form)**;
+  - **Emerald band**: green title band, alternating row shading, winner row in gold, rank 1–3 badges;
+  - **Navy formal**: navy headings, criteria line, framed total column;
+  - **Scorecard colours**: each criterion in its own colour, dark total column, gold, silver and bronze ranks.
+
+  The choice is remembered.
