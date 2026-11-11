@@ -100,12 +100,13 @@ function critData(p, d) {
 // right to left (#, name, then for each criterion the value and the points, then the total), two
 // heading rows, live formulas (MIN(...)/value × weight, MIN(documents × marks, weight), SUM), the
 // date and the Evaluation Committee's signature block. Four designs: original, emerald, navy, scorecard.
-const EVAL_DESIGNS = [["original", "Original (council form)"], ["emerald", "Emerald band"], ["navy", "Navy formal"], ["scorecard", "Scorecard colours"]];
+const EVAL_DESIGNS = [["original", "Original (council form)"], ["report", "Formal report"], ["calc", "Step-by-step calculation"], ["matrix", "Comparison matrix"]];
 const evalDesign = () => Z().evalDesign || "original";
 async function critSheet(p, design) {
   const C = critsOf(p); if (!C.length) throw err("Set the evaluation criteria first");
   critApply(p);
   const D = design || evalDesign(), orig = D === "original";
+  if (!orig) return evalSheetPro(p, D);
   const resp = (p.bidders || []).filter(b => b.responsive !== false), dq = (p.bidders || []).filter(b => b.responsive === false);
   const B = orig ? [...resp, ...dq] : [...resp.slice().sort((a, b) => (a.rank || 99) - (b.rank || 99)), ...dq];
   const TH = { // theme per design
@@ -209,5 +210,142 @@ async function critSheet(p, design) {
   }
   const u8 = await xlsxBuild({ name: orig ? "AB" : "Evaluation", sheet: W, widths: WD, heights: H, landscape: true, font: "Faruma", area: [2, first, r, last] });
   ii(new Blob([u8], { type: MIME.xlsx }), `Evaluation_${safeName(p.ref)}${orig ? "" : "_" + D}.xlsx`);
+  audit(p, "Evaluation sheet generated", critLine(p) + " · " + D);
+}
+
+// ---------- Professional layouts (right-to-left sheets) ----------
+// report : header with document box, information panel, result banner, points table, notes, signature boxes
+// calc   : one section per criterion showing the working (lowest ÷ value × weight), then a summary table
+// matrix : bidders across, criteria down (value and points rows), total, rank and a points bar
+async function evalSheetPro(p, D) {
+  const C = critsOf(p), F = "Faruma", NAVY = "16325C", TEAL = "0F766E", INK = "1F2937", MUTE = "6B7280", LINE = "D1D5DB", SOFT = "F3F6FA", GOLD = "B7791F";
+  const resp = (p.bidders || []).filter(b => b.responsive !== false).sort((a, b) => (a.rank || 99) - (b.rank || 99)), dq = (p.bidders || []).filter(b => b.responsive === false);
+  const B = [...resp, ...dq], win = resp[0];
+  const W = xlsxSheet(), H = {}, WD = { 1: 2 }, b0 = { font: F, color: INK };
+  const lab = cr => cr.labelDv || critType(cr.type)[2], man = cr => critType(cr.type)[3] === "manual";
+  const how = cr => critType(cr.type)[3] === "lowest" ? "އެންމެ ދަށް " + (cr.type === "price" ? "އަގަށް" : "މުއްދަތަށް") + " ފުރިހަމަ ޕޮއިންޓް؛ އެހެން ފަރާތްތަކަށް: އެންމެ ދަށް ÷ ހުށަހެޅި × " + cr.weight : critType(cr.type)[3] === "per" ? `ކޮންމެ ލިޔުމަކަށް ${cr.per || 1} މާކްސް، އެންމެ ގިނަވެގެން ${cr.weight}` : `ކޮމިޓީން ދޭ ޕޮއިންޓް (${cr.weight} އިން)`;
+  const unit = cr => cr.type === "price" ? "ހުށައެޅި އަގު" : cr.type === "duration" ? "މުއްދަތު" : cr.type === "experience" ? "ލިޔުންތައް" : "ޕޮއިންޓް";
+  const vfmt = cr => cr.type === "price" ? "#,##0.00" : cr.type === "duration" ? '0" ދުވަސް"' : cr.type === "experience" ? '0" ލިޔުން"' : "0.00";
+  // Width of the printable area depends on the layout.
+  const NC = D === "matrix" ? 2 + Math.max(B.length, 3) : D === "calc" ? 6 : 4 + C.reduce((a, cr) => a + (man(cr) ? 1 : 2), 0);
+  const c1 = 2, cN = c1 + NC - 1;
+  let r = 2;
+  // Header: council (right) and a document box (left)
+  const box = Math.min(3, Math.max(2, Math.floor(NC / 3)));
+  W.set(2, c1, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 18, color: NAVY, h: "right" }).merge(2, c1, 2, cN - box); H[2] = 34;
+  W.set(3, c1, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  ·  ށ. މިލަންދޫ، ދިވެހިރާއްޖެ", { ...b0, sz: 11, color: MUTE, h: "right" }).merge(3, c1, 3, cN - box);
+  const dt = { ...b0, sz: 10, color: "FFFFFF", fill: NAVY, h: "center" };
+  W.set(2, cN - box + 1, D === "calc" ? "ޕޮއިންޓް ހިސާބުކުރި ގޮތް" : D === "matrix" ? "ބިޑް އަޅާކިޔުމުގެ ޝީޓް" : "ބިޑް އިވެލުއޭޝަން ޝީޓް", { ...dt, b: true, sz: 13 }).merge(2, cN - box + 1, 2, cN);
+  W.set(3, cN - box + 1, "ތާރީޚް: " + dvDate(today()), dt).merge(3, cN - box + 1, 3, cN); W.box(2, cN - box + 1, 3, cN, { fill: NAVY });
+  W.box(4, c1, 4, cN, { border: { style: "medium", color: NAVY } }); H[4] = 3;
+  // Title
+  r = 6; W.set(r, c1, `${p.nameDv || p.name || ""} ކޮށްދޭނެ ފަރާތެއް ހޯދުމަށް ކުރި އިޢުލާނާ ގުޅިގެން ބީލަން ހުށައެޅުއްވި ފަރާތްތަކަށް ޕޮއިންޓް ލިބިފައިވާ ގޮތް`, { ...b0, b: true, sz: 14, h: "center", wrap: true }).merge(r, c1, r, cN); H[r] = 46;
+  // Information panel: pairs of label | value, two per row
+  const info = [["އިޢުލާން ނަންބަރު", p.advertNo || "—"], ["އިޢުލާން ކުރި ތާރީޚް", p.advertised ? dvDate(p.advertised) : "—"], ["ބިޑް ހުޅުވި ތާރީޚް", p.bidOpening ? dvDate(p.bidOpening) : "—"], ["ބިޑް ހުށަހެޅި ފަރާތްތައް", `${B.length} (ޝަރުތު ފުރިހަމަ: ${resp.length})`], ["ލަފާކުރި އަގު", p.estimate != null ? ht(p.estimate) : "—"], ["މަޝްރޫޢުގެ ނަންބަރު", p.ref || ""]];
+  r = 8; const half = Math.floor(NC / 2), lw = Math.max(1, Math.floor(half / 3));
+  const L = { ...b0, sz: 11, b: true, color: NAVY, fill: SOFT, h: "right", border: { style: "thin", color: LINE } }, V = { ...b0, sz: 11, h: "right", border: { style: "thin", color: LINE } };
+  for (let i = 0; i < info.length; i += 2) {
+    [info[i], info[i + 1]].forEach((pr, k) => { if (!pr) return; const s1 = c1 + k * half, e1 = k ? cN : c1 + half - 1; W.set(r, s1, pr[0], L).merge(r, s1, r, s1 + lw - 1); W.box(r, s1, r, s1 + lw - 1, L); W.set(r, s1 + lw, pr[1], V).merge(r, s1 + lw, r, e1); W.box(r, s1 + lw, r, e1, V); });
+    H[r] = 22; r++;
+  }
+  W.set(r, c1, "ކްރައިޓީރިއާ", L).merge(r, c1, r, c1 + lw - 1); W.box(r, c1, r, c1 + lw - 1, L);
+  W.set(r, c1 + lw, C.map(cr => `${lab(cr)} ${cr.weight}%`).join("   ·   "), { ...V, b: true, color: TEAL }).merge(r, c1 + lw, r, cN); W.box(r, c1 + lw, r, cN, V); H[r] = 22; r += 2;
+  const hd = { ...b0, b: true, sz: 11, color: "FFFFFF", fill: NAVY, h: "center", wrap: true, border: { style: "thin", color: "FFFFFF" } };
+  const sh = { ...b0, b: true, sz: 10, color: NAVY, fill: "DCE4F0", h: "center", wrap: true, border: { style: "thin", color: "FFFFFF" } };
+  const cell = (i, ex = {}) => ({ ...b0, sz: 11, h: "center", border: { style: "thin", color: LINE }, ...(i % 2 ? { fill: "FAFBFD" } : {}), ...ex });
+  const section = (t, sub) => { W.set(r, c1, t, { ...b0, b: true, sz: 13, color: NAVY, h: "right" }).merge(r, c1, r, cN); W.box(r, c1, r, cN, { border: undefined }); H[r] = 24; r++; if (sub) { W.set(r, c1, sub, { ...b0, sz: 10, color: MUTE, h: "right" }).merge(r, c1, r, cN); r++; } };
+  let totalRefs = {};
+  if (D === "report") {
+    // Result banner
+    if (win) { W.set(r, c1, "އެންމެ މަތިން ޕޮއިންޓް ލިބުނު ފަރާތް", { ...b0, sz: 11, color: MUTE, fill: "FFF8E6", h: "right" }).merge(r, c1, r, cN - 2); W.set(r + 1, c1, win.vendor, { ...b0, b: true, sz: 16, color: INK, fill: "FFF8E6", h: "right" }).merge(r + 1, c1, r + 1, cN - 2);
+      W.set(r, cN - 1, Number(win.total || 0).toFixed(2), { ...b0, b: true, sz: 22, color: "FFFFFF", fill: GOLD, h: "center" }).merge(r, cN - 1, r + 1, cN); W.box(r, c1, r + 1, cN, { fill: "FFF8E6" }); W.box(r, cN - 1, r + 1, cN, { fill: GOLD }); H[r] = 22; H[r + 1] = 30; r += 3; }
+    section("ޕޮއިންޓް ލިބުނު ގޮތް");
+    // Table: # | name | per criterion (value, points) | total | rank
+    const cols = [{ k: "no", w: 6 }, { k: "name", w: 34 }]; C.forEach(cr => { if (!man(cr)) cols.push({ k: "val", cr, w: cr.type === "price" ? 18 : 13 }); cols.push({ k: "pts", cr, w: 12 }); }); cols.push({ k: "total", w: 14 }, { k: "rank", w: 9 });
+    cols.forEach((x, i) => { x.c = c1 + i; WD[x.c] = x.w; });
+    const h1 = r, h2 = r + 1; H[h1] = 30; H[h2] = 30;
+    cols.forEach(x => { if (x.k === "no") W.set(h1, x.c, "#", hd).merge(h1, x.c, h2, x.c); if (x.k === "name") W.set(h1, x.c, "ބިޑް ހުށައެޅި ފަރާތް", hd).merge(h1, x.c, h2, x.c); if (x.k === "total") W.set(h1, x.c, "މުޅި ޖުމްލަ", hd).merge(h1, x.c, h2, x.c); if (x.k === "rank") W.set(h1, x.c, "ރޭންކް", hd).merge(h1, x.c, h2, x.c);
+      if (x.k === "val") { W.set(h1, x.c, `${lab(x.cr)} (${x.cr.weight}%)`, hd).merge(h1, x.c, h1, x.c + 1); W.set(h2, x.c, unit(x.cr), sh); }
+      if (x.k === "pts") { man(x.cr) && W.set(h1, x.c, `${lab(x.cr)} (${x.cr.weight}%)`, hd); W.set(h2, x.c, "ޕޮއިންޓް", sh); } });
+    W.box(h1, c1, h2, cN, hd); r = h2 + 1;
+    const r0 = r, rl = r0 + resp.length - 1;
+    B.forEach((b, i) => { const rr = r0 + i, isDq = b.responsive === false, top = b === win; H[rr] = 22; const ex = isDq ? { color: "9CA3AF", i: true } : top ? { b: true, fill: "FFF8E6" } : {};
+      cols.forEach(x => { const s2 = cell(i, ex);
+        if (x.k === "no") W.set(rr, x.c, i + 1, s2); if (x.k === "name") W.set(rr, x.c, b.vendor || "", { ...s2, h: "right" });
+        if (x.k === "val") W.set(rr, x.c, critValue(b, x.cr) ?? "", { ...s2, fmt: vfmt(x.cr) });
+        if (x.k === "pts") { const pt = (b.points || {})[x.cr.key]; if (isDq) return W.set(rr, x.c, "", s2); if (man(x.cr)) return W.set(rr, x.c, critValue(b, x.cr) ?? "", { ...s2, fmt: "0.00" }); const Vr = xref(rr, x.c - 1), rng = `${xcol(x.c - 1)}$${r0}:${xcol(x.c - 1)}$${rl}`;
+          W.set(rr, x.c, pt ?? "", { ...s2, fmt: "0.00", color: TEAL, b: true }, critType(x.cr.type)[3] === "lowest" ? `IF(${Vr}="","",MIN(${rng})/${Vr}*${x.cr.weight})` : `IF(${Vr}="","",MIN(${Vr}*${x.cr.per || 1},${x.cr.weight}))`); }
+        if (x.k === "total") isDq ? W.set(rr, x.c, "ޑިސްކޮލިފައި", { ...s2, sz: 10 }) : W.set(rr, x.c, b.total ?? 0, { ...s2, b: true, fmt: "0.00", fill: top ? GOLD : "E8EEF7", color: top ? "FFFFFF" : NAVY }, `SUM(${cols.filter(y => y.k === "pts").map(y => xref(rr, y.c)).join(",")})`);
+        if (x.k === "rank") { const tc = cols.find(y => y.k === "total").c; isDq ? W.set(rr, x.c, "—", s2) : W.set(rr, x.c, b.rank ?? "", { ...s2, b: true }, `RANK(${xref(rr, tc)},$${xcol(tc)}$${r0}:$${xcol(tc)}$${rl})`); } }); });
+    r = r0 + B.length + 1;
+    if (dq.length) { section("ޝަރުތު ފުރިހަމަނުވާ ފަރާތްތައް"); dq.forEach((b, i) => { W.set(r, c1, `${i + 1}.  ${b.vendor}  —  ${b.remarks || "ޑިސްކޮލިފައި ކުރެވިފައި"}`, { ...b0, sz: 11, color: "991B1B", h: "right" }).merge(r, c1, r, cN); r++; }); r++; }
+  }
+  if (D === "calc") {
+    [[c1, 6], [c1 + 1, 32], [c1 + 2, 18], [c1 + 3, 40], [c1 + 4, 12], [c1 + 5, 9]].forEach(([c, w]) => { WD[c] = w; });
+    const sumRows = {};
+    C.forEach((cr, n) => {
+      section(`${n + 1}.  ${lab(cr)}  —  ${cr.weight}%`, how(cr));
+      const hr = r; ["#", "ބިޑް ހުށައެޅި ފަރާތް", unit(cr), "ހިސާބު", "ޕޮއިންޓް", ""].forEach((t, k) => W.set(hr, c1 + k, t, hd)); W.set(hr, c1 + 5, "", hd); H[hr] = 26; r++;
+      const r0 = r, rl = r0 + resp.length - 1, low = (() => { const v = resp.map(b => critValue(b, cr)).filter(v => v != null && v > 0); return v.length ? Math.min(...v) : null; })();
+      resp.forEach((b, i) => { const rr = r0 + i, v = critValue(b, cr), pt = (b.points || {})[cr.key]; H[rr] = 21;
+        const calc = critType(cr.type)[3] === "lowest" ? (v ? `${cr.type === "price" ? ht(low * 100) : low} ÷ ${cr.type === "price" ? ht(v * 100) : v} × ${cr.weight}` : "—") : critType(cr.type)[3] === "per" ? (v != null ? `${v} × ${cr.per || 1}  (އެންމެ ގިނަވެގެން ${cr.weight})` : "—") : "ކޮމިޓީން ދިން ޕޮއިންޓް";
+        W.set(rr, c1, i + 1, cell(i)); W.set(rr, c1 + 1, b.vendor, cell(i, { h: "right" })); W.set(rr, c1 + 2, v ?? "", cell(i, { fmt: vfmt(cr) })); W.set(rr, c1 + 3, calc, cell(i, { color: MUTE, sz: 10 }));
+        const Vr = xref(rr, c1 + 2), rng = `${xcol(c1 + 2)}$${r0}:${xcol(c1 + 2)}$${rl}`;
+        W.set(rr, c1 + 4, pt ?? "", cell(i, { b: true, color: TEAL, fmt: "0.00" }), man(cr) ? null : critType(cr.type)[3] === "lowest" ? `IF(${Vr}="","",MIN(${rng})/${Vr}*${cr.weight})` : `IF(${Vr}="","",MIN(${Vr}*${cr.per || 1},${cr.weight}))`);
+        W.set(rr, c1 + 5, v != null && v === low && critType(cr.type)[3] === "lowest" ? "އެންމެ ދަށް" : "", cell(i, { sz: 9, color: GOLD, b: true }));
+        (sumRows[b.id || b.vendor] = sumRows[b.id || b.vendor] || []).push(xref(rr, c1 + 4)); });
+      r = r0 + resp.length + 1;
+    });
+    section("ޖުމްލަ ޕޮއިންޓް", "ކޮންމެ ކްރައިޓީރިއާއަކުން ލިބުނު ޕޮއިންޓް އެއްކޮށް");
+    const hr = r; ["#", "ބިޑް ހުށައެޅި ފަރާތް", C.map(cr => `${lab(cr)} ${cr.weight}%`).join(" + "), "", "މުޅި ޖުމްލަ", "ރޭންކް"].forEach((t, k) => W.set(hr, c1 + k, t, hd)); W.merge(hr, c1 + 2, hr, c1 + 3); H[hr] = 26; r++;
+    const r0 = r, rl = r0 + resp.length - 1;
+    resp.forEach((b, i) => { const rr = r0 + i, top = b === win; H[rr] = 22;
+      W.set(rr, c1, i + 1, cell(i, top ? { b: true } : {})); W.set(rr, c1 + 1, b.vendor, cell(i, { h: "right", ...(top ? { b: true } : {}) }));
+      W.set(rr, c1 + 2, C.map(cr => Number((b.points || {})[cr.key] || 0).toFixed(2)).join("  +  "), cell(i, { color: MUTE, sz: 10 })).merge(rr, c1 + 2, rr, c1 + 3); W.box(rr, c1 + 2, rr, c1 + 3, cell(i));
+      W.set(rr, c1 + 4, b.total ?? 0, cell(i, { b: true, fmt: "0.00", fill: top ? GOLD : "E8EEF7", color: top ? "FFFFFF" : NAVY }), `SUM(${(sumRows[b.id || b.vendor] || []).join(",")})`);
+      W.set(rr, c1 + 5, b.rank ?? "", cell(i, { b: true }), `RANK(${xref(rr, c1 + 4)},$${xcol(c1 + 4)}$${r0}:$${xcol(c1 + 4)}$${rl})`); });
+    r = r0 + resp.length + 1;
+    if (dq.length) { section("ޝަރުތު ފުރިހަމަނުވާ ފަރާތްތައް"); dq.forEach((b, i) => { W.set(r, c1, `${i + 1}.  ${b.vendor}  —  ${b.remarks || "ޑިސްކޮލިފައި ކުރެވިފައި"}`, { ...b0, sz: 11, color: "991B1B", h: "right" }).merge(r, c1, r, cN); r++; }); r++; }
+  }
+  if (D === "matrix") {
+    WD[c1] = 26; WD[c1 + 1] = 8; B.forEach((b, i) => { WD[c1 + 2 + i] = 20; }); for (let k = B.length; k < 3; k++) WD[c1 + 2 + k] = 20;
+    section("ބިޑްތައް އަޅާކިޔުން");
+    const hr = r; W.set(hr, c1, "ކްރައިޓީރިއާ", hd); W.set(hr, c1 + 1, "%", hd);
+    B.forEach((b, i) => W.set(hr, c1 + 2 + i, `${i + 1}. ${b.vendor}`, { ...hd, ...(b === win ? { fill: GOLD } : b.responsive === false ? { fill: "9CA3AF" } : {}) })); H[hr] = 44; r++;
+    const ptsRow = [], rl = c1 + 2 + resp.length - 1;
+    C.forEach((cr, n) => {
+      let vr = null;
+      if (!man(cr)) { vr = r; W.set(r, c1, `${lab(cr)} — ${unit(cr)}`, { ...b0, sz: 11, h: "right", fill: SOFT, border: { style: "thin", color: LINE } }); W.set(r, c1 + 1, "", { ...b0, fill: SOFT, border: { style: "thin", color: LINE } });
+        B.forEach((b, i) => W.set(r, c1 + 2 + i, critValue(b, cr) ?? "", { ...b0, sz: 11, h: "center", fmt: vfmt(cr), border: { style: "thin", color: LINE }, ...(b.responsive === false ? { color: "9CA3AF", i: true } : {}) })); H[r] = 21; r++; }
+      W.set(r, c1, `${lab(cr)} — ޕޮއިންޓް`, { ...b0, b: true, sz: 11, h: "right", border: { style: "thin", color: LINE } }); W.set(r, c1 + 1, cr.weight, { ...b0, b: true, h: "center", color: TEAL, border: { style: "thin", color: LINE } });
+      B.forEach((b, i) => { const c = c1 + 2 + i, isDq = b.responsive === false, pt = (b.points || {})[cr.key], V = vr ? xref(vr, c) : null;
+        W.set(r, c, isDq ? "" : pt ?? "", { ...b0, b: true, sz: 11, h: "center", color: TEAL, fmt: "0.00", border: { style: "thin", color: LINE } }, isDq || man(cr) ? null : critType(cr.type)[3] === "lowest" ? `IF(${V}="","",MIN($${xcol(c1 + 2)}$${vr}:$${xcol(rl)}$${vr})/${V}*${cr.weight})` : `IF(${V}="","",MIN(${V}*${cr.per || 1},${cr.weight}))`); });
+      ptsRow.push(r); H[r] = 22; r++;
+    });
+    const tr = r; W.set(tr, c1, "މުޅި ޖުމްލަ", { ...hd, h: "right" }); W.set(tr, c1 + 1, 100, hd);
+    B.forEach((b, i) => { const c = c1 + 2 + i, isDq = b.responsive === false; isDq ? W.set(tr, c, "ޑިސްކޮލިފައި", { ...hd, fill: "9CA3AF", sz: 10 }) : W.set(tr, c, b.total ?? 0, { ...hd, sz: 14, fmt: "0.00", ...(b === win ? { fill: GOLD } : {}) }, `SUM(${ptsRow.map(x => xref(x, c)).join(",")})`); }); H[tr] = 30; r++;
+    W.set(r, c1, "ރޭންކް", { ...b0, b: true, h: "right", border: { style: "thin", color: LINE } }); W.set(r, c1 + 1, "", { border: { style: "thin", color: LINE } });
+    B.forEach((b, i) => { const c = c1 + 2 + i; b.responsive === false ? W.set(r, c, "—", { ...b0, h: "center", border: { style: "thin", color: LINE } }) : W.set(r, c, b.rank ?? "", { ...b0, b: true, sz: 13, h: "center", border: { style: "thin", color: LINE } }, `RANK(${xref(tr, c)},$${xcol(c1 + 2)}$${tr}:$${xcol(rl)}$${tr})`); }); H[r] = 24; r++;
+    W.set(r, c1, "ޕޮއިންޓް (ބާ)", { ...b0, sz: 10, color: MUTE, h: "right", border: { style: "thin", color: LINE } }); W.set(r, c1 + 1, "", { border: { style: "thin", color: LINE } });
+    B.forEach((b, i) => { const c = c1 + 2 + i; W.set(r, c, b.responsive === false ? "" : "█".repeat(Math.round((b.total || 0) / 10)), { font: "Arial", sz: 11, color: b === win ? GOLD : TEAL, h: "right", border: { style: "thin", color: LINE } }, b.responsive === false ? null : `REPT("█",ROUND(${xref(tr, c)}/10,0))`); }); H[r] = 22; r++;
+    W.set(r, c1, "ބަޔާން", { ...b0, sz: 10, color: MUTE, h: "right", border: { style: "thin", color: LINE } }); W.set(r, c1 + 1, "", { border: { style: "thin", color: LINE } });
+    B.forEach((b, i) => W.set(r, c1 + 2 + i, b.responsive === false ? (b.remarks || "ޑިސްކޮލިފައި ކުރެވިފައި") : b.remarks || "", { ...b0, sz: 10, color: b.responsive === false ? "991B1B" : MUTE, h: "center", wrap: true, border: { style: "thin", color: LINE } })); H[r] = 30; r += 2;
+    if (win) { W.set(r, c1, `ނަތީޖާ:  ${win.vendor}  —  ${Number(win.total || 0).toFixed(2)} ޕޮއިންޓް  (ރޭންކް 1)`, { ...b0, b: true, sz: 13, color: "FFFFFF", fill: TEAL, h: "right", indent: 1 }).merge(r, c1, r, cN); W.box(r, c1, r, cN, { fill: TEAL }); H[r] = 28; r += 2; }
+  }
+  // Signature boxes: one per Evaluation Committee member (three per row)
+  const mem = (p.committees.eval || []).filter(m => !m.onLeave);
+  if (mem.length) { section("ބިޑް އިވެލުއޭޝަން ކޮމެޓީ");
+    const per = 3, span = Math.max(1, Math.floor(NC / per));
+    for (let g = 0; g < mem.length; g += per) {
+      mem.slice(g, g + per).forEach((m, k) => { const s1 = c1 + k * span, e1 = k === per - 1 ? cN : s1 + span - 1, bx = { ...b0, sz: 11, h: "right", border: { style: "thin", color: LINE } };
+        W.set(r, s1, "ސޮއި:", { ...bx, color: MUTE }).merge(r, s1, r, e1); W.set(r + 1, s1, "", bx).merge(r + 1, s1, r + 1, e1);
+        W.set(r + 2, s1, noTitle(m.nameDv || m.name || ""), { ...bx, b: true }).merge(r + 2, s1, r + 2, e1); W.set(r + 3, s1, m.designationDv || m.designation || "", { ...bx, color: MUTE, sz: 10 }).merge(r + 3, s1, r + 3, e1);
+        W.box(r, s1, r + 3, e1, { border: { style: "thin", color: LINE } }); });
+      H[r] = 20; H[r + 1] = 34; H[r + 2] = 22; H[r + 3] = 20; r += 5;
+    }
+  }
+  for (let c = c1; c <= cN; c++) WD[c] = WD[c] || 14;
+  const u8 = await xlsxBuild({ name: "Evaluation", sheet: W, widths: WD, heights: H, landscape: D !== "calc", onePage: D !== "calc", font: F, rtl: true, area: [2, c1, r, cN] });
+  ii(new Blob([u8], { type: MIME.xlsx }), `Evaluation_${safeName(p.ref)}_${D}.xlsx`);
   audit(p, "Evaluation sheet generated", critLine(p) + " · " + D);
 }

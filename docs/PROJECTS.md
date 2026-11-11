@@ -390,10 +390,11 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
   - live formulas: `MIN(range)/value*weight` for price and duration, `MIN(docs*marks,weight)` for experience, `SUM` for the total, and `RANK` in the new designs;
   - the date and the Evaluation Committee's signature block (ސޮއި / ނަން / މަޤާމް / ތާރީޚް), printing on landscape A4.
 
-  Choose the design next to the button:
-  - **Original (council form)**;
-  - **Emerald band**: green title band, alternating row shading, winner row in gold, rank 1–3 badges;
-  - **Navy formal**: navy headings, criteria line, framed total column;
-  - **Scorecard colours**: each criterion in its own colour, dark total column, gold, silver and bronze ranks.
+  Choose the layout next to the button:
+  - **Original (council form)**: your form's layout.
+  - **Formal report**: a header with a document box; an information panel (Iulaan no., dates, number of bids, estimate, criteria); a result banner naming the top bidder with the total; the points table with formulas; the disqualified bidders with reasons; signature boxes for the Evaluation Committee.
+  - **Step-by-step calculation**: one section per criterion showing the working for each bidder (e.g. 924,000 ÷ 966,600 × 75 = 71.69; 3 × 2 = 6), then a summary table that adds the points and ranks the bidders.
+  - **Comparison matrix**: bidders across the top and criteria down the side, with a value row and a points row for each criterion; the total, the rank, a points bar, remarks and a result line.
 
+  The new layouts are right-to-left sheets; the formal report and the matrix print on one landscape page.
   The choice is remembered.
