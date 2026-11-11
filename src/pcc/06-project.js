@@ -262,7 +262,7 @@ const docKey = s2 => String(s2 || "").toLowerCase().replace(/\s+/g, " ").trim();
 async function bidsBulk(p) {
   if (needCrit(p)) return;
   // Headings in Dhivehi (the document headings come from the template as written).
-  const SHORT = { vendor: ["ބިޑް ހުށައެޅި ފަރާތް", "190px"], amount: ["ހުށައެޅި އަގު (ރ.)", "120px"], duration: ["މުއްދަތު (ދުވަސް)", "70px"], validity: ["ބިޑުގެ މުއްދަތު", "86px"], experience: ["ތަޖުރިބާ (ލިޔުން)", "76px"], tech: ["ޓެކްނިކަލް", "64px"], fin: ["ފައިނޭންޝަލް", "64px"] };
+  const SHORT = { vendor: ["ބިޑް ހުށައެޅި ފަރާތް", "190px"], amount: ["ހުށައެޅި އަގު (ރ.)", "120px"], duration: ["މުއްދަތު (ދުވަސް)", "70px"], validity: ["މުއްދަތު", "86px"], experience: ["ތަޖުރިބާ (ލިޔުން)", "76px"], tech: ["ޓެކްނިކަލް", "64px"], fin: ["ފައިނޭންޝަލް", "64px"] };
   const COLS = bidFields(p).map(([k, l]) => { const oc = k.startsWith("sc:") ? critsOf(p).find(c => "sc:" + c.key === k) : null; return [k, SHORT[k] ? SHORT[k][0] : oc ? (oc.labelDv || oc.label) + ` (${oc.weight} އިން)` : l, SHORT[k] ? SHORT[k][1] : "90px"]; });
   const REQ0 = new Set(reqDocsOf(p));
   let DOCS = docsOf(p).map(n => ({ id: uid(), name: n, orig: n, req: REQ0.has(n) }));
