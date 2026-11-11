@@ -249,6 +249,9 @@ async function bidsTemplate(p, docNames) {
 // The documents checked for each bid. Each project keeps its own list (renamed, added or removed in
 // the bids table); the default is the standard list.
 const docsOf = p => (Array.isArray(p.bidDocs) && p.bidDocs.length ? p.bidDocs : BIDDOCS).slice();
+// Compulsory documents: a bid missing any of them is not responsive.
+const reqDocsOf = p => (Array.isArray(p.bidDocsReq) ? p.bidDocsReq : []).filter(d => docsOf(p).includes(d));
+const docsComplete = (p, docs) => reqDocsOf(p).every(d => (docs || {})[d]);
 const docKey = s2 => String(s2 || "").toLowerCase().replace(/\s+/g, " ").trim();
 
 // Bids received for a project, as one table: existing bids are shown and can be changed, new rows
@@ -258,34 +261,40 @@ async function bidsBulk(p) {
   if (needCrit(p)) return;
   const SHORT = { vendor: ["Bidder", "190px"], amount: ["Bid amount (MVR)", "120px"], duration: ["Days", "64px"], validity: ["Validity", "86px"], experience: ["Experience (docs)", "76px"], tech: ["Technical", "64px"], fin: ["Financial", "64px"] };
   const COLS = bidFields(p).map(([k, l]) => [k, SHORT[k] ? SHORT[k][0] : l, SHORT[k] ? SHORT[k][1] : "90px"]);
-  let DOCS = docsOf(p).map(n => ({ id: uid(), name: n, orig: n }));
+  const REQ0 = new Set(reqDocsOf(p));
+  let DOCS = docsOf(p).map(n => ({ id: uid(), name: n, orig: n, req: REQ0.has(n) }));
+  // Responsive follows the compulsory documents: ticked only when all of them are ticked.
+  const autoResp = r => { const R2 = DOCS.filter(d => d.req); if (!R2.length) return; r.resp.checked = r.manualOff ? false : R2.every(d => r.dk[d.id] && r.dk[d.id].checked); r.tr && r.tr.classList.toggle("pcc-bk-dq", !r.resp.checked); };
+  const autoAll = () => rows.forEach(autoResp);
   const head = o("thead", {}), body = o("tbody", {}), rows = [];
   const renum = () => [...body.children].forEach((t, i) => { t.firstChild.textContent = String(i + 1); });
-  const docCell = (r, d) => { const cb = r.dk[d.id] || (r.dk[d.id] = o("input", { type: "checkbox", checked: !!r.init[d.orig] || !!r.init[d.name] })); return o("td", { class: "pcc-bk-c" }, cb); };
+  const docCell = (r, d) => { const cb = r.dk[d.id] || (r.dk[d.id] = o("input", { type: "checkbox", checked: !!r.init[d.orig] || !!r.init[d.name] })); cb.onchange = () => autoResp(r); return o("td", { class: "pcc-bk-c" + (d.req ? " req" : "") }, cb); };
   const rowEl = r => { const tr = o("tr", {}, o("td", { class: "muted small" }, ""), COLS.map(([k]) => o("td", {}, r.els[k])), o("td", { class: "pcc-bk-c" }, r.resp), DOCS.map(d => docCell(r, d)), o("td", {}, btn("✕", () => { r.tr.remove(); rows.splice(rows.indexOf(r), 1); renum(); }, "small"))); r.tr = tr; return tr; };
   const addRow = (vals = {}, b = null) => {
     const els = {}; COLS.forEach(([k, , w]) => { els[k] = k === "vendor" ? I(vals[k] || "", { list: "pcc-vendors3", style: { width: w } }) : k === "amount" ? (() => { const e = MI(""); e.value = String(vals[k] ?? ""); e.style.width = w; return e; })() : I(vals[k] ?? "", { style: { width: w }, inputmode: k === "validity" ? "text" : "decimal" }); });
-    const r = { b, els, resp: o("input", { type: "checkbox", checked: vals.responsive !== false }), dk: {}, init: vals.docs || {}, remarks: vals.remarks ?? (b ? b.remarks || "" : "") };
+    const r = { b, els, resp: o("input", { type: "checkbox", checked: vals.responsive !== false }), dk: {}, init: vals.docs || {}, remarks: vals.remarks ?? (b ? b.remarks || "" : ""), manualOff: vals.responsive === false && !!vals.dq };
+    r.resp.onchange = () => { r.manualOff = !r.resp.checked && DOCS.filter(d => d.req).every(d => r.dk[d.id] && r.dk[d.id].checked); r.tr && r.tr.classList.toggle("pcc-bk-dq", !r.resp.checked); };
     if (vals.alldocs) DOCS.forEach(d => { r.init[d.name] = true; });
-    rows.push(r); body.append(rowEl(r)); renum(); return r;
+    rows.push(r); body.append(rowEl(r)); renum(); if (vals.vendor || b) autoResp(r); return r;
   };
   const fill = (r, vals) => { COLS.forEach(([k]) => { const v = vals[k]; if (v != null && String(v).trim() !== "") r.els[k].value = String(v); }); vals.responsive != null && (r.resp.checked = vals.responsive); vals.remarks && (r.remarks = vals.remarks);
     DOCS.forEach(d => { const v = (vals.docs || {})[d.name]; if (v != null) (r.dk[d.id] || (r.dk[d.id] = o("input", { type: "checkbox" }))).checked = !!v; else if (vals.alldocs != null && r.dk[d.id]) r.dk[d.id].checked = !!vals.alldocs; }); };
   const findRow = name => rows.find(r => docKey(r.els.vendor.value) === docKey(name));
   const dropEmpty = () => rows.filter(r => !r.b && !Object.values(r.els).some(e => e.value.trim())).forEach(r => { r.tr.remove(); rows.splice(rows.indexOf(r), 1); });
   // Add new rows or update the rows of bidders already in the table.
-  const merge = list => { dropEmpty(); let up = 0, add = 0; list.forEach(v => { const r = findRow(v.vendor); r ? (fill(r, v), up++) : (addRow(v), add++); }); renum(); return [up, add]; };
+  const merge = list => { dropEmpty(); let up = 0, add = 0; list.forEach(v => { const r = findRow(v.vendor); if (r) { fill(r, v); v.responsive === false && v.dq && (r.manualOff = true); autoResp(r); up++; } else { addRow(v); add++; } }); renum(); return [up, add]; };
   // Heading: tick-all boxes, and document names that can be renamed or removed.
-  const tickAll = get => { const cb = o("input", { type: "checkbox", title: "Tick / untick all" }); cb.onchange = () => rows.forEach(r => { const x = get(r); x && (x.checked = cb.checked); }); return cb; };
+  const tickAll = get => { const cb = o("input", { type: "checkbox", title: "Tick / untick all" }); cb.onchange = () => { rows.forEach(r => { const x = get(r); x && (x.checked = cb.checked); x && x === r.resp && (r.manualOff = false); }); autoAll(); }; return cb; };
   const drawHead = () => head.replaceChildren(o("tr", {}, o("th", {}, "#"), COLS.map(([, l]) => o("th", {}, l)), o("th", { class: "pcc-bk-h" }, o("div", { class: "pcc-bk-lab" }, "Responsive"), o("div", { class: "pcc-bk-hr" }, tickAll(r => r.resp))),
     DOCS.map(d => { const nm = o("textarea", { rows: 2, class: "pcc-bk-doc", title: "Document name — click to rename", dir: "auto" }); nm.value = d.name; nm.oninput = () => { d.name = nm.value.replace(/\s*\n\s*/g, " "); };
-      return o("th", { class: "pcc-bk-h" }, nm, o("div", { class: "pcc-bk-hr" }, tickAll(r => r.dk[d.id]), o("button", { type: "button", class: "pcc-bk-x", title: "Remove this document column", onclick: () => { DOCS = DOCS.filter(x => x !== d); redraw(); } }, "✕"))); }),
+      const rq = o("input", { type: "checkbox", checked: !!d.req }); rq.onchange = () => { d.req = rq.checked; redraw(); autoAll(); };
+      return o("th", { class: "pcc-bk-h" + (d.req ? " req" : "") }, nm, o("div", { class: "pcc-bk-hr" }, tickAll(r => r.dk[d.id]), o("button", { type: "button", class: "pcc-bk-x", title: "Remove this document column", onclick: () => { DOCS = DOCS.filter(x => x !== d); redraw(); autoAll(); } }, "✕")), o("label", { class: "pcc-bk-req", title: "A bid missing a compulsory document is not responsive" }, rq, d.req ? " ★ Compulsory" : " Compulsory")); }),
     o("th", {}, o("button", { type: "button", class: "btn small", title: "Add a document column", onclick: () => { DOCS.push({ id: uid(), name: "New document", orig: "" }); redraw(); setTimeout(() => { const L = head.querySelectorAll(".pcc-bk-doc"); L[L.length - 1] && (L[L.length - 1].select(), L[L.length - 1].focus()); }); } }, "+ Document"))));
-  const redraw = () => { drawHead(); body.replaceChildren(...rows.map(rowEl)); renum(); };
+  const redraw = () => { drawHead(); body.replaceChildren(...rows.map(rowEl)); rows.forEach(r => r.tr.classList.toggle("pcc-bk-dq", !r.resp.checked)); renum(); };
   // Existing bids first (they are updated on save), then empty rows.
-  (p.bidders || []).forEach(b => addRow({ ...Object.fromEntries(COLS.map(([k]) => [k, bidGet(b, k) ?? ""])), responsive: b.responsive !== false, docs: b.docs || {}, remarks: b.remarks || "" }, b));
+  (p.bidders || []).forEach(b => addRow({ ...Object.fromEntries(COLS.map(([k]) => [k, bidGet(b, k) ?? ""])), responsive: b.responsive !== false, dq: b.responsive === false && docsComplete(p, b.docs), docs: b.docs || {}, remarks: b.remarks || "" }, b));
   for (let i = 0; i < (rows.length ? 2 : 5); i++) addRow();
-  drawHead();
+  drawHead(); rows.forEach(r => r.tr.classList.toggle("pcc-bk-dq", !r.resp.checked && !!(r.b || r.els.vendor.value)));
   const paste = o("textarea", { rows: 3, placeholder: "Paste rows copied from Excel here — columns in this order: " + COLS.map(c => c[1]).join(", ") });
   const usePaste = () => {
     const lines = paste.value.split(/\r?\n/).map(l => l.split("\t").map(c => c.trim())).filter(c => c[0]);
@@ -328,7 +337,7 @@ async function bidsBulk(p) {
       const numv = (v, d = 2) => { const t = String(v ?? "").replace(/^(MVR|Rf\.?|ރ\.)\s*/i, "").replace(/,/g, "").trim(); return t !== "" && !Number.isNaN(Number(t)) ? String(Math.round(Number(t) * 10 ** d) / 10 ** d) : t; };
       const yes = (r, k) => k in M ? (s2 => s2 !== "" && !/^(no|n|false|0|✗|x|ނޫން)$/i.test(s2))(String(r[M[k]] ?? "").trim()) : null;
       const list = data.map(r => { const dq = r.some(v => DQ.test(String(v || ""))), vals = Object.fromEntries(COLS.map(([k]) => [k, k in M ? (k === "vendor" || k === "validity" ? String(r[M[k]] ?? "").trim() : numv(r[M[k]])) : ""]));
-        "responsive" in M && String(r[M.responsive] ?? "").trim() && (vals.responsive = yes(r, "responsive")); dq && (vals.responsive = false);
+        "responsive" in M && String(r[M.responsive] ?? "").trim() && (vals.responsive = yes(r, "responsive")); dq && (vals.responsive = false); vals.responsive === false && (vals.dq = true);
         "alldocs" in M && (vals.alldocs = !!yes(r, "alldocs"));
         const dd = {}; DOCS.forEach(d => { const k = "doc:" + d.id; k in M && (dd[d.name] = !!yes(r, k)); }); Object.keys(dd).length && (vals.docs = dd);
         "remarks" in M && String(r[M.remarks] ?? "").trim() && (vals.remarks = String(r[M.remarks]).trim()); return vals; });
@@ -338,16 +347,16 @@ async function bidsBulk(p) {
   };
   const ok = await form("Bids received — " + p.ref, [o("div", { style: { gridColumn: "1/-1" } },
     o("datalist", { id: "pcc-vendors3" }, K.sa().map(v => o("option", { value: v }))),
-    o("p", { class: "muted small" }, "One row per bidder; existing bids are listed and can be changed. Empty rows are ignored. Tick the documents each bidder submitted — click a document heading to rename it, ✕ removes the column, + Document adds one; the box under a heading ticks or unticks the whole column. Importing or pasting a bidder already listed updates that row."),
+    o("p", { class: "muted small" }, "One row per bidder; existing bids are listed and can be changed. Empty rows are ignored. Tick the documents each bidder submitted — click a document heading to rename it, ✕ removes the column, + Document adds one; the box under a heading ticks or unticks the whole column. Mark a document Compulsory and Responsive is ticked automatically only when all compulsory documents are ticked (untick Responsive by hand for other reasons, e.g. a late bid, and type the reason in Remarks). Importing or pasting a bidder already listed updates that row."),
     o("div", { class: "pcc-bulk" }, o("table", { class: "t" }, head, body)),
     o("div", { class: "row", style: { marginTop: "8px", gap: "8px", flexWrap: "wrap" } }, btn("+ Add row", () => addRow(), "small"), btn("Download Excel template", () => bidsTemplate(p, DOCS.map(d => d.name)).catch(e => xt(e.message, "err")), "small"), btn("Upload Excel file…", fromExcel, "small primary"), btn("Checklist PDF", () => bidsChecklist(p), "small"), o("span", { class: "muted small" }, "Upload reads your Bid Evaluation Form or the template; a bidder already listed is updated.")),
     o("details", { style: { marginTop: "10px" } }, o("summary", { style: { cursor: "pointer", fontWeight: 600 } }, "Paste from Excel"), paste, o("div", { class: "row", style: { marginTop: "6px" } }, btn("Add the pasted rows", usePaste, "small"))))], { one: true, ok: "Save bids",
-    check: () => { const L = rows.filter(r => r.els.vendor.value.trim()); if (!L.length) throw err("Type at least one bidder"); L.forEach(r => parseMoney(r.els.amount, r.els.vendor.value.trim() + ": bid amount")); if (rows.some(r => !r.els.vendor.value.trim() && Object.values(r.els).some(e => e.value.trim()))) throw err("A row has values but no bidder name"); if (DOCS.some(d => !d.name.trim())) throw err("A document column has no name"); const seen = new Set(); L.forEach(r => { const k = docKey(r.els.vendor.value); if (seen.has(k)) throw err(r.els.vendor.value.trim() + " is listed twice"); seen.add(k); }); } });
+    check: () => { autoAll(); const L = rows.filter(r => r.els.vendor.value.trim()); if (!L.length) throw err("Type at least one bidder"); L.forEach(r => parseMoney(r.els.amount, r.els.vendor.value.trim() + ": bid amount")); if (rows.some(r => !r.els.vendor.value.trim() && Object.values(r.els).some(e => e.value.trim()))) throw err("A row has values but no bidder name"); if (DOCS.some(d => !d.name.trim())) throw err("A document column has no name"); const seen = new Set(); L.forEach(r => { const k = docKey(r.els.vendor.value); if (seen.has(k)) throw err(r.els.vendor.value.trim() + " is listed twice"); seen.add(k); }); } });
   if (!ok) return;
   save(() => {
     need("pdocs");
     const num = el => { if (!el) return null; const t = el.value.trim().replace(/,/g, ""); return t === "" || Number.isNaN(Number(t)) ? null : Number(t); };
-    p.bidDocs = DOCS.map(d => d.name.trim());
+    p.bidDocs = DOCS.map(d => d.name.trim()); p.bidDocsReq = DOCS.filter(d => d.req).map(d => d.name.trim());
     const keep = new Set(), added = [], changed = [];
     rows.filter(r => r.els.vendor.value.trim()).forEach(r => {
       const v = { vendor: r.els.vendor.value.trim(), amount: parseMoney(r.els.amount, "Bid amount"), validity: r.els.validity.value.trim(), responsive: r.resp.checked, remarks: r.remarks || "", docs: Object.fromEntries(DOCS.map(d => [d.name.trim(), !!(r.dk[d.id] && r.dk[d.id].checked)])) };
@@ -364,7 +373,7 @@ async function bidsBulk(p) {
 
 // Checklist of documents submitted by each bidder, printed or saved as PDF (right to left, Dhivehi headings).
 function bidsChecklist(p) {
-  const D = docsOf(p), B = (p.bidders || []).slice().sort((a, b) => (a.rank || 99) - (b.rank || 99) || (a.responsive === false) - (b.responsive === false));
+  const D = docsOf(p), RQ = reqDocsOf(p), B = (p.bidders || []).slice().sort((a, b) => (a.rank || 99) - (b.rank || 99) || (a.responsive === false) - (b.responsive === false));
   if (!B.length) return xt("No bids recorded yet", "err");
   const E = s2 => String(s2 ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
   const mem = (p.committees.eval || []).filter(m => !m.onLeave);
@@ -372,15 +381,15 @@ function bidsChecklist(p) {
   @page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}body{font-family:Faruma,"MV Faseyha","Segoe UI",Arial,sans-serif;color:#1f2937;margin:0;font-size:12px}
   .hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #0b4f5c;padding-bottom:8px;margin-bottom:10px}.hd h1{margin:0;font-size:20px;color:#0b4f5c}.hd .s{color:#64748b;font-size:11px}
   .box{background:#0b4f5c;color:#fff;padding:8px 14px;border-radius:6px;text-align:center}.box b{display:block;font-size:14px}.ttl{text-align:center;font-weight:bold;font-size:14px;margin:6px 0 2px}.sub{text-align:center;color:#64748b;margin-bottom:10px}
-  table{width:100%;border-collapse:collapse}th,td{border:1px solid #cbd5e1;padding:6px 5px;text-align:center}th{background:#0b4f5c;color:#fff;font-size:11px}td.n{text-align:right}tr:nth-child(even) td{background:#f8fafc}
+  table{width:100%;border-collapse:collapse}th,td{border:1px solid #cbd5e1;padding:6px 5px;text-align:center}th{background:#0b4f5c;color:#fff;font-size:11px}th.rq{background:#9a3412}td.n{text-align:right}tr:nth-child(even) td{background:#f8fafc}
   .y{color:#15803d;font-weight:bold;font-size:15px}.x{color:#b91c1c;font-weight:bold;font-size:15px}.dq td{color:#b91c1c}.c{font-weight:bold}
   .sig{display:flex;gap:24px;margin-top:28px}.sig div{flex:1;border-top:1px dashed #94a3b8;padding-top:6px;text-align:center}.sig b{display:block}.sig span{color:#64748b;font-size:11px}
   .lg{margin-top:8px;color:#64748b;font-size:11px}</style></head><body>
   <div class="hd"><div><h1>މިލަންދޫ ކައުންސިލްގެ އިދާރާ</h1><div class="s">ބިޑް އިވެލުއޭޝަން ކޮމެޓީ · ށ. މިލަންދޫ، ދިވެހިރާއްޖެ</div></div><div class="box"><b>ލިޔެކިޔުންތަކުގެ ޗެކްލިސްޓް</b>${E(dvDate(today()))}</div></div>
   <div class="ttl">${E(p.nameDv || p.name || "")}</div><div class="sub">ބީލަން ހުށައެޅުއްވި ފަރާތްތަކުން ހުށަހެޅި ލިޔެކިޔުންތައް${p.advertNo ? " · " + E(p.advertNo) : ""}</div>
-  <table><thead><tr><th>#</th><th>ބިޑް ހުށައެޅި ފަރާތް</th><th>ހުށަހެޅި އަގު</th>${D.map(d => `<th>${E(d)}</th>`).join("")}<th>ހުށަހެޅި</th><th>ޝަރުތު</th><th>ބަޔާން</th></tr></thead><tbody>
+  <table><thead><tr><th>#</th><th>ބިޑް ހުށައެޅި ފަރާތް</th><th>ހުށަހެޅި އަގު</th>${D.map(d => `<th${RQ.includes(d) ? ' class="rq"' : ""}>${E(d)}${RQ.includes(d) ? " ★" : ""}</th>`).join("")}<th>ހުށަހެޅި</th><th>ޝަރުތު</th><th>ބަޔާން</th></tr></thead><tbody>
   ${B.map((b, i) => { const n = D.filter(d => (b.docs || {})[d]).length; return `<tr class="${b.responsive === false ? "dq" : ""}"><td>${i + 1}</td><td class="n">${E(b.vendor)}</td><td>${b.amount == null ? "—" : E(ht(b.amount))}</td>${D.map(d => (b.docs || {})[d] ? '<td class="y">✓</td>' : '<td class="x">✗</td>').join("")}<td class="c">${n} / ${D.length}</td><td>${b.responsive === false ? "ފުރިހަމަނުވޭ" : "ފުރިހަމަ"}</td><td class="n">${E(b.remarks || "")}</td></tr>`; }).join("")}
-  </tbody></table><div class="lg">✓ ހުށަހަޅާފައި · ✗ ހުށަހަޅާފައި ނުވޭ</div>
+  </tbody></table><div class="lg">✓ ހުށަހަޅާފައި · ✗ ހުށަހަޅާފައި ނުވޭ${RQ.length ? " · ★ ހުށަހަޅަންޖެހޭ ލާޒިމް ލިޔުން (މިއިން އެއްވެސް ލިޔުމެއް ނެތިއްޔާ ޝަރުތު ފުރިހަމަނުވޭ)" : ""}</div>
   ${mem.length ? `<div class="sig">${mem.map(m => `<div><b>${E(noTitle(m.nameDv || m.name || ""))}</b><span>${E(m.designationDv || m.designation || "")}</span></div>`).join("")}</div>` : ""}
   </body></html>`;
   const f = o("iframe", { style: { position: "fixed", right: "0", bottom: "0", width: "0", height: "0", border: "0" } }); document.body.append(f);
@@ -394,7 +403,7 @@ async function bidderEdit(p, b) {
   rem.value = x.remarks || "";
   const oth = critsOf(p).filter(c => c.type === "other").map(c => [c, N((x.scores || {})[c.key], { step: .01, min: 0, max: c.weight, placeholder: "out of " + c.weight })]);
   const full = !critsOf(p).length, has = t => full || critHas(p, t);
-  if (!(await form(b ? "Edit bid" : "Add bid", [o("datalist", { id: "pcc-vendors2" }, K.sa().map(v => o("option", { value: v }))), ["Bidder", ven], ["Bid amount (MVR)", amt], ["Bid validity", val], has("duration") ? ["Duration offered (days)", dur] : null, has("experience") ? ["Experience (number of similar-work documents)", exper] : null, has("technical") ? [full ? "Technical score" : `Technical (points, out of ${critsOf(p).find(c => c.type === "technical").weight})`, tech] : null, has("financial") ? [full ? "Financial score" : `Financial (points, out of ${critsOf(p).find(c => c.type === "financial").weight})`, fin] : null, ...oth.map(([c, el]) => [`${c.label} (points, out of ${c.weight})`, el]), full ? ["Total score", tot] : null, full ? ["Rank", rank] : null, ["Responsive", resp], ["Remarks", rem], o("div", { class: "pcc-docs", style: { gridColumn: "1/-1" } }, o("label", {}, "Documents submitted"), o("div", { class: "pcc-chks" }, docs.map(([d, c]) => o("label", { class: "pcc-chk" }, c, " ", d))))], { check: () => { if (!ven.value.trim()) throw err("Type the bidder"); parseMoney(amt, "Bid amount"); } }))) return;
+  if (!(await form(b ? "Edit bid" : "Add bid", [o("datalist", { id: "pcc-vendors2" }, K.sa().map(v => o("option", { value: v }))), ["Bidder", ven], ["Bid amount (MVR)", amt], ["Bid validity", val], has("duration") ? ["Duration offered (days)", dur] : null, has("experience") ? ["Experience (number of similar-work documents)", exper] : null, has("technical") ? [full ? "Technical score" : `Technical (points, out of ${critsOf(p).find(c => c.type === "technical").weight})`, tech] : null, has("financial") ? [full ? "Financial score" : `Financial (points, out of ${critsOf(p).find(c => c.type === "financial").weight})`, fin] : null, ...oth.map(([c, el]) => [`${c.label} (points, out of ${c.weight})`, el]), full ? ["Total score", tot] : null, full ? ["Rank", rank] : null, ["Responsive", resp], ["Remarks", rem], o("div", { class: "pcc-docs", style: { gridColumn: "1/-1" } }, o("label", {}, "Documents submitted"), o("div", { class: "pcc-chks" }, docs.map(([d, c]) => { reqDocsOf(p).includes(d) && (c.onchange = () => { resp.value = docs.filter(([dd]) => reqDocsOf(p).includes(dd)).every(([, cc]) => cc.checked) ? "yes" : "no"; }); return o("label", { class: "pcc-chk" }, c, " ", d, reqDocsOf(p).includes(d) ? o("b", { class: "pcc-req" }, " ★") : null); })), reqDocsOf(p).length ? o("p", { class: "muted small" }, "★ Compulsory — Responsive changes to Not responsive when one of these is not ticked.") : null)], { check: () => { if (!ven.value.trim()) throw err("Type the bidder"); parseMoney(amt, "Bid amount"); } }))) return;
   save(() => {
     need("pdocs");
     const nn = el => (el.value === "" ? null : Number(el.value)), v = { vendor: ven.value.trim(), amount: parseMoney(amt, "Bid amount"), validity: val.value.trim(), duration: nn(dur), experience: nn(exper), tech: nn(tech), fin: nn(fin), total: nn(tot), rank: nn(rank), responsive: resp.value === "yes", remarks: rem.value.trim(), docs: Object.fromEntries(docs.map(([d, c]) => [d, c.checked])) };

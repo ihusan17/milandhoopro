@@ -483,3 +483,8 @@ td.pcc-pt{text-align:center}
 .pcc-bulk .t td.pcc-bk-c,.pcc-bulk .t th.pcc-bk-h{text-align:center!important}
 .pcc-bulk .pcc-bk-doc,.pcc-bulk .pcc-bk-lab{box-sizing:border-box;height:40px!important;min-height:40px!important;margin:0}
 .pcc-bulk .pcc-bk-doc{display:block}
+.pcc-bk-req{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:6px;font-size:10.5px;font-weight:700;color:var(--muted,#64748b);white-space:nowrap;cursor:pointer;text-transform:none;letter-spacing:0}
+.pcc-bk-req input{margin:0}.pcc-bulk th.pcc-bk-h.req{box-shadow:inset 0 3px 0 #dc2626}.pcc-bulk th.pcc-bk-h.req .pcc-bk-req{color:#b91c1c}
+.pcc-bulk th.pcc-bk-h.req .pcc-bk-doc{border-color:#fca5a5!important;background:#fff5f5}
+.pcc-bulk td.pcc-bk-c.req{background:color-mix(in srgb,#dc2626 4%,transparent)}
+.pcc-bulk tr.pcc-bk-dq td{background:color-mix(in srgb,#dc2626 6%,transparent)}
