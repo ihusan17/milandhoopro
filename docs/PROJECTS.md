@@ -340,3 +340,4 @@ Projects → **Committee meetings** (`#/projects/meetings/<year>/<bid|eval>`) li
   - PR number is taken from the linked plan item's procurement no. and locked.
   - Removed from the form, with stored values kept: Unit / section, Project officer, Not-in-plan reason, Replaces cancelled plan item, Budget line, Funding source.
   - In the meeting form, clicking a project in the agenda opens its Edit box on top.
+- **Required details at a Bid Committee meeting.** For each project marked Award, Variation or Time extension, the agenda row asks for Contract value, Contractor / supplier, Iulaan number, Iulaan date and Bid opening. These are marked with a red `**`, prefilled from the project, and empty ones are outlined in red. The meeting cannot be saved until they are filled; the values are saved to the project and noted in its activity. Re-tender, Cancellation and Other need none of them.
