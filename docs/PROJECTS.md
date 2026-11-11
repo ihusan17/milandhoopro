@@ -302,3 +302,15 @@ Only interface wording is translated — names, amounts, reference numbers and a
 ## Monthly view (procurements by Iulaan month)
 
 Projects › **Monthly** (next to Table / Cards / Timeline) groups every procurement by the month its Iulaan is announced, January to December, with ‹ › to change year and a bar chart of how many start each month (click a bar to jump to that month). The date is the project's **Iulaan date**, or — if that is not set yet — the planned IFB/REOI date of its PR-09 plan item (shown with a dashed border). PR-09 plan items not yet started as projects are included ("Not started"). The category tabs (Goods, Works…) and filters apply. Procurements with no date are listed under "No Iulaan date yet".
+
+## Cancelled plan items and projects not in the plan
+
+- **Cancel a plan item** (Procurement plan → row → *Cancel…*): decision date, decision reference, reason (Dhivehi), and optionally cancel the linked project too. The row stays in the plan history, greyed and struck through with its reason; it is left out of totals, the PR-09 export and the Monthly view. *Undo cancel* restores it.
+- **Plan state of every project** (chip in the project banner, Monthly view, overview filter *Not in procurement plan*):
+  - *In plan*: linked to a plan item that is not cancelled.
+  - *Added to plan*: linked to an item added during the year (amendment).
+  - *Plan item cancelled*: its plan item was cancelled.
+  - *Not in plan*: no plan item linked.
+- **Edit project → Project section**: *If not in the plan: reason* and *Replaces cancelled plan item*. The cancelled row then shows "Replaced by PC-…".
+- **Plan page summary**: counts for In plan, Added during the year, Cancelled and Projects not in plan, with a list of the unplanned projects and an *Add to plan* button. That button adds the project as an amendment, marked "Added later".
+- **Placeholders**: `{plan_status_dv}`, `{plan_status}`, `{in_plan}`, `{unplanned_reason_dv}`, `{replaces_plan_item}`, `{plan_cancel_reason_dv}`.

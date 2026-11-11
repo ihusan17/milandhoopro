@@ -111,6 +111,7 @@ const DV_DICT = {
   "Jan": "ޖަނަވަރީ", "Feb": "ފެބްރުއަރީ", "Mar": "މާރިޗު", "Apr": "އޭޕްރިލް", "May": "މެއި", "Jun": "ޖޫން", "Jul": "ޖުލައި", "Aug": "އޮގަސްޓު", "Sep": "ސެޕްޓެމްބަރު", "Oct": "އޮކްޓޯބަރު", "Nov": "ނޮވެމްބަރު", "Dec": "ޑިސެމްބަރު", "cases": "މައްސަލަ",
   "Monthly": "މަހުން މަހަށް", "Iulaan date": "އިޢުލާން ތާރީޚު", "Planned (PR-09)": "ރާވާފައި (PR-09)", "No procurement this month.": "މި މަހު އެއްވެސް ޕްރޮކިއުމަންޓެއް ނެތް.", "Not started": "އަދި ނުފެށޭ",
   "January": "ޖަނަވަރީ", "February": "ފެބްރުއަރީ", "March": "މާރިޗު", "April": "އޭޕްރިލް", "June": "ޖޫން", "July": "ޖުލައި", "August": "އޮގަސްޓު", "September": "ސެޕްޓެމްބަރު", "October": "އޮކްޓޯބަރު", "November": "ނޮވެމްބަރު", "December": "ޑިސެމްބަރު",
+  "Not in plan": "ޕްލޭނުގައި ނުހިމެނޭ", "In plan": "ޕްލޭނުގައި ހިމެނޭ", "Added to plan": "ފަހުން ޕްލޭނަށް އިތުރުކުރި", "Plan item cancelled": "ޕްލޭނުން ކެންސަލްކޮށްފައި", "Added during the year": "އަހަރުގެ ތެރޭގައި އިތުރުކުރި", "Projects not in plan": "ޕްލޭނުގައި ނުހިމެނޭ މަޝްރޫޢު", "Not in procurement plan": "ޕްލޭނުގައި ނުހިމެނޭ", "Added later": "ފަހުން އިތުރުކުރި", "Cancel…": "ކެންސަލް…", "Undo cancel": "ކެންސަލް ބާތިލްކުރޭ", "Add to plan": "ޕްލޭނަށް އިތުރުކުރޭ", "Replaced by": "ބަދަލުގައި",
   "Page not found": "ޞަފްޙާ ނުފެނުނު", "ledger balanced": "ލެޖަރ ބެލެންސް",
   "Just now": "މިހާރު", "Plan": "ޕްލޭން", "Project reference": "މަޝްރޫޢުގެ ނަންބަރު", "Language": "ބަސް", "Translations": "ތަރުޖަމާ"
 };

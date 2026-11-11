@@ -36,7 +36,7 @@ function OVERVIEW(n, type) {
   if (ongoing.length) n.append(o("div", { class: "card pcc-strip-card" }, o("div", { class: "card-h" }, SV(ICO.truck, "hi"), o("h3", {}, "Handed over to contractor"), o("span", { class: "muted small" }, ongoing.length + " ongoing")), o("div", { class: "pcc-strip" }, ongoing.sort((a, b) => String(a.due || "9").localeCompare(String(b.due || "9"))).map(p => o("a", { class: "pcc-hc t-" + cdTone(daysLeft(p), false), href: "#/project/" + p.id }, o("div", { class: "pcc-hc-top" }, o("span", { class: "muted small" }, p.ref), cdChip(p)), pName(p), o("div", { class: "small" }, SV(ICO.users), " ", p.vendor || "Contractor not set"), o("div", { class: "pcc-hc-kv" }, o("span", {}, "Contract"), o("b", {}, mvr(p.contract)), o("span", {}, "Handover"), o("b", {}, fd(p.handover)), o("span", {}, "Due"), o("b", {}, fd(p.due))), dualBar(p))))));
   // toolbar
   const q = o("input", { type: "search", placeholder: "Search ref no., name (English or Dhivehi), contractor, place", dir: "auto" });
-  const stSel = S([["", "All statuses"], ["@ongoing", "Ongoing (handed over)"], ["@due30", "Due within 30 days"], ...PST.map(s => [s, s])], "");
+  const stSel = S([["", "All statuses"], ["@ongoing", "Ongoing (handed over)"], ["@due30", "Due within 30 days"], ["@unplanned", "Not in procurement plan"], ...PST.map(s => [s, s])], "");
   const yrs = [...new Set(all.map(pyear).filter(Boolean))].sort().reverse(), ySel = S([["", "All years"], ...yrs.map(y => [y, y])], "");
   const vSel = S([["", "All contractors"], ...[...new Set(all.map(p => p.vendor).filter(Boolean))].sort().map(v => [v, v])], "");
   const odChk = o("input", { type: "checkbox" }), sSel = S([["due", "Sort: due date"], ["ref", "Sort: reference"], ["name", "Sort: name"], ["value", "Sort: contract value"], ["progress", "Sort: % complete"], ["updated", "Sort: last updated"]], "due");
@@ -48,6 +48,7 @@ function OVERVIEW(n, type) {
     let L2 = all.filter(p => {
       if (F.q && !`${p.ref} ${p.name} ${p.nameDv || ""} ${p.nameEn || ""} ${p.vendor || ""} ${p.location || ""} ${p.officer || ""}`.toLowerCase().includes(F.q)) return false;
       if (F.status === "@ongoing" && !isOngoing(p)) return false;
+      if (F.status === "@unplanned" && planState(p).code === "planned") return false;
       if (F.status === "@due30") { const d = daysLeft(p); if (!(d != null && d >= 0 && d <= 30)) return false; }
       if (F.status && !F.status.startsWith("@") && p.status !== F.status) return false;
       if (F.year && pyear(p) !== F.year) return false;
@@ -83,7 +84,7 @@ const planOf = p => (Z().plan || []).find(x => (p.planId && x.id === p.planId) |
 function startOf(p) { if (isISO(p.advertised)) return { d: p.advertised, src: "iulaan" }; const x = planOf(p), d = x && x.dates ? x.dates.ifb || x.dates.reoi : null; return isISO(d) ? { d, src: "plan" } : null; }
 function monthly(L2, F, T) {
   const items = L2.map(p => ({ p, s: startOf(p) }));
-  (Z().plan || []).filter(x => !x.projectId && (!T || x.type === T[1])).forEach(x => { const d = x.dates ? x.dates.ifb || x.dates.reoi : null; items.push({ x, s: isISO(d) ? { d, src: "plan" } : null }); });
+  (Z().plan || []).filter(x => !x.projectId && x.status !== "Cancelled" && (!T || x.type === T[1])).forEach(x => { const d = x.dates ? x.dates.ifb || x.dates.reoi : null; items.push({ x, s: isISO(d) ? { d, src: "plan" } : null }); });
   const years = [...new Set(items.filter(i => i.s).map(i => i.s.d.slice(0, 4)))].sort();
   let yr = F.year || F.mYear || (years.includes(today().slice(0, 4)) ? today().slice(0, 4) : years[years.length - 1]) || today().slice(0, 4);
   const box = o("div", {});
@@ -98,7 +99,7 @@ function monthly(L2, F, T) {
       return o(p ? "a" : "div", { class: "pcc-mi t-" + String(type || "").replace(/\W/g, "").toLowerCase() + (it.s.src === "plan" ? " planned" : ""), href: p ? "#/project/" + p.id : undefined },
         o("div", { class: "pcc-mday" }, o("b", {}, String(Number(d.slice(8)))), o("span", {}, ENMON[Number(d.slice(5, 7)) - 1].slice(0, 3))),
         o("div", { class: "grow", style: { minWidth: 0 } }, o("div", { class: "pcc-mname", dir: "auto" }, name), o("div", { class: "muted small" }, ref + " · " + (type || ""), p && p.advertNo ? " · " + p.advertNo : "")),
-        p ? stChip(p.status) : o("span", { class: "pcc-tag" }, "Not started"));
+        p && planState(p).code !== "planned" ? planChip(p) : null, p ? stChip(p.status) : o("span", { class: "pcc-tag" }, "Not started"));
     };
     const months = o("div", { class: "pcc-months" }, ENMON.map((mn, i) => { const k = yr + "-" + String(i + 1).padStart(2, "0"), L3 = inYear.filter(it => it.s.d.startsWith(k)).sort((a, b) => a.s.d.localeCompare(b.s.d));
       return o("section", { class: "card pcc-month" + (k === cm ? " now" : "") + (L3.length ? "" : " empty"), id: "m-" + k }, o("div", { class: "pcc-month-h" }, o("h3", {}, mn), o("span", { class: "pcc-cnt" + (L3.length ? " full" : "") }, String(L3.length))), L3.length ? L3.map(card) : o("p", { class: "muted small" }, "No procurement this month.")); }));
