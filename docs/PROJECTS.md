@@ -392,6 +392,13 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
 
   Choose the layout next to the button:
   - **Original (council form)**: your form's layout.
+  - **Original — restyled**: the same columns, order and formulas as the form, with:
+    - a deep-teal title band (Bismillah, council name, committee) above a gold line;
+    - the project name large, with the Iulaan number;
+    - coloured criterion tags over each criterion's columns, and heading groups in each criterion's colour;
+    - alternating rows, coloured points, and the top bidder marked ★ with a gold total;
+    - the disqualified row in red;
+    - a "how points are worked out" line, the date, and signature cards with a dashed signing line.
   - **Formal report**: a header with a document box; an information panel (Iulaan no., dates, number of bids, estimate, criteria); a result banner naming the top bidder with the total; the points table with formulas; the disqualified bidders with reasons; signature boxes for the Evaluation Committee.
   - **Step-by-step calculation**: one section per criterion showing the working for each bidder (e.g. 924,000 ÷ 966,600 × 75 = 71.69; 3 × 2 = 6), then a summary table that adds the points and ranks the bidders.
   - **Comparison matrix**: bidders across the top and criteria down the side, with a value row and a points row for each criterion; the total, the rank, a points bar, remarks and a result line.
