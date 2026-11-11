@@ -267,3 +267,13 @@ html.pcc-ui-dv .pcc-pe-row>label{text-align:left}
 .pcc-i18n-list{max-height:55vh;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}
 .pcc-i18n-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line)}
 .pcc-i18n-row.miss{background:color-mix(in srgb,var(--warn,#b45309) 9%,transparent)}
+/* Dhivehi: mirror the fixed side menu to the right on wide screens */
+@media (min-width:901px){
+html.pcc-ui-dv header#top{left:auto!important;right:0!important;box-shadow:inset 1px 0 0 rgba(255,255,255,.04)!important}
+html.pcc-ui-dv main{margin-left:0!important;margin-right:248px!important}
+html.pcc-ui-dv #topbar{margin-left:0!important;margin-right:248px!important}
+html.pcc-ui-dv #banner{left:auto!important;right:272px!important}
+}
+/* Dhivehi: each paragraph follows its own text's direction (English sentences stay readable) */
+html.pcc-ui-dv p,html.pcc-ui-dv li,html.pcc-ui-dv td,html.pcc-ui-dv .alert,html.pcc-ui-dv .pcc-pe-hint,html.pcc-ui-dv .muted,html.pcc-ui-dv .small,html.pcc-ui-dv .pcc-tag{unicode-bidi:plaintext;text-align:start}
+html.pcc-ui-dv td{text-align:right}
