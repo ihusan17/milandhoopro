@@ -100,13 +100,14 @@ function critData(p, d) {
 // right to left (#, name, then for each criterion the value and the points, then the total), two
 // heading rows, live formulas (MIN(...)/value × weight, MIN(documents × marks, weight), SUM), the
 // date and the Evaluation Committee's signature block. Four designs: original, emerald, navy, scorecard.
-const EVAL_DESIGNS = [["original", "Original (council form)"], ["styled", "Original — restyled (teal)"], ["royal", "Original — royal (navy & gold)"], ["minimal", "Original — minimal"], ["ocean", "Original — ocean"], ["report", "Formal report"], ["calc", "Step-by-step calculation"], ["matrix", "Comparison matrix"]];
+const EVAL_DESIGNS = [["original", "Original (council form)"], ["styled", "Original — restyled (teal)"], ["royal", "Original — royal (navy & gold)"], ["minimal", "Original — minimal"], ["ocean", "Original — ocean"], ["evreport", "Evaluation report (stages, compliance, recommendation)"], ["evform", "Official evaluation form (numbered sections)"], ["award", "Award recommendation (summary panel)"], ["report", "Formal report"], ["calc", "Step-by-step calculation"], ["matrix", "Comparison matrix"]];
 const evalDesign = () => Z().evalDesign || "original";
 async function critSheet(p, design) {
   const C = critsOf(p); if (!C.length) throw err("Set the evaluation criteria first");
   critApply(p);
   const D = design || evalDesign(), orig = D === "original";
   if (STYLED[D]) return evalSheetStyled(p, D);
+  if (["evreport", "evform", "award"].includes(D)) return evalSheetBid(p, D);
   if (!orig) return evalSheetPro(p, D);
   const resp = (p.bidders || []).filter(b => b.responsive !== false), dq = (p.bidders || []).filter(b => b.responsive === false);
   const B = orig ? [...resp, ...dq] : [...resp.slice().sort((a, b) => (a.rank || 99) - (b.rank || 99)), ...dq];
@@ -500,4 +501,144 @@ async function evalSheetStyled(p, V = "styled") {
   const u8 = await xlsxBuild({ name: "AB", sheet: W, widths: WD, heights: H, landscape: true, onePage: true, font: F, area: [1, 1, r, cN + 1] });
   ii(new Blob([u8], { type: MIME.xlsx }), `Evaluation_${safeName(p.ref)}_${V}.xlsx`);
   audit(p, "Evaluation sheet generated", critLine(p) + " · " + V);
+}
+
+// ---------- Bid-evaluation layouts ----------
+// evreport : stage tracker, key figures, 1 compliance check, 2 scoring, 3 committee recommendation, 4 signature table
+// evform   : official numbered form — form code box, 1 bid details, 2 criteria, 3 points, 4 rejected bids, 5 decision, 6 signatures
+// award    : points table with a summary panel (winner, amount vs estimate, saving, runner-up) and a committee stamp box
+async function evalSheetBid(p, D) {
+  const C = critsOf(p); critApply(p);
+  const F = "Faruma", INK = "1F2937", MUTE = "64748B", NAVY = "1E3A5F", TEAL = "0F766E", GREEN = "15803D", RED = "B91C1C", AMBER = "B45309";
+  const LINE = D === "evform" ? "000000" : "CBD5E1", HEAD = D === "evform" ? { fill: "D9D9D9", color: "000000" } : { fill: NAVY, color: "FFFFFF" };
+  const resp = (p.bidders || []).filter(b => b.responsive !== false).sort((a, b) => (a.rank || 99) - (b.rank || 99)), dq = (p.bidders || []).filter(b => b.responsive === false);
+  const B = [...resp, ...dq], win = resp[0], second = resp[1], est = p.estimate != null ? p.estimate / 100 : null;
+  const lab = cr => cr.labelDv || critType(cr.type)[2], man = cr => critType(cr.type)[3] === "manual";
+  const W = xlsxSheet(), H = {}, WD = { 1: 2 }, b0 = { font: F, color: INK };
+  // Main table columns (right to left in an RTL sheet): # | name | per criterion value, points | total | rank | vs estimate
+  const tcols = [{ k: "no", w: 6 }, { k: "name", w: 32 }]; C.forEach(cr => { if (!man(cr)) tcols.push({ k: "val", cr, w: cr.type === "price" ? 17 : 12 }); tcols.push({ k: "pts", cr, w: 11 }); });
+  tcols.push({ k: "total", w: 13 }, { k: "rank", w: 8 }); if (est && D !== "evform") tcols.push({ k: "est", w: 13 });
+  const c1 = 2; tcols.forEach((x, i) => { x.c = c1 + i; WD[x.c] = x.w; });
+  const tN = tcols[tcols.length - 1].c, side = D === "award" ? 4 : 0, cN = side ? tN + 1 + side : tN;
+  if (side) { WD[tN + 1] = 2; for (let k = 1; k <= side; k++) WD[tN + 1 + k] = 15; }
+  const at = (k, cr) => (tcols.find(x => x.k === k && (!cr || x.cr === cr)) || {}).c;
+  const bd = D === "evform" ? { style: "thin", color: "000000" } : { style: "thin", color: LINE };
+  const th = { ...b0, b: true, sz: 11, ...HEAD, h: "center", wrap: true, border: D === "evform" ? bd : { style: "thin", color: "FFFFFF" } };
+  const td = (ex = {}) => ({ ...b0, sz: 11, h: "center", border: bd, ...ex });
+  const mergeSet = (r, a, b, v, st, h) => { W.set(r, a, v, st).merge(r, a, r, b); W.box(r, a, r, b, { fill: st.fill, border: st.border }); if (h) H[r] = h; };
+  const sec = (r, n, t) => { mergeSet(r, c1, D === "award" ? tN : cN, `${n ? n + ".  " : ""}${t}`, { ...b0, b: true, sz: 13, color: D === "evform" ? "000000" : NAVY, h: "right", ...(D === "evform" ? { fill: "F2F2F2", border: { style: "thin", color: "000000" } } : { border: { style: "medium", color: NAVY, only: "bottom" } }) }, 24); };
+  const words = v => { try { return dvMoneyWords(Math.round(v * 100)); } catch (e) { return ""; } };
+  const mem = (p.committees.eval || []).filter(m => !m.onLeave);
+  // ----- Header -----
+  let r = 2;
+  if (D === "evform") {
+    mergeSet(2, cN - 1, cN, "EV-01", { ...b0, b: true, sz: 12, h: "center", border: { style: "medium", color: "000000" } }, 24);
+    mergeSet(3, cN - 1, cN, "ސަފުހާ 1", { ...b0, sz: 9, color: MUTE, h: "center", border: { style: "thin", color: "000000" } });
+    mergeSet(2, c1, cN - 2, "`", { ...b0, sz: 16, h: "center" });
+    mergeSet(3, c1, cN - 2, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 16, h: "center" }, 28);
+    mergeSet(4, c1, cN, "ބިޑް އިވެލުއޭޝަން ފޯމު", { ...b0, b: true, sz: 15, h: "center", border: { style: "double", color: "000000", only: ["top", "bottom"] } }, 30);
+    r = 6;
+  } else {
+    mergeSet(2, c1, cN - 3, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 18, color: NAVY, h: "right" }, 32);
+    mergeSet(3, c1, cN - 3, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  ·  ށ. މިލަންދޫ، ދިވެހިރާއްޖެ", { ...b0, sz: 11, color: MUTE, h: "right" });
+    W.set(2, cN - 2, D === "award" ? "ހަވާލުކުރުމަށް ލަފާ" : "ބިޑް އިވެލުއޭޝަން ރިޕޯޓު", { ...b0, b: true, sz: 13, color: "FFFFFF", fill: D === "award" ? TEAL : NAVY, h: "center" }).merge(2, cN - 2, 2, cN);
+    W.set(3, cN - 2, (p.advertNo || "") + "   ·   " + dvDate(today()), { ...b0, sz: 9, color: "FFFFFF", fill: D === "award" ? TEAL : NAVY, h: "center" }).merge(3, cN - 2, 3, cN); W.box(2, cN - 2, 3, cN, { fill: D === "award" ? TEAL : NAVY });
+    W.box(4, c1, 4, cN, { border: { style: "medium", color: D === "award" ? TEAL : NAVY, only: "bottom" } }); H[4] = 4; r = 6;
+  }
+  mergeSet(r, c1, cN, `${p.nameDv || p.name || ""} ކޮށްދޭނެ ފަރާތެއް ހޯދުމަށްކުރި އިޢުލާނާ ގުޅިގެން ހުށަހެޅި ބިޑްތައް ވަޒަންކުރުން`, { ...b0, b: true, sz: 14, h: "center", wrap: true, color: D === "evform" ? "000000" : INK }, 40); r += 2;
+  // ----- Stage tracker and key figures (evaluation report) -----
+  if (D === "evreport") {
+    const st = [["ބިޑް ހުޅުވުން", true, p.bidOpening ? dvDate(p.bidOpening) : ""], ["ޝަރުތު ބެލުން", true, `${resp.length} / ${B.length}`], ["ޕޮއިންޓް ދިނުން", true, C.map(c => c.weight + "%").join("·")], ["ކޮމިޓީގެ ލަފާ", !!win, win ? "ނިމިފައި" : ""], ["ބިޑް ކޮމިޓީ", false, "ހުށަހަޅަންޖެހޭ"]];
+    const span = cN - c1 + 1, seg = Math.floor(span / st.length);
+    st.forEach(([t, done, sub], k) => { const a = c1 + k * seg, b = k === st.length - 1 ? cN : a + seg - 1, f = done ? TEAL : "E5E7EB", fc = done ? "FFFFFF" : MUTE;
+      mergeSet(r, a, b, `${done ? "✓" : "⏳"}  ${k + 1}. ${t}`, { ...b0, b: true, sz: 11, fill: f, color: fc, h: "center", border: { style: "thin", color: "FFFFFF" } }, 26);
+      mergeSet(r + 1, a, b, sub, { ...b0, sz: 9, fill: done ? "D5EFEA" : "F3F4F6", color: done ? TEAL : MUTE, h: "center", border: { style: "thin", color: "FFFFFF" } }, 18); });
+    r += 3;
+    const kp = [["ބިޑް ހުށަހެޅި", String(B.length)], ["ޝަރުތު ފުރިހަމަ", String(resp.length)], ["ލަފާކުރި އަގު", est != null ? ht(est * 100) : "—"], ["އެންމެ ދަށް އަގު", resp.length ? ht(Math.min(...resp.map(b => b.amount ?? Infinity))) : "—"]];
+    const ks = Math.floor(span / kp.length);
+    kp.forEach(([l, v], k) => { const a = c1 + k * ks, b = k === kp.length - 1 ? cN : a + ks - 1; mergeSet(r, a, b, l, { ...b0, sz: 10, color: MUTE, fill: "F8FAFC", h: "center", border: { style: "thin", color: "E2E8F0", only: ["top", "left", "right"] } }, 18); mergeSet(r + 1, a, b, v, { ...b0, b: true, sz: 15, color: NAVY, fill: "F8FAFC", h: "center", border: { style: "thin", color: "E2E8F0", only: ["bottom", "left", "right"] } }, 28); });
+    r += 3;
+  }
+  // ----- Bid details and criteria (official form) -----
+  let n = 0;
+  if (D === "evform") {
+    sec(r, ++n, "ބީލަމުގެ މަޢުލޫމާތު"); r++;
+    const info = [["މަޝްރޫޢު", p.nameDv || p.name || ""], ["މަޝްރޫޢުގެ ނަންބަރު", p.ref || ""], ["އިޢުލާން ނަންބަރު", p.advertNo || ""], ["އިޢުލާން ކުރި ތާރީޚް", p.advertised ? dvDate(p.advertised) : ""], ["ބިޑް ހުޅުވި ތާރީޚް", p.bidOpening ? dvDate(p.bidOpening) : ""], ["ލަފާކުރި އަގު", est != null ? ht(est * 100) : ""], ["ބިޑް ހުށަހެޅި ފަރާތްތަކުގެ އަދަދު", `${B.length}  (ޝަރުތު ފުރިހަމަ ${resp.length})`]];
+    info.forEach(([l, v]) => { mergeSet(r, c1, c1 + 1, l, { ...b0, b: true, sz: 11, fill: "F2F2F2", h: "right", border: bd }); mergeSet(r, c1 + 2, cN, v, { ...b0, sz: 11, h: "right", border: bd }, 22); r++; });
+    r++; sec(r, ++n, "ވަޒަންކުރުމުގެ މިންގަނޑު"); r++;
+    W.set(r, c1, "#", th); mergeSet(r, c1 + 1, c1 + 2, "މިންގަނޑު", th); W.set(r, c1 + 3, "%", th); mergeSet(r, c1 + 4, cN, "ޕޮއިންޓް ދޭގޮތް", th, 24); r++;
+    C.forEach((cr, i) => { W.set(r, c1, i + 1, td()); mergeSet(r, c1 + 1, c1 + 2, lab(cr), td({ h: "right" })); W.set(r, c1 + 3, cr.weight, td({ b: true }));
+      mergeSet(r, c1 + 4, cN, critType(cr.type)[3] === "lowest" ? `އެންމެ ދަށް ${cr.type === "price" ? "އަގަށް" : "މުއްދަތަށް"} ${cr.weight}؛ އެހެން ފަރާތްތަކަށް: އެންމެ ދަށް ÷ ހުށަހެޅި × ${cr.weight}` : critType(cr.type)[3] === "per" ? `ކޮންމެ ލިޔުމަކަށް ${cr.per || 1} މާކްސް (އެންމެ ގިނަވެގެން ${cr.weight})` : `ކޮމިޓީން ދޭ ޕޮއިންޓް (${cr.weight} އިން)`, td({ h: "right", sz: 10 }), 22); r++; });
+    W.set(r, c1, "", td({ fill: "F2F2F2" })); mergeSet(r, c1 + 1, c1 + 2, "ޖުމްލަ", td({ b: true, fill: "F2F2F2", h: "right" })); W.set(r, c1 + 3, C.reduce((a, c) => a + Number(c.weight), 0), td({ b: true, fill: "F2F2F2" })); mergeSet(r, c1 + 4, cN, "", td({ fill: "F2F2F2" }), 22); r += 2;
+  }
+  // ----- Compliance check (evaluation report) -----
+  if (D === "evreport") {
+    sec(r, ++n, "ޝަރުތު ފުރިހަމަވޭތޯ ބެލުން"); r++;
+    W.set(r, c1, "#", th); W.set(r, c1 + 1, "ބިޑް ހުށައެޅި ފަރާތް", th); mergeSet(r, c1 + 2, c1 + 3, "ހުށަހެޅި އަގު", th); mergeSet(r, c1 + 4, c1 + 5, "ޝަރުތު", th); mergeSet(r, c1 + 6, cN, "ބަޔާން", th, 24); r++;
+    B.forEach((b, i) => { const ok = b.responsive !== false; W.set(r, c1, i + 1, td()); W.set(r, c1 + 1, b.vendor, td({ h: "right" })); mergeSet(r, c1 + 2, c1 + 3, b.amount == null ? "—" : b.amount / 100, td({ fmt: "#,##0.00" }));
+      mergeSet(r, c1 + 4, c1 + 5, ok ? "✓  ފުރިހަމަ" : "✗  ފުރިހަމަނުވޭ", td({ b: true, color: ok ? GREEN : RED, fill: ok ? "ECFDF5" : "FEF2F2" })); mergeSet(r, c1 + 6, cN, b.remarks || (ok ? "" : "ޑިސްކޮލިފައި ކުރެވިފައި"), td({ h: "right", sz: 10, color: MUTE }), 22); r++; });
+    r++;
+  }
+  // ----- Scoring table -----
+  sec(r, ++n, D === "evform" ? "ޕޮއިންޓް ލިބުނު ގޮތް" : "ޕޮއިންޓް ދިނުން"); if (side) W.box(r, tN + 2, r, cN, {}); r++;
+  const h1 = r, h2 = r + 1; H[h1] = 28; H[h2] = 26;
+  tcols.forEach(x => {
+    const one = t => { W.set(h1, x.c, t, th).merge(h1, x.c, h2, x.c); W.box(h1, x.c, h2, x.c, th); };
+    if (x.k === "no") one("#"); if (x.k === "name") one("ބިޑް ހުށައެޅި ފަރާތް"); if (x.k === "total") one("މުޅި ޖުމްލަ"); if (x.k === "rank") one("ރޭންކް"); if (x.k === "est") one("ލަފާކުރި އަގާ ބަލާއިރު");
+    if (x.k === "val") { W.set(h1, x.c, `${lab(x.cr)}  (${x.cr.weight}%)`, th).merge(h1, x.c, h1, x.c + 1); W.box(h1, x.c, h1, x.c + 1, th); W.set(h2, x.c, x.cr.type === "price" ? "ހުށަހެޅި އަގު" : x.cr.type === "duration" ? "ދުވަސް" : "ލިޔުން", { ...th, sz: 10, ...(D === "evform" ? {} : { fill: "2E5480" }) }); }
+    if (x.k === "pts") { if (man(x.cr)) { W.set(h1, x.c, `${lab(x.cr)}  (${x.cr.weight}%)`, th); } W.set(h2, x.c, "ޕޮއިންޓް", { ...th, sz: 10, ...(D === "evform" ? {} : { fill: "2E5480" }) }); }
+  });
+  const r0 = h2 + 1, rl = r0 + resp.length - 1;
+  B.forEach((b, i) => { const rr = r0 + i, isDq = b.responsive === false, top = b === win; H[rr] = 23;
+    const ex = isDq ? { color: "9CA3AF", i: true } : top ? { b: true, fill: D === "evform" ? "F2F2F2" : "FFF7E0" } : {};
+    tcols.forEach(x => { const s2 = td(ex);
+      if (x.k === "no") W.set(rr, x.c, i + 1, s2); if (x.k === "name") W.set(rr, x.c, b.vendor || "", { ...s2, h: "right" });
+      if (x.k === "val") W.set(rr, x.c, critValue(b, x.cr) ?? "", { ...s2, fmt: x.cr.type === "price" ? "#,##0.00" : "0" });
+      if (x.k === "pts") { if (isDq) return W.set(rr, x.c, "", s2); if (man(x.cr)) return W.set(rr, x.c, critValue(b, x.cr) ?? "", { ...s2, fmt: "0.00" }); const V = xref(rr, x.c - 1), rng = `${xcol(x.c - 1)}$${r0}:${xcol(x.c - 1)}$${rl}`;
+        W.set(rr, x.c, (b.points || {})[x.cr.key] ?? "", { ...s2, fmt: "0.00", b: true, color: D === "evform" ? "000000" : TEAL }, critType(x.cr.type)[3] === "lowest" ? `IF(${V}="","",MIN(${rng})/${V}*${x.cr.weight})` : `IF(${V}="","",MIN(${V}*${x.cr.per || 1},${x.cr.weight}))`); }
+      if (x.k === "total") isDq ? W.set(rr, x.c, "ޑިސްކޮލިފައި", { ...s2, sz: 10 }) : W.set(rr, x.c, b.total ?? 0, { ...s2, b: true, fmt: "0.00", ...(D === "evform" ? {} : { fill: top ? TEAL : "E8EEF5", color: top ? "FFFFFF" : NAVY }) }, `SUM(${tcols.filter(y => y.k === "pts").map(y => xref(rr, y.c)).join(",")})`);
+      if (x.k === "rank") { const tc = at("total"); isDq ? W.set(rr, x.c, "—", s2) : W.set(rr, x.c, b.rank ?? "", { ...s2, b: true }, `RANK(${xref(rr, tc)},$${xcol(tc)}$${r0}:$${xcol(tc)}$${rl})`); }
+      if (x.k === "est") { const v = b.amount == null || isDq ? null : (b.amount / 100 - est) / est; W.set(rr, x.c, v == null ? "" : v, { ...s2, fmt: '+0.0%;-0.0%;0.0%', color: v == null ? MUTE : v <= 0 ? GREEN : AMBER, b: true }); }
+    }); });
+  const tEnd = r0 + B.length - 1; r = tEnd + 2;
+  // ----- Summary panel and stamp (award) -----
+  if (side && win) {
+    const s1 = tN + 2, sN = cN, card = (rr, l, v, st = {}) => { mergeSet(rr, s1, sN, l, { ...b0, sz: 10, color: MUTE, fill: st.bg || "F8FAFC", h: "right", border: { style: "thin", color: st.bd || "E2E8F0", only: ["top", "left", "right"] } }, 18); mergeSet(rr + 1, s1, sN, v, { ...b0, b: true, sz: st.sz || 14, color: st.c || NAVY, fill: st.bg || "F8FAFC", h: "right", border: { style: "thin", color: st.bd || "E2E8F0", only: ["bottom", "left", "right"] } }, st.h || 26); };
+    let sr = h1;
+    card(sr, "ހަވާލުކުރުމަށް ލަފާދެވޭ ފަރާތް", "★  " + win.vendor, { bg: "FFF7E0", bd: "E9C46A", c: "7A5A0C", sz: 14, h: 30 }); sr += 2;
+    card(sr, "ޖުމްލަ ޕޮއިންޓް", Number(win.total || 0).toFixed(2), { sz: 20, c: TEAL, h: 32 }); sr += 2;
+    card(sr, "ހުށަހެޅި އަގު", win.amount == null ? "—" : ht(win.amount)); sr += 2;
+    if (est != null && win.amount != null) { const d = win.amount / 100 - est; card(sr, "ލަފާކުރި އަގާ ބަލާއިރު", `${d <= 0 ? "▼" : "▲"} ${ht(Math.abs(d) * 100)}  (${(Math.abs(d) / est * 100).toFixed(1)}%)`, { c: d <= 0 ? GREEN : AMBER, sz: 12 }); sr += 2; }
+    if (second) { card(sr, "ދެވަނަ", `${second.vendor}  ·  ${Number(second.total || 0).toFixed(2)}`, { sz: 11, c: INK }); sr += 2; }
+    sr++; mergeSet(sr, s1, sN, "ކޮމިޓީގެ ތައްގަނޑު", { ...b0, sz: 9, color: MUTE, h: "center" }); sr++;
+    for (let rr = sr; rr <= sr + 3; rr++) for (let c = s1 + 1; c <= sN - 1; c++) { const sides = [rr === sr && "top", rr === sr + 3 && "bottom", c === s1 + 1 && "left", c === sN - 1 && "right"].filter(Boolean); sides.length && W.box(rr, c, rr, c, { border: { style: "dashed", color: "94A3B8", only: sides } }); }
+    for (let rr = sr; rr <= sr + 3; rr++) H[rr] = H[rr] || 20;
+    var panelEnd = sr + 4;
+  }
+  // ----- Rejected bids (official form) -----
+  if (D === "evform") {
+    sec(r, ++n, "ޝަރުތު ފުރިހަމަ ނުވާ ފަރާތްތައް"); r++;
+    W.set(r, c1, "#", th); mergeSet(r, c1 + 1, c1 + 3, "ފަރާތް", th); mergeSet(r, c1 + 4, cN, "ސަބަބު", th, 22); r++;
+    (dq.length ? dq : [null]).forEach((b, i) => { W.set(r, c1, b ? i + 1 : "", td()); mergeSet(r, c1 + 1, c1 + 3, b ? b.vendor : "ނެތް", td({ h: "right" })); mergeSet(r, c1 + 4, cN, b ? b.remarks || "ޑިސްކޮލިފައި ކުރެވިފައި" : "", td({ h: "right" }), 22); r++; });
+    r++;
+  }
+  // ----- Recommendation / decision -----
+  if (win) {
+    sec(r, ++n, D === "evform" ? "ނިންމުން" : "ކޮމިޓީގެ ލަފާ"); r++;
+    const txt = `މަތީގައިވާ ގޮތަށް ބިޑްތައް ވަޒަންކުރުމުން، އެންމެ މަތިން ޕޮއިންޓް (${Number(win.total || 0).toFixed(2)}) ލިބިފައިވާ ${win.vendor} އަށް، ރ. ${win.amount == null ? "—" : ht(win.amount)} (${win.amount == null ? "" : words(win.amount / 100)}) އަށް މި މަސައްކަތް ހަވާލުކުރުމަށް ބިޑް ކޮމިޓީއަށް ލަފާދެމެވެ.`;
+    mergeSet(r, c1, side ? tN : cN, txt, { ...b0, sz: 12, h: "right", wrap: true, v: "center", ...(D === "evform" ? { border: bd } : { fill: "F0FDF4", color: "14532D", border: { style: "medium", color: GREEN, only: "right" } }) }, 54); r += 2;
+  }
+  // ----- Signature table -----
+  if (mem.length) {
+    sec(r, ++n, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީގެ ސޮއި"); r++;
+    const sE = side ? tN : cN, q = Math.max(1, Math.floor((sE - c1 - 1) / 4));
+    const segs = [[c1, c1, "#"], [c1 + 1, c1 + q, "ނަން"], [c1 + q + 1, c1 + 2 * q, "މަޤާމް"], [c1 + 2 * q + 1, c1 + 3 * q, "ސޮއި"], [c1 + 3 * q + 1, sE, "ތާރީޚް"]];
+    segs.forEach(([a, b, t]) => mergeSet(r, a, b, t, th, 24)); r++;
+    mem.forEach((m, i) => { const vals = [i + 1, noTitle(m.nameDv || m.name || ""), m.designationDv || m.designation || "", "", dvDate(today())]; segs.forEach(([a, b], k) => mergeSet(r, a, b, vals[k], td({ h: k === 1 || k === 2 ? "right" : "center" }), 32)); r++; });
+  }
+  if (D === "evform") { r++; mergeSet(r, c1, cN, "", { border: { style: "double", color: "000000", only: "top" } }, 6); }
+  if (typeof panelEnd === "number") r = Math.max(r, panelEnd);
+  const u8 = await xlsxBuild({ name: "Evaluation", sheet: W, widths: WD, heights: H, landscape: D !== "evform" || cN - c1 > 9, onePage: D !== "evform", font: F, rtl: true, area: [1, 1, r + 1, cN + 1] });
+  ii(new Blob([u8], { type: MIME.xlsx }), `Evaluation_${safeName(p.ref)}_${D}.xlsx`);
+  audit(p, "Evaluation sheet generated", critLine(p) + " · " + D);
 }

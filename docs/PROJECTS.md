@@ -415,6 +415,25 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
       - blue and aqua criterion colours and a framed table;
       - an aqua winner row and result bar;
       - framed signature boxes.
+  - Bid-evaluation layouts:
+    - **Evaluation report**:
+      - a stage tracker: bid opening, compliance check, scoring and recommendation (✓), then the Bid Committee (⏳);
+      - key figures: bids received, responsive bids, estimate and lowest bid;
+      - 1 Compliance check: each bid with ✓ or ✗ and the reason;
+      - 2 Scoring: with rank and a % against the estimate;
+      - 3 The committee's recommendation: winner, amount and the amount in Dhivehi words;
+      - 4 A signature table: name, designation, signature and date.
+    - **Official evaluation form**: an EV-01 form-code box, double rules, grey headings and numbered sections:
+      - 1 Bid details;
+      - 2 Evaluation criteria (% and method);
+      - 3 Points;
+      - 4 Rejected bids;
+      - 5 Decision;
+      - 6 Signatures.
+    - **Award recommendation**:
+      - the scoring table, with the recommendation and signatures beneath it;
+      - a summary panel showing the recommended bidder, total points, bid amount, the difference from the estimate (saving), and the runner-up;
+      - a dashed box for the committee stamp.
   - **Formal report**: a header with a document box; an information panel (Iulaan no., dates, number of bids, estimate, criteria); a result banner naming the top bidder with the total; the points table with formulas; the disqualified bidders with reasons; signature boxes for the Evaluation Committee.
   - **Step-by-step calculation**: one section per criterion showing the working for each bidder (e.g. 924,000 ÷ 966,600 × 75 = 71.69; 3 × 2 = 6), then a summary table that adds the points and ranks the bidders.
   - **Comparison matrix**: bidders across the top and criteria down the side, with a value row and a points row for each criterion; the total, the rank, a points bar, remarks and a result line.
