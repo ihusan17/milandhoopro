@@ -462,3 +462,13 @@ html.pcc-ui-dv .pcm-row .pcm-who{align-items:flex-start}
 .modal:has(.pcc-bulk){width:min(1100px,96vw);max-width:96vw}
 .pcc-bulk .t th{font-size:11px;white-space:normal}
 .pcc-bulk td:last-child .btn{padding:2px 8px;min-height:28px}.pcc-bulk .t th,.pcc-bulk .t td{padding-inline:5px}
+/* evaluation criteria */
+.pcc-crit-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pcc-crit-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:12px;border:1px solid var(--line);background:var(--card);--c:var(--brand)}
+.pcc-crit-chip b{min-width:46px;text-align:center;padding:4px 8px;border-radius:9px;background:var(--c);color:#fff}
+.pcc-crit-chip small{color:var(--muted,#64748b)}
+.pcc-crit-chip.t-price{--c:#0f766e}.pcc-crit-chip.t-duration{--c:#2563eb}.pcc-crit-chip.t-experience{--c:#d97706}.pcc-crit-chip.t-technical{--c:#7c3aed}.pcc-crit-chip.t-financial{--c:#db2777}.pcc-crit-chip.t-other{--c:#475569}
+.pcc-crit-rows{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.pcc-crit-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+.pcc-crit-row .pcc-chk{min-width:120px}.pcc-crit-w{display:inline-flex;align-items:center;gap:4px}
+td.pcc-pt{text-align:center}

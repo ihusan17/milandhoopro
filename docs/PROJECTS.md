@@ -361,3 +361,26 @@ The current page is filled with its colour. In Dhivehi the bars mirror right to 
   - the project's existing bids already filled in, or 10 empty rows.
 
   Fill it in and use *Upload Excel file…*; the Responsive, All documents and Remarks columns are read too.
+
+## Evaluation criteria
+
+Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used for the project and give each a percentage; together they must make 100%.
+
+**Quick sets:** Price 75 · Duration 15 · Experience 10 (2 marks per document), Price 80 · Duration 20, Technical 70 · Financial 30, Price 100. The last criteria used become the starting point for the next project.
+
+**How points are worked out** (for responsive bids only):
+
+| Criterion | Points |
+|---|---|
+| Price, Duration | The lowest gets full marks; others get lowest ÷ theirs × weight. |
+| Experience | Marks per similar-work document (e.g. 2 each), up to its weight. |
+| Technical, Financial, Other | Points typed for each bidder, up to the weight. Other criteria get their own box in *Edit bid*. |
+
+**Where the points appear:**
+- *Bids received* shows each criterion's points, with the price, days or document count underneath, and the total.
+- Bids are ranked by total.
+- **Evaluation sheet (Excel)** gives `Evaluation_<project>.xlsx`. It is a right-to-left sheet with Dhivehi headings: name, then for each criterion the value and the points, then total, rank and remarks. Not-responsive bids are marked ޑިސްކޮލިފައި. It ends with the date and the Evaluation Committee's signature block.
+
+**Template fields:**
+- Inside `{#bidders}`: `{price_points}`, `{duration_points}`, `{experience_points}`, `{technical_points}`, `{financial_points}`.
+- Elsewhere: `{criteria_text_dv}`, `{criteria_text}`, and the list `{#criteria}{label_dv} {weight}%{/criteria}`.

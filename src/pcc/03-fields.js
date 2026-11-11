@@ -40,6 +40,8 @@ const FIELDS = [
     ["{#inspectors}…{/inspectors}", "Inspection team (Completion tab): no, name_dv, designation_dv", ""],
     ["{#snags}…{/snags}", "Defects found at inspection (Completion tab): no, item_dv, status_dv", ""],
     ["{#report_items}…{/report_items}", "Progress report work items (one per line in the report): no, item_dv, status_dv (ނިމިފައި), inspect_date, inspect_date_dash", ""],
+    ["price_points", "Inside {#bidders}: points for price (also duration_points, experience_points, technical_points, financial_points) from the project's evaluation criteria", "75.00"],
+    ["criteria_text_dv", "The evaluation criteria in Dhivehi, e.g. އަގު 75%، މުއްދަތު 15%، ތަޖުރިބާ 10%  (criteria_text in English; {#criteria}{label_dv} {weight}%{/criteria} as a list)", ""],
     ["{#responsive_bidders}…{/responsive_bidders}", "Bidders marked Responsive, numbered 1, 2, 3…: same fields as bidders (bidder_name, bid_amount, duration_offered, experience, technical_score, financial_score, total_score)", ""],
     ["{#rejected_bidders}…{/rejected_bidders}", "Bidders marked Not responsive: no, bidder_name, bid_amount, remarks (type the reason for rejection in the bidder's Remarks)", ""],
     ["{#payments}…{/payments}", "no, kind, amount, status, invoice_no, memo_ref, paid_date", ""],
@@ -106,6 +108,7 @@ function dataFor(p, extra = {}) {
   Object.entries(moneyVals).forEach(([k, val]) => { d[k] = val == null ? (k === "budget_extra_needed" && p.estimate != null && w && w.amount != null ? "-" : "") : ht(val); d[k + "_words_dv"] = dvMoneyWords(val); d[k + "_words_en"] = enMoneyWords(val); d.__num[k] = rf(val); });
   ["duration_days", "percent_complete", "days_left", "retention_percent", "retention_period_days", "bidder_count", "responsive_count"].forEach(k => { d[k] !== "" && (d.__num[k] = Number(d[k])); });
   d.bidders = (p.bidders || []).slice().sort((a, b) => (a.rank || 99) - (b.rank || 99)).map((x, i) => ({ no: i + 1, rank: x.rank ?? "", bidder_name: x.vendor || "", bid_amount: x.amount == null ? "" : ht(x.amount), bid_amount_words_en: enMoneyWords(x.amount), bid_amount_words_dv: dvMoneyWords(x.amount), bid_validity: x.validity || "", duration_offered: x.duration ?? "", technical_score: x.tech ?? "", financial_score: x.fin ?? "", total_score: x.total ?? "", responsive: x.responsive === false ? "No" : "Yes", remarks: x.remarks || "", experience: x.experience ?? "", __ok: x.responsive !== false, documents: Object.entries(x.docs || {}).filter(e => e[1]).map(e => e[0]).join(", "), __num: { bid_amount: rf(x.amount), technical_score: num(x.tech), financial_score: num(x.fin), total_score: num(x.total), rank: num(x.rank), duration_offered: num(x.duration), experience: num(x.experience) } }));
+  critData(p, d);
   // Responsive bidders (scored) and rejected bidders (with the reason typed in Remarks), numbered 1, 2, 3…
   d.responsive_bidders = d.bidders.filter(x => x.__ok).map((x, i) => ({ ...x, no: i + 1, __num: { ...x.__num, no: i + 1 } }));
   d.rejected_bidders = d.bidders.filter(x => !x.__ok).map((x, i) => ({ ...x, no: i + 1, __num: { ...x.__num, no: i + 1 } }));
