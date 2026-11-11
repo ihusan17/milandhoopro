@@ -83,7 +83,7 @@ async function meetingEdit(m, k, p, pre) {
 function meetingSync(m) {
   const pre = m.kind === "eval" ? "evalMeeting" : "bidMeeting", main = m.kind === "eval" ? ["evaluation", "reeval"] : ["award"];
   mItems(m).filter(it => main.includes(it.type)).forEach(it => { const p = prj(it.projectId); if (!p || (p[pre + "No"] && p[pre + "Id"] !== m.id)) return;
-    Object.assign(p, { [pre + "Id"]: m.id, [pre + "No"]: m.ref, [pre + "Date"]: m.date, [pre + "Time"]: m.time || "", [pre + "Start"]: m.start || m.time || "", [pre + "End"]: m.end || "" }); });
+    Object.assign(p, { [pre + "Id"]: m.id, [pre + "No"]: m.ref, [pre + "Date"]: m.date, [pre + "Time"]: m.time || "", [pre + "Start"]: m.start || m.time || "", [pre + "End"]: m.end || "" }, m.kind === "eval" ? { evaluation: m.date, evaluationTime: m.start || m.time || "" } : { award: m.date }); });
 }
 async function meetingDelete(m) {
   const n = Z().pdocs.filter(d => d.meetingId === m.id).length;
