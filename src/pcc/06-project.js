@@ -116,7 +116,7 @@ function psumProject(p, V) {
   const desc = [p.descDv ? o("p", { dir: "rtl", lang: "dv", class: "pcc-para" }, p.descDv) : null, p.desc ? o("p", { dir: "auto", class: "pcc-para" }, p.desc) : null, p.notes ? o("p", { class: "muted small pcc-para" }, p.notes) : null];
   {
     const tile = ([l, v, f]) => o("div", { class: "ps-tile" + (f === "ref" ? " ref" : "") }, o("span", {}, l), o("b", { dir: "auto" }, has(v) ? v : o("i", { class: "muted" }, "Not set")));
-    return o("div", { class: "card ps-a" }, o("h3", {}, "Project"), names,
+    return o("div", { class: "card ps-a" },
       o("div", { class: "ps-money" }, D.money.map(([l, v], i) => o("div", { class: "ps-m m" + i }, o("span", {}, l), o("b", {}, psMoney(v))))),
       o("h4", {}, "Details"), o("div", { class: "ps-tiles" }, rows(D.id).map(tile)), o("h4", {}, "Procurement"), o("div", { class: "ps-tiles" }, rows(D.proc).map(tile)), ...desc);
   }
