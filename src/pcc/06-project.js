@@ -47,8 +47,7 @@ async function PEDIT2(p, type, pre, ref) {
     Object.keys(xf).length ? { id: "own", t: "Other template fields", sh: "Other fields", ic: "M8 4H6v16h2M16 4h2v16h-2", hint: "Placeholders in your templates that the program has no field for. Type the value for this project; it fills every template that uses it.", fields: Object.keys(xf).map(k => F([(ownOf(k) || {}).label || "", o("code", {}, "{" + k + "}")], xf[k], 4, xtags[k].length ? "In " + xtags[k].join(", ") : "Not in a template yet")) } : null,
     { id: "scope", t: "Scope and notes", sh: "Scope", ic: "M5 4h10l4 4v12H5zM14 4v5h5M8 13h8M8 17h6", fields: [F("Scope in Dhivehi", f.descDv, 12), F("Scope in English", f.desc, 12), F("Notes", f.notes, 12)] }
   ].filter(Boolean);
-  const style = (Z().ui || {}).peditStyle || "cards";
-  const ok = await Mt(p ? "Edit project " + (p.ref || "") : "New project", [...lists, peditLayout(style, secs)],
+  const ok = await Mt(p ? "Edit project " + (p.ref || "") : "New project", [...lists, peditLayout(secs)],
   [{ label: "Cancel", value: !1 }, { label: p ? "Save" : "Create project", primary: !0, value: !0, onClick: () => {
     try {
       if (!f.nameEn.value.trim() && !f.nameDv.value.trim()) throw err("Type the project name in English or Dhivehi");
@@ -185,100 +184,9 @@ function docsCard(p, groups, title, codes) {
   return card(title, docTable(cur.map(d => ({ kind: "gen", d, p })), false), old.length ? o("details", { class: "pcc-old" }, o("summary", {}, `${old.length} older version${old.length === 1 ? "" : "s"}`), docTable(old.map(d => ({ kind: "gen", d, p })), false)) : null);
 }
 
-// ----- Edit-project layouts: "cards", "tabs" or "sheet" -----
-function peditLayout(style, secs) {
-  const icon = d => { const sv = document.createElementNS("http://www.w3.org/2000/svg", "svg"); sv.setAttribute("viewBox", "0 0 24 24"); sv.setAttribute("class", "pcc-pe-ic"); const pa = document.createElementNS("http://www.w3.org/2000/svg", "path"); pa.setAttribute("d", d); sv.append(pa); return sv; };
-  const field = x => x.sub ? o("div", { class: "pcc-pe-sub" }, x.sub) : o("div", { class: "pcc-pe-f w" + x.w }, o("label", {}, x.label), x.el, x.hint ? (typeof x.hint === "string" ? o("div", { class: "pcc-pe-hint" }, x.hint) : o("div", { class: "pcc-pe-hint" }, x.hint)) : null);
-  const filled = s2 => { const els = s2.fields.filter(x => x.el).map(x => x.el.querySelector ? (x.el.matches("input,select,textarea") ? x.el : x.el.querySelector("input,select,textarea")) : null).filter(Boolean); return [els.filter(e => String(e.value || "").trim()).length, els.length]; };
+// ----- Edit-project layout: numbered sections, label left / box right, two per line -----
+function peditLayout(secs) {
   const top = o("div", { class: "pcc-pe-top" }, o("span", { class: "muted small" }, "Changes are saved when you press Save."), o("span", { class: "grow" }), kbToggle());
-  if (style === "tabs") {
-    const nav = o("div", { class: "pcc-pe-nav" }), panes = o("div", { class: "pcc-pe-panes" }), btns = [];
-    const show = i => { btns.forEach((b, k) => b.classList.toggle("on", k === i)); [...panes.children].forEach((pn, k) => { pn.hidden = k !== i; }); };
-    secs.forEach((s2, i) => {
-      const cnt = o("span", { class: "pcc-pe-cnt" }), upd = () => { const [a, b] = filled(s2); cnt.textContent = a + "/" + b; cnt.classList.toggle("full", a === b && b > 0); };
-      const b = o("button", { type: "button", class: "pcc-pe-tab", onclick: () => show(i) }, icon(s2.ic), o("span", { class: "grow" }, s2.t), cnt); btns.push(b); nav.append(b);
-      const pane = o("div", { class: "pcc-pe-pane" }, o("h3", { class: "pcc-pe-h" }, icon(s2.ic), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(field)));
-      pane.addEventListener("input", upd); pane.addEventListener("change", upd); panes.append(pane); setTimeout(upd);
-    });
-    show(0);
-    return o("div", { class: "pcc-pe pcc-pe-tabs" }, top, o("div", { class: "pcc-pe-tabwrap" }, nav, panes));
-  }
-  const valOf = el => { const e = el && (el.matches && el.matches("input,select,textarea") ? el : el.querySelector && el.querySelector("input,select,textarea")); if (!e) return ""; if (e.tagName === "SELECT") { const op = e.options[e.selectedIndex]; return e.value ? (op ? op.text : e.value) : ""; } return String(e.value || "").trim(); };
-  const pretty = (x, v2) => (x.el && x.el.matches && x.el.matches("input[type=date]") && v2 ? fd(v2) : v2);
-  const paint = el => { el.querySelectorAll("[data-c]").forEach(e => e.style.setProperty("--c", e.getAttribute("data-c"))); return el; };
-  const PAL = { project: "#2563EB", money: "#059669", proc: "#D97706", meet: "#7C3AED", period: "#DC2626", ret: "#0891B2", own: "#4B5563", scope: "#DB2777" };
-  const fl = x => x.sub ? o("div", { class: "pcc-pe-sub" }, x.sub) : o("div", { class: "pcc-pe-f w" + x.w + " pcc-pe-fl" }, x.el, o("label", {}, x.label), x.hint ? o("div", { class: "pcc-pe-hint" }, x.hint) : null);
-  if (style === "hero") {
-    const g = id => (secs.find(x => x.id === id) || { fields: [] }).fields, byLabel = (id, l) => (g(id).find(x => x.label === l) || {}).el;
-    const ring = o("div", { class: "pcc-pe-ring" }), nm = o("div", { class: "pcc-pe-hname" }), meta = o("div", { class: "pcc-pe-hmeta" });
-    const upd = () => {
-      const pr = Math.max(0, Math.min(100, Number(valOf(byLabel("period", "Physical progress (%)")) || 0)));
-      ring.style.setProperty("--p", pr); ring.textContent = pr + "%";
-      nm.replaceChildren(o("div", {}, valOf(byLabel("project", "Name in English")) || "Untitled project"), o("div", { class: "dv", dir: "rtl", lang: "dv" }, valOf(byLabel("project", "Name in Dhivehi"))));
-      const chip = t => (t ? o("span", { class: "pcc-pe-hchip" }, t) : null);
-      meta.replaceChildren(...[valOf(byLabel("project", "Status")), valOf(byLabel("project", "Type")), valOf(byLabel("money", "Contract value (MVR)")) ? "MVR " + valOf(byLabel("money", "Contract value (MVR)")) : "", valOf(byLabel("period", "Due date")) ? "Due " + fd(valOf(byLabel("period", "Due date"))) : ""].map(chip).filter(Boolean));
-      root.querySelectorAll(".pcc-pe-fl").forEach(w => { const e = w.querySelector("input,select,textarea"); e && w.classList.toggle("has", !!String(e.value || "").trim() || e.tagName === "SELECT" || /date|time/.test(e.type)); });
-    };
-    const hero = o("div", { class: "pcc-pe-hero" }, o("div", { class: "pcc-pe-hl" }, nm, meta), ring);
-    const body = o("div", { class: "pcc-pe-hbody" }, secs.map(s2 => o("section", { class: "pcc-pe-hsec" }, o("div", { class: "pcc-pe-pill" }, icon(s2.ic), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(fl)))));
-    const root = o("div", { class: "pcc-pe pcc-pe-heroL" }, top, hero, body);
-    root.addEventListener("input", upd); root.addEventListener("change", upd); setTimeout(upd);
-    return root;
-  }
-  if (style === "bento") {
-    const span = { project: 2, money: 1, proc: 2, meet: 2, period: 1, ret: 1, own: 1, scope: 2 };
-    const ORD = ["project", "money", "ret", "proc", "meet", "period", "own", "scope"], bs = secs.slice().sort((a, b) => ORD.indexOf(a.id) - ORD.indexOf(b.id));
-    if (!bs.some(x => x.id === "own")) span.period = 2;
-    return paint(o("div", { class: "pcc-pe pcc-pe-bento" }, top, o("div", { class: "pcc-pe-bgrid" }, bs.map(s2 => o("section", { class: "pcc-pe-tile pe-sp" + (span[s2.id] || 1), "data-c": PAL[s2.id] || "#0e7c6b" }, o("div", { class: "pcc-pe-th" }, o("span", { class: "pcc-pe-ticon" }, icon(s2.ic)), s2.t), o("div", { class: "pcc-pe-tb" }, s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(x => field(span[s2.id] === 1 && !x.sub ? { ...x, w: x.w === 12 ? 12 : 6 } : x)))))))));
-  }
-  if (style === "minimal") {
-    const idx = o("nav", { class: "pcc-pe-idx" }, secs.map((s2, i) => o("a", { href: "#", "data-c": PAL[s2.id] || "#0e7c6b", onclick: e => { e.preventDefault(); const t = e.target.closest(".pcc-pe").querySelector("#pm-" + s2.id); t && t.scrollIntoView({ behavior: "smooth", block: "start" }); } }, o("span", {}, String(i + 1).padStart(2, "0")), s2.sh || s2.t)));
-    const body = o("div", { class: "pcc-pe-mbody" }, secs.map((s2, i) => o("section", { class: "pcc-pe-min", id: "pm-" + s2.id, "data-c": PAL[s2.id] || "#0e7c6b" }, o("div", { class: "pcc-pe-minh" }, o("span", { class: "pcc-pe-minn" }, String(i + 1).padStart(2, "0")), o("h3", {}, s2.t)), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(field)))));
-    return paint(o("div", { class: "pcc-pe pcc-pe-minimal" }, top, o("div", { class: "pcc-pe-minwrap" }, idx, body)));
-  }
-  if (style === "steps") {
-    let cur = 0; const bar = o("div", { class: "pcc-pe-steps" }), panes = o("div", {}), back = o("button", { type: "button", class: "btn" }, "‹ Back"), next = o("button", { type: "button", class: "btn primary" }, "Next ›"), pos = o("span", { class: "muted small" });
-    const dots = secs.map((s2, i) => o("button", { type: "button", class: "pcc-pe-step", onclick: () => go(i) }, o("span", { class: "pcc-pe-stepn" }, String(i + 1)), o("span", { class: "pcc-pe-stepl" }, s2.sh || s2.t)));
-    bar.append(...dots);
-    secs.forEach(s2 => panes.append(o("div", { class: "pcc-pe-steppane" }, o("h3", { class: "pcc-pe-h" }, o("span", { class: "pcc-pe-icb" }, icon(s2.ic)), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(field)))));
-    const go = i => { cur = Math.max(0, Math.min(secs.length - 1, i)); dots.forEach((d, k) => { d.classList.toggle("on", k === cur); d.classList.toggle("done", k < cur); }); [...panes.children].forEach((pn, k) => { pn.hidden = k !== cur; }); back.disabled = cur === 0; next.disabled = cur === secs.length - 1; pos.textContent = `Step ${cur + 1} of ${secs.length} — you can press Save at any step`; bar.style.setProperty("--pe-pct-n", String(cur / Math.max(1, secs.length - 1))); };
-    back.onclick = () => go(cur - 1); next.onclick = () => go(cur + 1); go(0);
-    return o("div", { class: "pcc-pe pcc-pe-stepper" }, top, bar, panes, o("div", { class: "pcc-pe-stepnav" }, back, pos, next));
-  }
-  if (style === "split") {
-    const g = id => (secs.find(x => x.id === id) || { fields: [] }).fields, byLabel = (id, l) => (g(id).find(x => x.label === l) || {}).el;
-    const nm = o("div", { class: "pcc-pe-sname" }), st = o("span", { class: "pcc-pe-schip" }), money = o("div", { class: "pcc-pe-smoney" }), dates = o("ol", { class: "pcc-pe-stl" }), done = o("div", { class: "pcc-pe-sdone" });
-    const DL = [["proc", "Iulaan date"], ["proc", "Bid opening"], ["proc", "Evaluation date"], ["proc", "Award"], ["proc", "Agreement signed"], ["period", "Site handover"], ["period", "Due date"], ["period", "Actual completion"]];
-    const upd = () => {
-      nm.replaceChildren(o("div", { dir: "rtl", lang: "dv", class: "dv" }, valOf(byLabel("project", "Name in Dhivehi")) || ""), o("div", {}, valOf(byLabel("project", "Name in English")) || "Untitled project"));
-      st.textContent = valOf(byLabel("project", "Status")) || "Planned";
-      const est = valOf(byLabel("money", "Estimated cost (MVR)")), con = valOf(byLabel("money", "Contract value (MVR)"));
-      money.replaceChildren(o("div", {}, o("span", {}, "Estimated"), o("b", {}, est ? "MVR " + est : "—")), o("div", {}, o("span", {}, "Contract"), o("b", {}, con ? "MVR " + con : "—")));
-      dates.replaceChildren(...DL.map(([sid, l]) => { const v2 = valOf(byLabel(sid, l)); return o("li", { class: v2 ? "set" : "" }, o("span", {}, l), o("b", {}, v2 ? fd(v2) : "—")); }));
-      const all = secs.flatMap(s2 => s2.fields.filter(x => x.el)), n = all.filter(x => valOf(x.el)).length;
-      done.replaceChildren(o("div", { class: "pcc-pe-sbar" }, o("i", { style: { width: Math.round(n / all.length * 100) + "%" } })), o("span", {}, `${n} of ${all.length} fields filled`));
-    };
-    const side = o("aside", { class: "pcc-pe-side" }, o("div", { class: "pcc-pe-slabel" }, "Project"), nm, st, money, o("div", { class: "pcc-pe-slabel" }, "Key dates"), dates, done);
-    const main = o("div", { class: "pcc-pe-main" }, secs.map(s2 => o("section", { class: "pcc-pe-msec" }, o("h3", { class: "pcc-pe-mh" }, icon(s2.ic), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(field)))));
-    main.addEventListener("input", upd); main.addEventListener("change", upd); setTimeout(upd);
-    return o("div", { class: "pcc-pe pcc-pe-split" }, top, o("div", { class: "pcc-pe-splitwrap" }, side, main));
-  }
-  if (style === "accordion") {
-    const items = secs.map((s2, i) => {
-      const sum = o("span", { class: "pcc-pe-asum" }), cnt = o("span", { class: "pcc-pe-cnt" });
-      const upd = () => { const f2 = s2.fields.filter(x => x.el), vals = f2.map(x => [x, valOf(x.el)]).filter(([, v2]) => v2); cnt.textContent = vals.length + "/" + f2.length; cnt.classList.toggle("full", vals.length === f2.length && f2.length > 0); sum.textContent = vals.slice(0, 3).map(([x, v2]) => pretty(x, v2)).join(" · ") || "Nothing filled yet"; };
-      const body = s2.id === "proc" ? o("div", { class: "pcc-pe-tline" }, s2.fields.map(x => o("div", { class: "pcc-pe-tli" }, o("span", { class: "pcc-pe-tdot" }), field({ ...x, w: 12 })))) : o("div", { class: "pcc-pe-grid" }, s2.fields.map(field));
-      const d = o("details", { class: "pcc-pe-acc", open: i === 0 }, o("summary", {}, o("span", { class: "pcc-pe-icb" }, icon(s2.ic)), o("span", { class: "pcc-pe-at" }, o("b", {}, s2.t), sum), cnt, o("span", { class: "pcc-pe-chev" }, "⌄")), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, body);
-      d.addEventListener("input", upd); d.addEventListener("change", upd); setTimeout(upd);
-      d.addEventListener("toggle", () => { if (d.open) items.forEach(y => y !== d && (y.open = false)); });
-      return d;
-    });
-    return o("div", { class: "pcc-pe pcc-pe-accordion" }, top, items);
-  }
-  if (style === "sheet") {
-    return o("div", { class: "pcc-pe pcc-pe-sheet" }, top, secs.map((s2, i) => o("section", { class: "pcc-pe-ssec" }, o("div", { class: "pcc-pe-sh" }, o("span", { class: "pcc-pe-num" }, String(i + 1)), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null,
-      o("div", { class: "pcc-pe-rows" }, s2.fields.map(x => x.sub ? o("div", { class: "pcc-pe-sub" }, x.sub) : o("div", { class: "pcc-pe-row" + (x.w === 12 ? " full" : "") }, o("label", {}, x.label), o("div", {}, x.el, x.hint ? o("div", { class: "pcc-pe-hint" }, x.hint) : null)))))));
-  }
-  const jump = o("div", { class: "pcc-pe-jump" }, secs.map(s2 => o("button", { type: "button", class: "pcc-pe-chip", onclick: e => { const t = e.target.closest(".pcc-pe").querySelector("#pe-" + s2.id); t && t.scrollIntoView({ behavior: "smooth", block: "start" }); } }, icon(s2.ic), s2.sh || s2.t)));
-  return o("div", { class: "pcc-pe pcc-pe-cards" }, top, jump, secs.map(s2 => o("section", { class: "pcc-pe-card", id: "pe-" + s2.id }, o("h3", { class: "pcc-pe-h" }, o("span", { class: "pcc-pe-icb" }, icon(s2.ic)), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(field)))));
+  return o("div", { class: "pcc-pe pcc-pe-sheet" }, top, secs.map((s2, i) => o("section", { class: "pcc-pe-ssec" }, o("div", { class: "pcc-pe-sh" }, o("span", { class: "pcc-pe-num" }, String(i + 1)), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null,
+    o("div", { class: "pcc-pe-rows" }, s2.fields.map(x => x.sub ? o("div", { class: "pcc-pe-sub" }, x.sub) : o("div", { class: "pcc-pe-row" + (x.w === 12 ? " full" : "") }, o("label", {}, x.label), o("div", {}, x.el, x.hint ? o("div", { class: "pcc-pe-hint" }, x.hint) : null)))))));
 }
