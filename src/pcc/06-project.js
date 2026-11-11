@@ -261,8 +261,9 @@ const docKey = s2 => String(s2 || "").toLowerCase().replace(/\s+/g, " ").trim();
 // twice). One tick-box column per document, with editable headings and tick / untick all.
 async function bidsBulk(p) {
   if (needCrit(p)) return;
-  const SHORT = { vendor: ["Bidder", "190px"], amount: ["Bid amount (MVR)", "120px"], duration: ["Days", "64px"], validity: ["Validity", "86px"], experience: ["Experience (docs)", "76px"], tech: ["Technical", "64px"], fin: ["Financial", "64px"] };
-  const COLS = bidFields(p).map(([k, l]) => [k, SHORT[k] ? SHORT[k][0] : l, SHORT[k] ? SHORT[k][1] : "90px"]);
+  // Headings in Dhivehi (the document headings come from the template as written).
+  const SHORT = { vendor: ["ބިޑް ހުށައެޅި ފަރާތް", "190px"], amount: ["ހުށައެޅި އަގު (ރ.)", "120px"], duration: ["މުއްދަތު (ދުވަސް)", "70px"], validity: ["ބިޑުގެ މުއްދަތު", "86px"], experience: ["ތަޖުރިބާ (ލިޔުން)", "76px"], tech: ["ޓެކްނިކަލް", "64px"], fin: ["ފައިނޭންޝަލް", "64px"] };
+  const COLS = bidFields(p).map(([k, l]) => { const oc = k.startsWith("sc:") ? critsOf(p).find(c => "sc:" + c.key === k) : null; return [k, SHORT[k] ? SHORT[k][0] : oc ? (oc.labelDv || oc.label) + ` (${oc.weight} އިން)` : l, SHORT[k] ? SHORT[k][1] : "90px"]; });
   const REQ0 = new Set(reqDocsOf(p));
   let DOCS = docsOf(p).map(n => ({ id: uid(), name: n, orig: n, req: REQ0.has(n) }));
   // Responsive follows the compulsory documents: ticked only when all of them are ticked.
@@ -287,7 +288,7 @@ async function bidsBulk(p) {
   const merge = list => { dropEmpty(); let up = 0, add = 0; list.forEach(v => { const r = findRow(v.vendor); if (r) { fill(r, v); v.responsive === false && v.dq && (r.manualOff = true); autoResp(r); up++; } else { addRow(v); add++; } }); renum(); return [up, add]; };
   // Heading: tick-all boxes, and document names that can be renamed or removed.
   const tickAll = get => { const cb = o("input", { type: "checkbox", title: "Tick / untick all" }); cb.onchange = () => { rows.forEach(r => { const x = get(r); x && (x.checked = cb.checked); x && x === r.resp && (r.manualOff = false); }); autoAll(); }; return cb; };
-  const drawHead = () => head.replaceChildren(o("tr", {}, o("th", {}, "#"), COLS.map(([, l]) => o("th", {}, l)), o("th", { class: "pcc-bk-h" }, o("div", { class: "pcc-bk-lab" }, "Responsive")),
+  const drawHead = () => head.replaceChildren(o("tr", {}, o("th", {}, "#"), COLS.map(([, l]) => o("th", { class: "pcc-bk-dvh", lang: "dv", dir: "rtl" }, l)), o("th", { class: "pcc-bk-h" }, o("div", { class: "pcc-bk-lab pcc-bk-dvh", lang: "dv", dir: "rtl" }, "ޝަރުތު ފުރިހަމަ")),
     DOCS.map(d => o("th", { class: "pcc-bk-h" + (d.req ? " req" : ""), title: d.req ? "Compulsory — a bid without it is not responsive" : "" }, o("div", { class: "pcc-bk-name", dir: "auto" }, d.name, d.req ? o("b", { class: "pcc-req" }, " ★") : null))),
     o("th", {})));
   const redraw = () => { drawHead(); body.replaceChildren(...rows.map(rowEl)); rows.forEach(r => r.tr.classList.toggle("pcc-bk-dq", !r.resp.checked)); renum(); };
