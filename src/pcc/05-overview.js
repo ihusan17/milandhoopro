@@ -1,8 +1,25 @@
 // Projects list: Overview (KPIs, handed-over strip, table / card / timeline) and the Documents register.
 
+// Projects navigation. Trial designs (A, B, C) are chosen with localStorage "mq-pnav"; empty = the original pills.
+const PNAV_IC = { all: "M4 5h7v6H4zM13 5h7v4h-7zM13 11h7v8h-7zM4 13h7v6H4z", goods: "M4 8l8-4 8 4v8l-8 4-8-4zM4 8l8 4 8-4M12 12v8", works: "M3 20h18M5 20V10l7-5 7 5v10M10 20v-5h4v5", noncons: "M4 7h16v10H4zM8 7V5h8v2M4 12h16", cons: "M12 12a4 4 0 100-8 4 4 0 000 8zM5 20c0-4 3-6 7-6s7 2 7 6", plan: "M5 4h14v16H5zM9 9h6M9 13h6M9 17h3", meet: "M8 11a3 3 0 100-6 3 3 0 000 6zm8 0a3 3 0 100-6 3 3 0 000 6zM2 20c0-3 3-5 6-5s6 2 6 5m0-5c1-.6 2-1 2-1 3 0 6 2 6 5", log: "M12 7v5l3 2M12 21a9 9 0 100-18 9 9 0 000 18z", docs: "M6 3h8l4 4v14H6zM14 3v4h4M9 13h6M9 17h6", templates: "M4 4h16v6H4zM4 14h7v6H4zM15 14h5v6h-5z" };
+const PNAV_COL = { goods: "#2563EB", works: "#D97706", noncons: "#7C3AED", cons: "#DB2777" };
+const nvIco = k => { const s2 = document.createElement("span"); s2.className = "pnv-ic"; s2.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${PNAV_IC[k] || PNAV_IC.all}"/></svg>`; return s2; };
+const pnavVar = () => { try { return localStorage.getItem("mq-pnav") || ""; } catch (e) { return ""; } };
 function PCNAV(cur) {
-  const T = [["#/projects", "Overview", "all"], ...PTYPES.map(([k, l]) => ["#/projects/" + k, l, k]), ["#/plan", "Procurement plan", "plan"], ["#/projects/meetings", "Committee meetings", "meet"], ["#/worklog", "Work Logs", "log"], ["#/projects/documents", "Documents", "docs"], ...(can("templates") ? [["#/projects/templates", "Templates", "templates"]] : [])];
-  return o("div", { class: "pills pcc-nav" }, T.map(([h, l, k]) => o("a", { href: h, class: "pill" + (k === cur ? " on" : "") }, l)));
+  const cats = [["#/projects", "Overview", "all"], ...PTYPES.map(([k, l]) => ["#/projects/" + k, l, k])];
+  const tools = [["#/plan", "Procurement plan", "plan"], ["#/projects/meetings", "Committee meetings", "meet"], ["#/worklog", "Work Logs", "log"], ["#/projects/documents", "Documents", "docs"], ...(can("templates") ? [["#/projects/templates", "Templates", "templates"]] : [])];
+  const v = pnavVar();
+  if (!v) return o("div", { class: "pills pcc-nav" }, [...cats, ...tools].map(([h, l, k]) => o("a", { href: h, class: "pill" + (k === cur ? " on" : "") }, l)));
+  const live = PRJ().filter(p => p.status !== "Cancelled"), cnt = k => (k === "all" ? live.length : live.filter(p => (PTYPES.find(t => t[0] === k) || [])[1] === p.type).length);
+  const meetN = MEETS().filter(m => String(m.date || "").slice(0, 4) === today().slice(0, 4)).length, planN = (Z().plan || []).filter(x => String(x.year) === today().slice(0, 4) && x.status !== "Cancelled").length;
+  const extra = { plan: planN, meet: meetN };
+  const item = ([h, l, k], cls) => { const a = o("a", { href: h, class: cls + (k === cur ? " on" : ""), "data-k": k }); PNAV_COL[k] && a.style.setProperty("--c", PNAV_COL[k]); a.append(nvIco(k), o("span", { class: "pnv-l" }, l)); const n = k in extra ? extra[k] : cats.some(c => c[2] === k) ? cnt(k) : null; n != null && a.append(o("span", { class: "pnv-n" }, String(n))); return a; };
+  if (v === "A") return o("nav", { class: "pnv pnv-a" }, o("div", { class: "pnv-grp" }, o("span", { class: "pnv-cap" }, "Projects"), o("div", { class: "pnv-seg" }, cats.map(c => item(c, "pnv-i")))), o("div", { class: "pnv-grp" }, o("span", { class: "pnv-cap" }, "Workspace"), o("div", { class: "pnv-seg" }, tools.map(c => item(c, "pnv-i")))));
+  if (v === "B") return o("nav", { class: "pnv pnv-b" }, [...cats, o("span", { class: "pnv-sep" }), ...tools].map(c => c.nodeType ? c : item(c, "pnv-t")));
+  // C: section tabs on top, category chips below (chips only where they filter projects)
+  const onCat = cats.some(c => c[2] === cur);
+  return o("nav", { class: "pnv pnv-c" }, o("div", { class: "pnv-tabs" }, [["#/projects", "Projects", "all"], ...tools].map(([h, l, k]) => { const a = item([h, l, k], "pnv-tab"); k === "all" && onCat && a.classList.add("on"); a.querySelector(".pnv-n") && k === "all" && a.querySelector(".pnv-n").remove(); return a; })),
+    onCat ? o("div", { class: "pnv-chips" }, o("span", { class: "pnv-cap" }, "Show"), cats.map(([h, l, k]) => item([h, k === "all" ? "All types" : l, k], "pnv-chip"))) : null);
 }
 const viewPref = () => { try { return localStorage.getItem("mq-pview") || "table"; } catch { return "table"; } };
 const setViewPref = v => { try { localStorage.setItem("mq-pview", v); } catch {} };
