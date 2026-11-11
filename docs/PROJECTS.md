@@ -292,3 +292,9 @@ Templates › **Delete** on the template's row (administrators). Documents alrea
 - **Pictures and Word features**: `{report_photos}` / `{project_photos}` (alone in a paragraph) make a 2×2 photo grid; `{qr_code}` links to the project in the portal; `{status_stamp}` is a coloured ނިމިފައި / ކުރިއަށް ދަނީ / ލަސްވެފައި badge; `{page_no}` / `{page_count}` are Word page fields.
 - **Show-if switches**: put `{#has_extensions}` and `{/has_extensions}` in their own paragraphs around a section to show it only when there is something to list (also `has_inspectors`, `has_snags`, `has_project_photos`, `has_report_photos`).
 - **Checks before generating**: warns when completion is before handover, the completion date is missing, a report has no work items, the work finished late without a penalty rate, no inspection team is set, defects are still open, or the contract value looks wrong. The pack window shows Dhivehi amount words under each amount as you type.
+
+## Dhivehi interface
+
+Press **ދިވެހި** in the top bar (next to the dark-mode button) to switch the portal to Dhivehi: right-to-left layout, Faruma for Thaana. Press **EN** to switch back. The choice is remembered on each device.
+
+Only interface wording is translated — names, amounts, reference numbers and anything staff type stay exactly as entered. Administrators can correct wording or translate texts still in English: Projects › Templates › **Translations** (or right-click the language button). Texts seen in English on the pages you opened are listed first; corrections are shared with all staff.
