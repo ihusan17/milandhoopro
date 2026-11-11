@@ -277,3 +277,21 @@ html.pcc-ui-dv #banner{left:auto!important;right:272px!important}
 /* Dhivehi: each paragraph follows its own text's direction (English sentences stay readable) */
 html.pcc-ui-dv p,html.pcc-ui-dv li,html.pcc-ui-dv td,html.pcc-ui-dv .alert,html.pcc-ui-dv .pcc-pe-hint,html.pcc-ui-dv .muted,html.pcc-ui-dv .small,html.pcc-ui-dv .pcc-tag{unicode-bidi:plaintext;text-align:start}
 html.pcc-ui-dv td{text-align:right}
+/* Dhivehi: mirror the portal's left/right rules so spacing matches the English layout exactly */
+html.pcc-ui-dv .tb-right,html.pcc-ui-dv .card-h a,html.pcc-ui-dv .sfd-car,html.pcc-ui-dv .pcc-mrow2 .pcc-leave{margin-left:0!important;margin-right:auto!important}
+html.pcc-ui-dv .tb-search .si{left:auto;right:14px}
+html.pcc-ui-dv .tb-search input{padding:0 44px 0 14px}
+html.pcc-ui-dv .tb-pop,html.pcc-ui-dv .sfd-menu:not(.x){right:auto;left:0}
+html.pcc-ui-dv .dd{right:auto;left:16px}
+html.pcc-ui-dv .bell b{right:auto;left:-8px}
+html.pcc-ui-dv .tb-badge{right:auto;left:5px}
+html.pcc-ui-dv .subnav{margin:2px 23px 6px 0;padding-left:0;padding-right:12px;border-left:0;border-right:1px solid rgba(255,255,255,.22)}
+html.pcc-ui-dv .screen>h1:first-child::after,html.pcc-ui-dv .screen>.row:first-child::after{left:auto;right:54%}
+html.pcc-ui-dv .steps .s::after{left:calc(-50% + 15px);right:calc(50% + 15px)}
+html.pcc-ui-dv .g-head .g-track span{border-left:0;border-right:1px solid var(--line);padding-left:0;padding-right:4px}
+html.pcc-ui-dv .sfd-car{transform:translateY(-2px) rotate(-45deg) scaleX(-1)}
+html.pcc-ui-dv .pbar span,html.pcc-ui-dv .right,html.pcc-ui-dv .money,html.pcc-ui-dv .dn li small,html.pcc-ui-dv .rpt-m,html.pcc-ui-dv .rpt td.n,html.pcc-ui-dv .ctab td.c-st,html.pcc-ui-dv .pcc-hc-kv b,html.pcc-ui-dv .pcc-dual .r em{text-align:left}
+html.pcc-ui-dv table.t th,html.pcc-ui-dv table.t td,html.pcc-ui-dv .tb-me .nm,html.pcc-ui-dv header#top nav .grp,html.pcc-ui-dv header#top nav .subnav a,html.pcc-ui-dv .rpt th,html.pcc-ui-dv .rpt td,html.pcc-ui-dv .sfd-btn,html.pcc-ui-dv .sfd-opt,html.pcc-ui-dv .pcc-kpi,html.pcc-ui-dv .pcc-tile{text-align:right}
+
+html.pcc-ui-dv header#top nav .grp .car{transform:rotate(90deg)}
+html.pcc-ui-dv header#top nav .grp.open .car{transform:rotate(0)}

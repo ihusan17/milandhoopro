@@ -108,12 +108,20 @@ const DV_DICT = {
   "Declaration of Evaluation Committee member": "އިވެލުއޭޓްކުރާ ފަރާތުގެ އިޤުރާރު", "One file per Bid Committee member": "ބިޑް ކޮމިޓީގެ ކޮންމެ މެންބަރަކަށް ފައިލެއް", "One file per Evaluation Committee member": "އިވެލުއޭޝަން ކޮމިޓީގެ ކޮންމެ މެންބަރަކަށް ފައިލެއް",
   "Dates": "ތާރީޚުތައް", "Construction": "އިމާރާތްކުރުން", "Not in a template yet": "އަދި ޓެމްޕްލޭޓެއްގައި ނެތް", "Quantity": "އަދަދު", "Units and their ICPCF code": "ޔުނިޓްތަކާއި އެއިގެ ICPCF ކޯޑު",
   "case": "މައްސަލަ", "Search ref no., name (English or Dhivehi), contractor, place": "ނަންބަރު، ނަން (އިނގިރޭސި ނުވަތަ ދިވެހި)، ފަރާތް، ތަން ހޯދާ", "Remarks": "ރިމާކްސް", "(optional)": "(ބޭނުންނަމަ)",
+  "Jan": "ޖަނަވަރީ", "Feb": "ފެބްރުއަރީ", "Mar": "މާރިޗު", "Apr": "އޭޕްރިލް", "May": "މެއި", "Jun": "ޖޫން", "Jul": "ޖުލައި", "Aug": "އޮގަސްޓު", "Sep": "ސެޕްޓެމްބަރު", "Oct": "އޮކްޓޯބަރު", "Nov": "ނޮވެމްބަރު", "Dec": "ޑިސެމްބަރު", "cases": "މައްސަލަ",
+  "Page not found": "ޞަފްޙާ ނުފެނުނު", "ledger balanced": "ލެޖަރ ބެލެންސް",
   "Just now": "މިހާރު", "Plan": "ޕްލޭން", "Project reference": "މަޝްރޫޢުގެ ނަންބަރު", "Language": "ބަސް", "Translations": "ތަރުޖަމާ"
 };
+const DV_DAYS = { Sun: "އާދިއްތަ", Mon: "ހޯމަ", Tue: "އަންގާރަ", Wed: "ބުދަ", Thu: "ބުރާސްފަތި", Fri: "ހުކުރު", Sat: "ހޮނިހިރު" };
+const DV_MONS = { Jan: "ޖަނަވަރީ", Feb: "ފެބްރުއަރީ", Mar: "މާރިޗު", Apr: "އޭޕްރިލް", May: "މެއި", Jun: "ޖޫން", Jul: "ޖުލައި", Aug: "އޮގަސްޓު", Sep: "ސެޕްޓެމްބަރު", Oct: "އޮކްޓޯބަރު", Nov: "ނޮވެމްބަރު", Dec: "ޑިސެމްބަރު" };
 // Patterns for texts that carry a value (the value is kept as it is).
 const DV_PAT = [
   [/^Edit project (.+)$/, "މަޝްރޫޢު ބަދަލުކުރޭ $1"], [/^Good (morning|afternoon|evening), (.+)$/, (m, a, n) => ({ morning: "ބާއްޖަވެރި ހެނދުނެއް", afternoon: "ބާއްޖަވެރި މެންދުރެއް", evening: "ބާއްޖަވެރި ހަވީރެއް" })[a] + "، " + n],
-  [/^(\d+)% done$/, "$1% ނިމިފައި"], [/^(\d+) new this month$/, "މި މަހު $1 އާ"], [/^(\d+) quotes? received in 7 days$/, "7 ދުވަހުގެ ތެރޭގައި $1 ކޯޓޭޝަން ލިބުނު"], [/^(\d+) due in the next 30 days$/, "ކުރިއަށް އޮތް 30 ދުވަހުގައި $1 ނިންމަންޖެހޭ"],
+  [/^(\d+)% done$/, "$1% ނިމިފައި"],
+  [/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat), (\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})$/, (m, w, d, mo, y) => DV_DAYS[w] + "، " + d + " " + DV_MONS[mo] + " " + y],
+  [/^(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})$/, (m, d, mo, y) => d + " " + DV_MONS[mo] + " " + y],
+  [/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (\d{4})(: .*)?$/, (m, mo, y, rest) => DV_MONS[mo] + " " + y + (rest || "")],
+  [/^(\d+) days? ago$/, "$1 ދުވަސް ކުރިން"], [/^(\d+) hours? ago$/, "$1 ގަޑިއިރު ކުރިން"], [/^(\d+) minutes? ago$/, "$1 މިނެޓް ކުރިން"], [/^Yesterday$/, "އިއްޔެ"], [/^Today$/, "މިއަދު"], [/^(\d+) new this month$/, "މި މަހު $1 އާ"], [/^(\d+) quotes? received in 7 days$/, "7 ދުވަހުގެ ތެރޭގައި $1 ކޯޓޭޝަން ލިބުނު"], [/^(\d+) due in the next 30 days$/, "ކުރިއަށް އޮތް 30 ދުވަހުގައި $1 ނިންމަންޖެހޭ"],
   [/^Last 6 months · (.+) MVR in (\d+) winning quotes?$/, "ފަހުގެ 6 މަސް · $2 ކޯޓޭޝަނުގައި ރ $1"], [/^Notifications, (\d+) new$/, "ނޮޓިފިކޭޝަން، $1 އާ"], [/^Staff \((\d+)\)$/, "މުވައްޒަފުން ($1)"], [/^Ledger \((\d+)\)$/, "ލެޖަރ ($1)"],
   [/^(\d+) items?$/, "$1 އައިޓަމް"], [/^Mark as done: (.+)$/, "ނިމިއްޖެ: $1"], [/^Synced (.+)$/, "ސިންކުކުރީ $1"], [/^(\d+) days late$/, "$1 ދުވަސް ލަސްވެފައި"], [/^(\d+) days left$/, "$1 ދުވަސް ބާކީ"], [/^Reports \((\d+)\)$/, "ރިޕޯޓުތައް ($1)"],
   [/^Work log \((\d+)\)$/, "މަސައްކަތުގެ ލޮގް ($1)"], [/^Defects found at inspection \((\d+) open\)$/, "އިންސްޕެކްޝަނުގައި ފެނުނު މައްސަލަތައް ($1 ހުޅުވިފައި)"], [/^Step (\d+) of (\d+)/, "$2 ގެ $1 ވަނަ ފިޔަވަޅު"],
