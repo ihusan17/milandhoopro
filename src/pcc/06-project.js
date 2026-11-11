@@ -205,6 +205,37 @@ function peditLayout(style, secs) {
   }
   const valOf = el => { const e = el && (el.matches && el.matches("input,select,textarea") ? el : el.querySelector && el.querySelector("input,select,textarea")); if (!e) return ""; if (e.tagName === "SELECT") { const op = e.options[e.selectedIndex]; return e.value ? (op ? op.text : e.value) : ""; } return String(e.value || "").trim(); };
   const pretty = (x, v2) => (x.el && x.el.matches && x.el.matches("input[type=date]") && v2 ? fd(v2) : v2);
+  const paint = el => { el.querySelectorAll("[data-c]").forEach(e => e.style.setProperty("--c", e.getAttribute("data-c"))); return el; };
+  const PAL = { project: "#2563EB", money: "#059669", proc: "#D97706", meet: "#7C3AED", period: "#DC2626", ret: "#0891B2", own: "#4B5563", scope: "#DB2777" };
+  const fl = x => x.sub ? o("div", { class: "pcc-pe-sub" }, x.sub) : o("div", { class: "pcc-pe-f w" + x.w + " pcc-pe-fl" }, x.el, o("label", {}, x.label), x.hint ? o("div", { class: "pcc-pe-hint" }, x.hint) : null);
+  if (style === "hero") {
+    const g = id => (secs.find(x => x.id === id) || { fields: [] }).fields, byLabel = (id, l) => (g(id).find(x => x.label === l) || {}).el;
+    const ring = o("div", { class: "pcc-pe-ring" }), nm = o("div", { class: "pcc-pe-hname" }), meta = o("div", { class: "pcc-pe-hmeta" });
+    const upd = () => {
+      const pr = Math.max(0, Math.min(100, Number(valOf(byLabel("period", "Physical progress (%)")) || 0)));
+      ring.style.setProperty("--p", pr); ring.textContent = pr + "%";
+      nm.replaceChildren(o("div", {}, valOf(byLabel("project", "Name in English")) || "Untitled project"), o("div", { class: "dv", dir: "rtl", lang: "dv" }, valOf(byLabel("project", "Name in Dhivehi"))));
+      const chip = t => (t ? o("span", { class: "pcc-pe-hchip" }, t) : null);
+      meta.replaceChildren(...[valOf(byLabel("project", "Status")), valOf(byLabel("project", "Type")), valOf(byLabel("money", "Contract value (MVR)")) ? "MVR " + valOf(byLabel("money", "Contract value (MVR)")) : "", valOf(byLabel("period", "Due date")) ? "Due " + fd(valOf(byLabel("period", "Due date"))) : ""].map(chip).filter(Boolean));
+      root.querySelectorAll(".pcc-pe-fl").forEach(w => { const e = w.querySelector("input,select,textarea"); e && w.classList.toggle("has", !!String(e.value || "").trim() || e.tagName === "SELECT" || /date|time/.test(e.type)); });
+    };
+    const hero = o("div", { class: "pcc-pe-hero" }, o("div", { class: "pcc-pe-hl" }, nm, meta), ring);
+    const body = o("div", { class: "pcc-pe-hbody" }, secs.map(s2 => o("section", { class: "pcc-pe-hsec" }, o("div", { class: "pcc-pe-pill" }, icon(s2.ic), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(fl)))));
+    const root = o("div", { class: "pcc-pe pcc-pe-heroL" }, top, hero, body);
+    root.addEventListener("input", upd); root.addEventListener("change", upd); setTimeout(upd);
+    return root;
+  }
+  if (style === "bento") {
+    const span = { project: 2, money: 1, proc: 2, meet: 2, period: 1, ret: 1, own: 1, scope: 2 };
+    const ORD = ["project", "money", "ret", "proc", "meet", "period", "own", "scope"], bs = secs.slice().sort((a, b) => ORD.indexOf(a.id) - ORD.indexOf(b.id));
+    if (!bs.some(x => x.id === "own")) span.period = 2;
+    return paint(o("div", { class: "pcc-pe pcc-pe-bento" }, top, o("div", { class: "pcc-pe-bgrid" }, bs.map(s2 => o("section", { class: "pcc-pe-tile pe-sp" + (span[s2.id] || 1), "data-c": PAL[s2.id] || "#0e7c6b" }, o("div", { class: "pcc-pe-th" }, o("span", { class: "pcc-pe-ticon" }, icon(s2.ic)), s2.t), o("div", { class: "pcc-pe-tb" }, s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(x => field(span[s2.id] === 1 && !x.sub ? { ...x, w: x.w === 12 ? 12 : 6 } : x)))))))));
+  }
+  if (style === "minimal") {
+    const idx = o("nav", { class: "pcc-pe-idx" }, secs.map((s2, i) => o("a", { href: "#", "data-c": PAL[s2.id] || "#0e7c6b", onclick: e => { e.preventDefault(); const t = e.target.closest(".pcc-pe").querySelector("#pm-" + s2.id); t && t.scrollIntoView({ behavior: "smooth", block: "start" }); } }, o("span", {}, String(i + 1).padStart(2, "0")), s2.sh || s2.t)));
+    const body = o("div", { class: "pcc-pe-mbody" }, secs.map((s2, i) => o("section", { class: "pcc-pe-min", id: "pm-" + s2.id, "data-c": PAL[s2.id] || "#0e7c6b" }, o("div", { class: "pcc-pe-minh" }, o("span", { class: "pcc-pe-minn" }, String(i + 1).padStart(2, "0")), o("h3", {}, s2.t)), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(field)))));
+    return paint(o("div", { class: "pcc-pe pcc-pe-minimal" }, top, o("div", { class: "pcc-pe-minwrap" }, idx, body)));
+  }
   if (style === "steps") {
     let cur = 0; const bar = o("div", { class: "pcc-pe-steps" }), panes = o("div", {}), back = o("button", { type: "button", class: "btn" }, "‹ Back"), next = o("button", { type: "button", class: "btn primary" }, "Next ›"), pos = o("span", { class: "muted small" });
     const dots = secs.map((s2, i) => o("button", { type: "button", class: "pcc-pe-step", onclick: () => go(i) }, o("span", { class: "pcc-pe-stepn" }, String(i + 1)), o("span", { class: "pcc-pe-stepl" }, s2.sh || s2.t)));
