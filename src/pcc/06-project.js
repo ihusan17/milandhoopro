@@ -203,6 +203,47 @@ function peditLayout(style, secs) {
     show(0);
     return o("div", { class: "pcc-pe pcc-pe-tabs" }, top, o("div", { class: "pcc-pe-tabwrap" }, nav, panes));
   }
+  const valOf = el => { const e = el && (el.matches && el.matches("input,select,textarea") ? el : el.querySelector && el.querySelector("input,select,textarea")); if (!e) return ""; if (e.tagName === "SELECT") { const op = e.options[e.selectedIndex]; return e.value ? (op ? op.text : e.value) : ""; } return String(e.value || "").trim(); };
+  const pretty = (x, v2) => (x.el && x.el.matches && x.el.matches("input[type=date]") && v2 ? fd(v2) : v2);
+  if (style === "steps") {
+    let cur = 0; const bar = o("div", { class: "pcc-pe-steps" }), panes = o("div", {}), back = o("button", { type: "button", class: "btn" }, "‹ Back"), next = o("button", { type: "button", class: "btn primary" }, "Next ›"), pos = o("span", { class: "muted small" });
+    const dots = secs.map((s2, i) => o("button", { type: "button", class: "pcc-pe-step", onclick: () => go(i) }, o("span", { class: "pcc-pe-stepn" }, String(i + 1)), o("span", { class: "pcc-pe-stepl" }, s2.sh || s2.t)));
+    bar.append(...dots);
+    secs.forEach(s2 => panes.append(o("div", { class: "pcc-pe-steppane" }, o("h3", { class: "pcc-pe-h" }, o("span", { class: "pcc-pe-icb" }, icon(s2.ic)), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(field)))));
+    const go = i => { cur = Math.max(0, Math.min(secs.length - 1, i)); dots.forEach((d, k) => { d.classList.toggle("on", k === cur); d.classList.toggle("done", k < cur); }); [...panes.children].forEach((pn, k) => { pn.hidden = k !== cur; }); back.disabled = cur === 0; next.disabled = cur === secs.length - 1; pos.textContent = `Step ${cur + 1} of ${secs.length} — you can press Save at any step`; bar.style.setProperty("--pe-pct-n", String(cur / Math.max(1, secs.length - 1))); };
+    back.onclick = () => go(cur - 1); next.onclick = () => go(cur + 1); go(0);
+    return o("div", { class: "pcc-pe pcc-pe-stepper" }, top, bar, panes, o("div", { class: "pcc-pe-stepnav" }, back, pos, next));
+  }
+  if (style === "split") {
+    const g = id => (secs.find(x => x.id === id) || { fields: [] }).fields, byLabel = (id, l) => (g(id).find(x => x.label === l) || {}).el;
+    const nm = o("div", { class: "pcc-pe-sname" }), st = o("span", { class: "pcc-pe-schip" }), money = o("div", { class: "pcc-pe-smoney" }), dates = o("ol", { class: "pcc-pe-stl" }), done = o("div", { class: "pcc-pe-sdone" });
+    const DL = [["proc", "Iulaan date"], ["proc", "Bid opening"], ["proc", "Evaluation date"], ["proc", "Award"], ["proc", "Agreement signed"], ["period", "Site handover"], ["period", "Due date"], ["period", "Actual completion"]];
+    const upd = () => {
+      nm.replaceChildren(o("div", { dir: "rtl", lang: "dv", class: "dv" }, valOf(byLabel("project", "Name in Dhivehi")) || ""), o("div", {}, valOf(byLabel("project", "Name in English")) || "Untitled project"));
+      st.textContent = valOf(byLabel("project", "Status")) || "Planned";
+      const est = valOf(byLabel("money", "Estimated cost (MVR)")), con = valOf(byLabel("money", "Contract value (MVR)"));
+      money.replaceChildren(o("div", {}, o("span", {}, "Estimated"), o("b", {}, est ? "MVR " + est : "—")), o("div", {}, o("span", {}, "Contract"), o("b", {}, con ? "MVR " + con : "—")));
+      dates.replaceChildren(...DL.map(([sid, l]) => { const v2 = valOf(byLabel(sid, l)); return o("li", { class: v2 ? "set" : "" }, o("span", {}, l), o("b", {}, v2 ? fd(v2) : "—")); }));
+      const all = secs.flatMap(s2 => s2.fields.filter(x => x.el)), n = all.filter(x => valOf(x.el)).length;
+      done.replaceChildren(o("div", { class: "pcc-pe-sbar" }, o("i", { style: { width: Math.round(n / all.length * 100) + "%" } })), o("span", {}, `${n} of ${all.length} fields filled`));
+    };
+    const side = o("aside", { class: "pcc-pe-side" }, o("div", { class: "pcc-pe-slabel" }, "Project"), nm, st, money, o("div", { class: "pcc-pe-slabel" }, "Key dates"), dates, done);
+    const main = o("div", { class: "pcc-pe-main" }, secs.map(s2 => o("section", { class: "pcc-pe-msec" }, o("h3", { class: "pcc-pe-mh" }, icon(s2.ic), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, o("div", { class: "pcc-pe-grid" }, s2.fields.map(field)))));
+    main.addEventListener("input", upd); main.addEventListener("change", upd); setTimeout(upd);
+    return o("div", { class: "pcc-pe pcc-pe-split" }, top, o("div", { class: "pcc-pe-splitwrap" }, side, main));
+  }
+  if (style === "accordion") {
+    const items = secs.map((s2, i) => {
+      const sum = o("span", { class: "pcc-pe-asum" }), cnt = o("span", { class: "pcc-pe-cnt" });
+      const upd = () => { const f2 = s2.fields.filter(x => x.el), vals = f2.map(x => [x, valOf(x.el)]).filter(([, v2]) => v2); cnt.textContent = vals.length + "/" + f2.length; cnt.classList.toggle("full", vals.length === f2.length && f2.length > 0); sum.textContent = vals.slice(0, 3).map(([x, v2]) => pretty(x, v2)).join(" · ") || "Nothing filled yet"; };
+      const body = s2.id === "proc" ? o("div", { class: "pcc-pe-tline" }, s2.fields.map(x => o("div", { class: "pcc-pe-tli" }, o("span", { class: "pcc-pe-tdot" }), field({ ...x, w: 12 })))) : o("div", { class: "pcc-pe-grid" }, s2.fields.map(field));
+      const d = o("details", { class: "pcc-pe-acc", open: i === 0 }, o("summary", {}, o("span", { class: "pcc-pe-icb" }, icon(s2.ic)), o("span", { class: "pcc-pe-at" }, o("b", {}, s2.t), sum), cnt, o("span", { class: "pcc-pe-chev" }, "⌄")), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null, body);
+      d.addEventListener("input", upd); d.addEventListener("change", upd); setTimeout(upd);
+      d.addEventListener("toggle", () => { if (d.open) items.forEach(y => y !== d && (y.open = false)); });
+      return d;
+    });
+    return o("div", { class: "pcc-pe pcc-pe-accordion" }, top, items);
+  }
   if (style === "sheet") {
     return o("div", { class: "pcc-pe pcc-pe-sheet" }, top, secs.map((s2, i) => o("section", { class: "pcc-pe-ssec" }, o("div", { class: "pcc-pe-sh" }, o("span", { class: "pcc-pe-num" }, String(i + 1)), s2.t), s2.hint ? o("p", { class: "pcc-pe-hint" }, s2.hint) : null,
       o("div", { class: "pcc-pe-rows" }, s2.fields.map(x => x.sub ? o("div", { class: "pcc-pe-sub" }, x.sub) : o("div", { class: "pcc-pe-row" + (x.w === 12 ? " full" : "") }, o("label", {}, x.label), o("div", {}, x.el, x.hint ? o("div", { class: "pcc-pe-hint" }, x.hint) : null)))))));
