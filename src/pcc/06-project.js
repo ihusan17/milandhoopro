@@ -199,7 +199,7 @@ async function memberEdit(p, k, m) {
 const BIDDOCS = ["Bid form", "Business registration", "GST / TIN certificate", "Bid security", "Work plan / schedule", "Staff CVs", "Experience letters", "Bank statement"];
 // Several bids at once: a quick table (one row per bidder), or rows pasted from Excel.
 async function bidsBulk(p) {
-  const COLS = [["vendor", "Bidder", "170px"], ["amount", "Bid amount (MVR)", "115px"], ["duration", "Days", "64px"], ["validity", "Validity", "84px"], ["experience", "Experience", "64px"], ["tech", "Technical", "64px"], ["fin", "Financial", "64px"]];
+  const COLS = [["vendor", "Bidder", "170px"], ["amount", "Bid amount (MVR)", "115px"], ["duration", "Days", "64px"], ["validity", "Validity", "84px"], ["experience", "Experience", "64px"], ["tech", "Technical", "64px"], ["fin", "Financial", "64px"], ["total", "Total score", "70px"]];
   const body = o("tbody", {}), rows = [];
   const addRow = (vals = {}) => {
     const els = {}; COLS.forEach(([k, , w]) => { els[k] = k === "vendor" ? I(vals[k] || "", { list: "pcc-vendors3", style: { width: w } }) : k === "amount" ? (() => { const e = MI(""); e.value = String(vals[k] ?? ""); return e; })() : I(vals[k] ?? "", { style: { width: w }, inputmode: k === "validity" ? "text" : "decimal" }); k === "amount" && (els[k].style.width = w); });
@@ -208,7 +208,7 @@ async function bidsBulk(p) {
     rows.push(r); body.append(tr); return r;
   };
   for (let i = 0; i < 5; i++) addRow();
-  const paste = o("textarea", { rows: 3, placeholder: "Paste rows copied from Excel here — columns in this order: Bidder, Bid amount, Duration, Validity, Experience, Technical, Financial" });
+  const paste = o("textarea", { rows: 3, placeholder: "Paste rows copied from Excel here — columns in this order: Bidder, Bid amount, Duration, Validity, Experience, Technical, Financial, Total score" });
   const usePaste = () => {
     const lines = paste.value.split(/\r?\n/).map(l => l.split("\t").map(c => c.trim())).filter(c => c[0]);
     if (!lines.length) return xt("Nothing to add — copy the rows in Excel and paste them here", "err");
@@ -216,18 +216,55 @@ async function bidsBulk(p) {
     lines.forEach(c => addRow(Object.fromEntries(COLS.map(([k], i) => [k, (c[i] || "").replace(/^(MVR|Rf\.?|ރ\.)\s*/i, "")]))));
     [...body.children].forEach((t, i) => { t.firstChild.textContent = String(i + 1); }); paste.value = ""; xt(lines.length + " row(s) added below");
   };
+  // Upload an Excel sheet. Columns are found from their headings (English or Dhivehi, one or two
+  // heading rows, merged headings). Points columns are skipped; the quoted price, days, experience
+  // and total score are read. A row marked disqualified becomes "not responsive".
+  const PTS = /ޕޮއިންޓް|point|score|marks/i;
+  const HDR = [["vendor", h => /bidder|company|contractor|supplier|party|firm|name|ނަން|ފަރާތ|ކުންފުނި/i.test(h) && !/designation|signature|ސޮއި/i.test(h)],
+    ["total", h => /total score|overall|grand total|މުޅި ޖުމްލަ/i.test(h)],
+    ["amount", h => !PTS.test(h) && /amount|price|quoted|quotation|bid ?value|mvr|އަގު/i.test(h)],
+    ["duration", h => !PTS.test(h) && /duration|days|period|މުއްދަތު|ދުވަސް/i.test(h)],
+    ["validity", h => /validity|valid/i.test(h)],
+    ["experience", h => !PTS.test(h) && /experience|similar|ތަޖުރިބާ/i.test(h)],
+    ["tech", h => /tech/i.test(h)], ["fin", h => /financ/i.test(h)]];
+  const isText = v => { const t = String(v ?? "").trim(); return t && !/^[-+=]?[\d.,\s%]+$/.test(t); };
+  const headerAt = (R, ri) => {
+    const top = R[ri] || [], sub = (R[ri + 1] || []).some(isText) && !(R[ri + 1] || []).some(v => /^\d{3,}/.test(String(v || ""))) ? R[ri + 1] : null, n = Math.max(top.length, sub ? sub.length : 0);
+    const H = []; let parentL = "";
+    for (let c = 0; c < n; c++) { const t = isText(top[c]) ? String(top[c]).trim() : ""; const parent = t || (sub && isText(sub[c]) ? (isText(top[c - 1]) ? String(top[c - 1]).trim() : parentL) : ""); t && (parentL = t); H[c] = (parent + " " + (sub && isText(sub[c]) ? String(sub[c]).trim() : "")).trim(); }
+    const map = {}; HDR.forEach(([k, f]) => { const c = H.findIndex((h, ci) => h && f(h) && !Object.values(map).includes(ci)); c >= 0 && (map[k] = c); });
+    return { map, start: ri + (sub ? 2 : 1) };
+  };
+  const fromExcel = async () => {
+    const f = await pickFile(".xlsx"); if (!f) return;
+    try {
+      const book = await readBook(await toU8(f)), cands = [];
+      book.forEach(sh => { let best = null; sh.rows.slice(0, 25).forEach((r, ri) => { if (!r || !r.some(isText)) return; const h = headerAt(sh.rows, ri), sc = Object.keys(h.map).length; if ("vendor" in h.map && "amount" in h.map && (!best || sc > best.sc)) best = { sh, ...h, sc }; }); best && cands.push(best); });
+      if (!cands.length) throw err("Could not find the bidder name and bid amount columns. Give the columns headings such as Bidder / ނަން and Bid amount / ހުށައެޅި އަގު.");
+      let best = cands[0];
+      if (cands.length > 1) { const sel = S(cands.map((c, i) => [i, c.sh.name]), 0); if (!(await form("Which sheet?", [["Sheet", sel]], { ok: "Use this sheet" }))) return; best = cands[Number(sel.value)]; }
+      const M = best.map, DQ = /disqualif|ޑިސްކޮލިފައި|ޑިސްކޮލިފައިކުރެވިފައި|not responsive|rejected/i;
+      const data = best.sh.rows.slice(best.start).filter(r => r && isText(r[M.vendor]) && !/^(grand )?total|^sub ?total|^ޖުމްލަ|^ޖުމުލަ|^ނަން:|^ސޮއި/i.test(String(r[M.vendor]).trim()) && (/\d/.test(String(r[M.amount] || "")) || r.some(v => DQ.test(String(v || "")))));
+      if (!data.length) throw err("No bidder rows found under the headings in sheet " + best.sh.name);
+      rows.filter(r => !Object.values(r.els).some(e => e.value.trim())).forEach(r => { const i = rows.indexOf(r); body.children[i] && body.children[i].remove(); rows.splice(i, 1); });
+      const numv = (v, d = 2) => { const t = String(v ?? "").replace(/^(MVR|Rf\.?|ރ\.)\s*/i, "").replace(/,/g, "").trim(); return t !== "" && !Number.isNaN(Number(t)) ? String(Math.round(Number(t) * 10 ** d) / 10 ** d) : t; };
+      data.forEach(r => { const dq = r.some(v => DQ.test(String(v || ""))); const vals = Object.fromEntries(COLS.map(([k]) => [k, k in M ? (k === "vendor" || k === "validity" ? String(r[M[k]] ?? "").trim() : numv(r[M[k]])) : ""])); if (dq) { vals.responsive = false; vals.total = ""; } addRow(vals); });
+      [...body.children].forEach((t, i) => { t.firstChild.textContent = String(i + 1); });
+      xt(`${data.length} bidder${data.length === 1 ? "" : "s"} read from sheet "${best.sh.name}" — check them, then Save bids`);
+    } catch (e) { xt(e.message, "err"); }
+  };
   const ok = await form("Add several bids — " + p.ref, [o("div", { style: { gridColumn: "1/-1" } },
     o("datalist", { id: "pcc-vendors3" }, K.sa().map(v => o("option", { value: v }))),
     o("p", { class: "muted small" }, "One row per bidder. Empty rows are ignored. Tick Responsive for bids that meet the requirements, and All documents when every document was submitted. Totals and ranks are worked out automatically."),
     o("div", { class: "pcc-bulk" }, o("table", { class: "t" }, o("thead", {}, o("tr", {}, o("th", {}, "#"), COLS.map(([, l]) => o("th", {}, l)), o("th", {}, "Responsive"), o("th", {}, "All documents"), o("th", {}))), body)),
-    o("div", { class: "row", style: { marginTop: "8px" } }, btn("+ Add row", () => addRow(), "small")),
+    o("div", { class: "row", style: { marginTop: "8px", gap: "8px" } }, btn("+ Add row", () => addRow(), "small"), btn("Upload Excel file…", fromExcel, "small primary"), o("span", { class: "muted small" }, "Reads your Bid Evaluation Form or any sheet with headings like Bidder / ނަން, Bid amount / ހުށައެޅި އަގު, Duration / މުއްދަތު, Experience / ތަޖުރިބާ, Total / މުޅި ޖުމްލަ.")),
     o("details", { style: { marginTop: "10px" } }, o("summary", { style: { cursor: "pointer", fontWeight: 600 } }, "Paste from Excel"), paste, o("div", { class: "row", style: { marginTop: "6px" } }, btn("Add the pasted rows", usePaste, "small"))))], { one: true, ok: "Save bids",
     check: () => { const L = rows.filter(r => r.els.vendor.value.trim()); if (!L.length) throw err("Type at least one bidder"); L.forEach(r => parseMoney(r.els.amount, r.els.vendor.value.trim() + ": bid amount")); rows.filter(r => !r.els.vendor.value.trim() && Object.values(r.els).some(e => e.value.trim())).length && (() => { throw err("A row has values but no bidder name"); })(); } });
   if (!ok) return;
   save(() => {
     need("pdocs");
     const num = el => { const t = el.value.trim().replace(/,/g, ""); return t === "" || Number.isNaN(Number(t)) ? null : Number(t); };
-    const L = rows.filter(r => r.els.vendor.value.trim()).map(r => { const v = { id: uid(), vendor: r.els.vendor.value.trim(), amount: parseMoney(r.els.amount, "Bid amount"), validity: r.els.validity.value.trim(), duration: num(r.els.duration), experience: num(r.els.experience), tech: num(r.els.tech), fin: num(r.els.fin), total: null, rank: null, responsive: r.resp.checked, remarks: "", docs: Object.fromEntries(BIDDOCS.map(d => [d, r.docs.checked])) }; if (v.tech != null && v.fin != null) v.total = Math.round((v.tech + v.fin) * 100) / 100; return v; });
+    const L = rows.filter(r => r.els.vendor.value.trim()).map(r => { const v = { id: uid(), vendor: r.els.vendor.value.trim(), amount: parseMoney(r.els.amount, "Bid amount"), validity: r.els.validity.value.trim(), duration: num(r.els.duration), experience: num(r.els.experience), tech: num(r.els.tech), fin: num(r.els.fin), total: num(r.els.total), rank: null, responsive: r.resp.checked, remarks: "", docs: Object.fromEntries(BIDDOCS.map(d => [d, r.docs.checked])) }; if (v.total == null && v.tech != null && v.fin != null) v.total = Math.round((v.tech + v.fin) * 100) / 100; return v; });
     p.bidders.push(...L); autoRank(p); audit(p, L.length + " bids recorded", L.map(v => v.vendor).join(", "));
     L.forEach(v => { if (!(Z().vendors || []).some(y => y.name === v.vendor)) (Z().vendors = Z().vendors || []).push({ name: v.vendor, category: (Z().vendorCats || [])[0] || "Other", status: "Active" }); });
   }, "Bids saved");
