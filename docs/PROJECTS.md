@@ -467,3 +467,4 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
   - To change the documents, download the template, rename, add or remove document headings (any Yes/No column after *Responsive*), and upload it. Those headings become the project's document columns.
   - A heading ending in `*` is compulsory, and the downloaded template already marks compulsory documents with `*`.
   - A file without Yes/No document columns (e.g. the Bid Evaluation Form) keeps the current list.
+- **Compulsory documents are set in the template only.** The bids table no longer has a *Compulsory* tick. A heading ending in `*` in the uploaded Excel template makes that document compulsory, shown with ★ and a red top line, and Responsive follows those documents.
