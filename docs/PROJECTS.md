@@ -349,3 +349,4 @@ Every Projects page shows two grouped bars:
 - **Workspace**: Procurement plan (items this year), Committee meetings (meetings this year), Work Logs, Documents and Templates.
 
 The current page is filled with its colour. In Dhivehi the bars mirror right to left. On a phone each bar scrolls sideways.
+- **Project tabs.** The Procurement plan, Bid Documents and Evaluation tabs were removed from the project page. Committee meetings, their members and their documents are handled in the Committee meetings register. The Bids received table (Add bid, Edit, Award), used by `{#bidders}` in the evaluation templates, is now at the bottom of the project's Summary. Generated documents stay in Files.

@@ -1,6 +1,6 @@
 // Project form and the project detail page (banner, sub-tab bar, Summary, Plan, Bid, Evaluation).
 
-const SUBTABS = [["summary", "Summary"], ["bid", "Bid Documents"], ["eval", "Evaluation"], ["logs", "Work Logs"], ["progress", "Progress Reports"], ["checklist", "Checklist"], ["completion", "Completion"], ["retention", "Retention"], ["letters", "Letters & Memos"], ["payments", "Payments"], ["files", "Files"], ["activity", "Activity"]];
+const SUBTABS = [["summary", "Summary"], ["logs", "Work Logs"], ["progress", "Progress Reports"], ["checklist", "Checklist"], ["completion", "Completion"], ["retention", "Retention"], ["letters", "Letters & Memos"], ["payments", "Payments"], ["files", "Files"], ["activity", "Activity"]];
 const extDays = p => (p.eots || []).reduce((a, e) => a + (Number(e.days) || 0), 0);
 function recalcDue(p) {
   if (p.handover && p.duration && !p.dueManual) p.dueOriginal = dAdd(p.handover, Number(p.duration));
@@ -85,7 +85,7 @@ function PDETAIL(n, [id, tab = "summary"]) {
       o("div", { class: "pcc-b-acts" }, can("projects") ? btn("Edit", () => PEDIT2(p), "small") : null, btn("Print summary", () => printSummary(p), "small"), K.LV5() ? btn("Delete", async () => { if (await jt(`Delete ${p.ref} and everything recorded under it? Generated files stay in storage but are no longer listed.`, "Delete")) save(() => { need("projects"); Z().projects = PRJ().filter(x => x !== p); (Z().plan || []).forEach(x => { x.projectId === p.id && (x.projectId = null); }); Z().pdocs = Z().pdocs.filter(x => x.projectId !== p.id); Z().pfiles = Z().pfiles.filter(x => x.projectId !== p.id); nav("#/projects"); }, "Project deleted"); }, "small danger") : null))),
     o("div", { class: "pills pcc-subnav", role: "tablist" }, SUBTABS.map(([k, l]) => o("a", { href: `#/project/${p.id}/${k}`, class: "pill" + (k === tab ? " on" : ""), role: "tab", "aria-selected": String(k === tab) }, l, tabCount(p, k)))));
   const body = o("div", { class: "pcc-tab" }); n.append(body);
-  const fn = { summary: tSummary, bid: tBid, eval: tEval, logs: tLogs, progress: tProgress, checklist: tChecklist, completion: tCompletion, retention: tRetention, letters: tLetters, payments: tPayments, files: tFiles, activity: tActivity }[tab] || tSummary;
+  const fn = { summary: tSummary, logs: tLogs, progress: tProgress, checklist: tChecklist, completion: tCompletion, retention: tRetention, letters: tLetters, payments: tPayments, files: tFiles, activity: tActivity }[tab] || tSummary;
   fn(body, p);
   requestAnimationFrame(() => { const on = n.querySelector(".pcc-subnav .on"); on && on.scrollIntoView({ block: "nearest", inline: "center" }); });
   void w;
@@ -113,6 +113,7 @@ function tSummary(n, p) {
       card("Committees", o("p", {}, `Bid Committee: ${(p.committees.bid || []).map(m => m.name).join(", ") || "not set"}`), o("p", {}, `Evaluation Committee: ${(p.committees.eval || []).map(m => m.name).join(", ") || "not set"}`)),
       card("Payments", (() => { const pt = payTotals(p); return kvs([["Contract value", mvr(p.contract)], ["Paid (net)", mvr(pt.totalPaid)], ["Balance", mvr(pt.balance)], ["Retention held", mvr(pt.retentionHeld)]]); })()),
       card("Purchase cases", cs.length ? tbl(["Request", "Status"], cs.map(c => o("tr", {}, o("td", {}, o("a", { href: "#/case/" + c.id }, K.Gt(c) || "Draft #" + c.id)), o("td", {}, K.sn(c.status))))) : o("p", { class: "muted" }, "No purchase cases linked."), linkCase(p)))));
+  n.append(bidsCard(p));
 }
 function linkCase(p) {
   if (!can("projects")) return null;
@@ -173,7 +174,12 @@ function tBid(n, p) {
 }
 function tEval(n, p) {
   const B = p.bidders.slice().sort((a, b) => (a.rank || 99) - (b.rank || 99));
-  n.append(packCard(p, "eval"), meetingsCard(p, "eval"), card("Bids received", B.length ? tbl(["Rank", "Bidder", "Bid (MVR)", "Duration", "Validity", "Technical", "Financial", "Total", "Documents", "Responsive", ""], B.map(b => o("tr", { class: b.awarded ? "pcc-win" : "" }, o("td", {}, b.rank ?? "—"), o("td", { dir: "auto" }, o("b", {}, b.vendor), b.awarded ? o("span", { class: "pcc-tag win" }, "Awarded") : null, b.remarks ? o("div", { class: "muted small" }, b.remarks) : null), o("td", { class: "money" }, money(b.amount)), o("td", {}, b.duration ? b.duration + " d" : ""), o("td", {}, b.validity || ""), o("td", {}, b.tech ?? ""), o("td", {}, b.fin ?? ""), o("td", {}, o("b", {}, b.total ?? "")), o("td", { class: "small" }, Object.values(b.docs || {}).filter(Boolean).length + "/" + BIDDOCS.length), o("td", {}, b.responsive === false ? "No" : "Yes"), o("td", { class: "pcc-acts" }, can("pdocs") ? [btn("Edit", () => bidderEdit(p, b), "small"), b.awarded ? null : btn("Award", () => award(p, b), "small primary"), btn("Remove", async () => { (await jt("Remove this bid?", "Remove")) && save(() => { p.bidders = p.bidders.filter(x => x !== b); autoRank(p); audit(p, "Bid removed", b.vendor); }, "Removed"); }, "small")] : null)))) : o("p", { class: "muted" }, "No bids recorded yet."), can("pdocs") ? btn("Add bid", () => bidderEdit(p, null)) : null, o("p", { class: "muted small" }, "Rank is worked out from the total score (highest first) or, without scores, the lowest responsive bid.")), committeeCard(p, "eval"), docsCard(p, ["Evaluation Committee"], "Evaluation Committee documents"));
+  n.append(bidsCard(p));
+}
+// Bids received (used by the evaluation templates through {#bidders}); shown on the project's Summary.
+function bidsCard(p) {
+  const B = p.bidders.slice().sort((a, b) => (a.rank || 99) - (b.rank || 99));
+  return card("Bids received", B.length ? tbl(["Rank", "Bidder", "Bid (MVR)", "Duration", "Validity", "Technical", "Financial", "Total", "Documents", "Responsive", ""], B.map(b => o("tr", { class: b.awarded ? "pcc-win" : "" }, o("td", {}, b.rank ?? "—"), o("td", { dir: "auto" }, o("b", {}, b.vendor), b.awarded ? o("span", { class: "pcc-tag win" }, "Awarded") : null, b.remarks ? o("div", { class: "muted small" }, b.remarks) : null), o("td", { class: "money" }, money(b.amount)), o("td", {}, b.duration ? b.duration + " d" : ""), o("td", {}, b.validity || ""), o("td", {}, b.tech ?? ""), o("td", {}, b.fin ?? ""), o("td", {}, o("b", {}, b.total ?? "")), o("td", { class: "small" }, Object.values(b.docs || {}).filter(Boolean).length + "/" + BIDDOCS.length), o("td", {}, b.responsive === false ? "No" : "Yes"), o("td", { class: "pcc-acts" }, can("pdocs") ? [btn("Edit", () => bidderEdit(p, b), "small"), b.awarded ? null : btn("Award", () => award(p, b), "small primary"), btn("Remove", async () => { (await jt("Remove this bid?", "Remove")) && save(() => { p.bidders = p.bidders.filter(x => x !== b); autoRank(p); audit(p, "Bid removed", b.vendor); }, "Removed"); }, "small")] : null)))) : o("p", { class: "muted" }, "No bids recorded yet."), can("pdocs") ? btn("Add bid", () => bidderEdit(p, null)) : null, o("p", { class: "muted small" }, "Rank is worked out from the total score (highest first) or, without scores, the lowest responsive bid."));
 }
 async function award(p, b) {
   if (!(await jt(`Award ${p.ref} to ${b.vendor} for ${mvr(b.amount)}? The contractor and contract value are set from this bid.`, "Award"))) return;
