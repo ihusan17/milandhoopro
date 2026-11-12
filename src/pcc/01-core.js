@@ -17,6 +17,10 @@ const dDiff = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
 const mAdd = (iso, n) => { if (!isISO(iso)) return ""; const [y, m, d] = iso.split("-").map(Number), t = new Date(Date.UTC(y, m - 1 + n, 1)), last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate(); t.setUTCDate(Math.min(d, last)); return t.toISOString().slice(0, 10); };
 // Retention period: always 6 months from the date the work was completed.
 const RET_MONTHS = 6;
+// Retention is held only when the contract (award) value is above 500,000 MVR.
+const RET_MIN = 500000;
+const retApplies = p => Number(p.contract) > RET_MIN * 100; // amounts are stored in laari
+const retPct = p => (retApplies(p) ? Number(p.retentionPct) || 0 : 0);
 const fd = d => (isISO(d) ? Xt(d) : "—");
 const money = v => (v == null || v === "" ? "—" : ht(v));
 const mvr = v => (v == null || v === "" ? "—" : ht(v) + " MVR");

@@ -83,7 +83,7 @@ function dataFor(p, extra = {}) {
     type: p.type || "", type_dv: TYPEDV[p.type] || "", category: p.category || "", location: p.location || "", description: p.desc || "", description_dv: p.descDv || "",
     status: p.status || "", pr_number: p.prNumber || "", advertisement_no: p.advertNo || "", budget_code: b ? b.code : "", budget_name: b ? b.description : "", unit: p.unit || "",
     duration_days: p.duration ?? "", extension_days: (p.eots || []).reduce((a, e) => a + (Number(e.days) || 0), 0) || "", percent_complete: p.progress ?? 0, days_left: daysLeft(p) ?? "",
-    retention_percent: p.retentionPct ?? "", retention_period_days: p.retentionDays ?? "", retention_period: RET_MONTHS + " months", retention_period_dv: RET_MONTHS + " މަސް",
+    retention_percent: retPct(p) || "", retention_applies: retApplies(p), retention_period_days: p.retentionDays ?? "", retention_period: RET_MONTHS + " months", retention_period_dv: RET_MONTHS + " މަސް",
     project_officer: p.officer || "", project_officer_designation: off.designation || "", year: t.slice(0, 4),
     contractor_name: p.vendor || "", contractor_name_dv: v.nameDv || p.vendor || (w ? w.vendor : "") || "", contractor_address: v.address || "", contractor_phone: v.phone || "", contractor_email: v.email || "", contractor_reg_no: v.regNo || v.reg || "", contractor_contact: v.contact || "",
     award_bidder: w ? w.vendor : "", award_duration: w ? w.duration ?? "" : "", bidder_count: (p.bidders || []).length, responsive_count: (p.bidders || []).filter(x => x.responsive !== false).length,
@@ -107,7 +107,7 @@ function dataFor(p, extra = {}) {
   d.iulaan_no = d.advertisement_no; ["", "_dv", "_en", "_hijri", "_iso"].forEach(x => { d["iulaan_date" + x] = d["advertised_date" + x]; });
   // letter defaults (a letter or memo overrides these with its own values)
   Object.assign(d, { letter_date: Xt(t), letter_date_dv: dvDate(t), letter_date_en: enDate(t), letter_date_hijri: hijri(t), signatory_name: p.officer || "", signatory_designation: off.designation || "" });
-  const moneyVals = { estimated_cost: p.estimate, contract_value: p.contract, retention_amount: p.contract != null && p.retentionPct ? Math.round(p.contract * p.retentionPct / 100) : null, award_amount: w ? w.amount : null, total_paid: pt.totalPaid, balance: pt.balance, retention_held: pt.retentionHeld,
+  const moneyVals = { estimated_cost: p.estimate, contract_value: p.contract, retention_amount: retPct(p) ? Math.round(p.contract * retPct(p) / 100) : null, award_amount: w ? w.amount : null, total_paid: pt.totalPaid, balance: pt.balance, retention_held: pt.retentionHeld,
     // Award sheet: budget left after the award, and extra budget needed when the award is above the budget.
     budget_after_award: p.estimate != null && w && w.amount != null ? Math.max(0, p.estimate - w.amount) : null, budget_extra_needed: p.estimate != null && w && w.amount != null && w.amount > p.estimate ? w.amount - p.estimate : null };
   Object.entries(moneyVals).forEach(([k, val]) => { d[k] = val == null ? (k === "budget_extra_needed" && p.estimate != null && w && w.amount != null ? "-" : "") : ht(val); d[k + "_words_dv"] = dvMoneyWords(val); d[k + "_words_en"] = enMoneyWords(val); d.__num[k] = rf(val); });

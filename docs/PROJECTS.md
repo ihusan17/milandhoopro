@@ -533,3 +533,11 @@ The retention period is always **6 months from the work completion date** (calen
 28 Feb). It is set automatically when the work is marked completed, and the Edit box shows it read-only
 (e.g. `181 days · 31.08.2026 → 28.02.2027`). Existing projects are recalculated on load. Templates:
 `{retention_period_days}`, `{retention_period}` ("6 months"), `{retention_period_dv}` ("6 މަސް").
+
+### Retention only above 500,000 MVR
+
+Retention is held only when the contract (award) value is **above 500,000 MVR**. For 500,000 MVR or
+below, the Retention % is ignored: no retention amount, no retention deducted in payments, and the
+project goes straight to *Completed* (not *In retention*). The Retention tab says
+"Not held — contract is 500,000 MVR or below". Templates: `{retention_applies}` (true/false);
+`{retention_percent}` and `{retention_amount}` are empty when retention is not held.
