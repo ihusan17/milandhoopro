@@ -1,6 +1,6 @@
 // Project form and the project detail page (banner, sub-tab bar, Summary, Plan, Bid, Evaluation).
 
-const SUBTABS = [["summary", "Summary"], ["logs", "Work Logs"], ["progress", "Progress Reports"], ["checklist", "Checklist"], ["completion", "Completion"], ["retention", "Retention"], ["letters", "Letters & Memos"], ["payments", "Payments"], ["files", "Files"], ["activity", "Activity"]];
+const SUBTABS = [["summary", "Summary"], ["eval", "Bid evaluation"], ["logs", "Work Logs"], ["progress", "Progress Reports"], ["checklist", "Checklist"], ["completion", "Completion"], ["retention", "Retention"], ["letters", "Letters & Memos"], ["payments", "Payments"], ["files", "Files"], ["activity", "Activity"]];
 const extDays = p => (p.eots || []).reduce((a, e) => a + (Number(e.days) || 0), 0);
 function recalcDue(p) {
   if (p.handover && p.duration && !p.dueManual) p.dueOriginal = dAdd(p.handover, Number(p.duration));
@@ -84,10 +84,10 @@ function PDETAIL(n, [id, tab = "summary"]) {
       p.status === "In retention" ? retChip(p) : null,
       o("div", { class: "pcc-b-acts" }, can("projects") ? btn("Edit", () => PEDIT2(p), "small") : null, btn("Print summary", () => printSummary(p), "small"), K.LV5() ? btn("Delete", async () => { if (await jt(`Delete ${p.ref} and everything recorded under it? Generated files stay in storage but are no longer listed.`, "Delete")) save(() => { need("projects"); Z().projects = PRJ().filter(x => x !== p); (Z().plan || []).forEach(x => { x.projectId === p.id && (x.projectId = null); }); Z().pdocs = Z().pdocs.filter(x => x.projectId !== p.id); Z().pfiles = Z().pfiles.filter(x => x.projectId !== p.id); nav("#/projects"); }, "Project deleted"); }, "small danger") : null))),
     (() => { const it = ([k, l]) => { const a = o("a", { href: `#/project/${p.id}/${k}`, class: "pnv-i" + (k === tab ? " on" : ""), role: "tab", "aria-selected": String(k === tab) }); a.append(nvIco(k), o("span", { class: "pnv-l" }, l)); const c = tabCount(p, k); c && (c.className = "pnv-n", a.append(c)); return a; };
-      const G = [["Project work", ["summary", "logs", "progress", "checklist", "completion", "retention"]], ["Records", ["letters", "payments", "files", "activity"]]];
+      const G = [["Project work", ["summary", "eval", "logs", "progress", "checklist", "completion", "retention"]], ["Records", ["letters", "payments", "files", "activity"]]];
       return o("nav", { class: "pnv pnv-a pcc-subnav", role: "tablist" }, G.map(([cap, ks]) => o("div", { class: "pnv-grp" }, o("span", { class: "pnv-cap" }, cap), o("div", { class: "pnv-seg" }, SUBTABS.filter(t => ks.includes(t[0])).map(it))))); })());
   const body = o("div", { class: "pcc-tab" }); n.append(body);
-  const fn = { summary: tSummary, logs: tLogs, progress: tProgress, checklist: tChecklist, completion: tCompletion, retention: tRetention, letters: tLetters, payments: tPayments, files: tFiles, activity: tActivity }[tab] || tSummary;
+  const fn = { summary: tSummary, eval: tEval, logs: tLogs, progress: tProgress, checklist: tChecklist, completion: tCompletion, retention: tRetention, letters: tLetters, payments: tPayments, files: tFiles, activity: tActivity }[tab] || tSummary;
   fn(body, p);
   requestAnimationFrame(() => { const on = n.querySelector(".pcc-subnav .on"); on && on.scrollIntoView({ block: "nearest", inline: "center" }); });
   void w;
@@ -161,7 +161,6 @@ function tSummary(n, p) {
         psumBox(V, "Payments", "payments", [["Contract value", psMoney(p.contract)], ["Paid (net)", psMoney(pt.totalPaid)], ["Balance", psMoney(pt.balance)], ["Retention held", psMoney(pt.retentionHeld)]]),
         commView(p),
         card("Purchase cases", cs.length ? tbl(["Request", "Status"], cs.map(c => o("tr", {}, o("td", {}, o("a", { href: "#/case/" + c.id }, K.Gt(c) || "Draft #" + c.id)), o("td", {}, K.sn(c.status))))) : o("p", { class: "muted" }, "No purchase cases linked."), linkCase(p))); })()));
-  n.append(critCard(p), bidsCard(p));
 }
 function linkCase(p) {
   if (!can("projects")) return null;
@@ -437,11 +436,11 @@ function autoRank(p) {
 function tBid(n, p) {
   n.append(packCard(p, "bid"), meetingsCard(p, "bid"), committeeCard(p, "bid"), docsCard(p, ["Bid Committee"], "Bid Committee documents"));
 }
+// Bid evaluation: the project's evaluation criteria, then the bids received with their points.
 function tEval(n, p) {
-  const B = p.bidders.slice().sort((a, b) => (a.rank || 99) - (b.rank || 99));
   n.append(critCard(p), bidsCard(p));
 }
-// Bids received (used by the evaluation templates through {#bidders}); shown on the project's Summary.
+// Bids received (used by the evaluation templates through {#bidders}); shown on the Bid evaluation tab.
 function bidsCard(p) {
   const B = p.bidders.slice().sort((a, b) => (a.rank || 99) - (b.rank || 99));
   const C = critsOf(p), crit = C.length > 0;

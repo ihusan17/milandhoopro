@@ -117,6 +117,7 @@ const DV_DICT = {
   "Workspace": "މަސައްކަތުގެ ބައިތައް",
   "Project work": "މަޝްރޫޢުގެ މަސައްކަތް", "Records": "ރެކޯޑުތައް",
   "No meeting recorded yet": "އަދި ބައްދަލުވުމެއް ރެކޯޑުކޮށްފައެއް ނުވޭ", "Chair": "ރައީސް", "On leave": "ޗުއްޓީގައި",
+  "Bid evaluation": "ބިޑް ވަޒަންކުރުން",
   "Page not found": "ޞަފްޙާ ނުފެނުނު", "ledger balanced": "ލެޖަރ ބެލެންސް",
   "Just now": "މިހާރު", "Plan": "ޕްލޭން", "Project reference": "މަޝްރޫޢުގެ ނަންބަރު", "Language": "ބަސް", "Translations": "ތަރުޖަމާ"
 };
