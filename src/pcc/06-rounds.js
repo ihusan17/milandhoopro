@@ -117,9 +117,3 @@ function roundChip(p) {
   const n = roundNo(p), tip = [...R.map(r => `${ordinal(r.no)} Iulaan: ${r.advertNo || "—"}`), `${ordinal(n)} Iulaan: ${p.advertNo || "—"} (current)`].join("\n");
   return o("span", { class: "pcc-plan-chip t-warn pcc-rchip", title: tip }, `${ordinal(n)} Iulaan`);
 }
-// Iulaan numbers of every round, newest first, for the tables.
-function iulaanNos(p) {
-  const R = p.rounds || []; if (!R.length) return null;
-  const n = roundNo(p);
-  return o("div", { class: "pcc-iuls small" }, o("div", {}, o("span", { class: "muted" }, ordinal(n) + ": "), p.advertNo || "—"), R.slice().reverse().map(r => o("div", { class: "muted" }, ordinal(r.no) + ": ", o("s", {}, r.advertNo || "—"))));
-}

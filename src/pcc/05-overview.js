@@ -81,7 +81,7 @@ function OVERVIEW(n, type) {
 }
 function ptable(L2) {
   return tbl(["Ref no.", "Project", "Contractor", "Contract (MVR)", "Handover", "Due", "Days left", "% complete", "Status", ""], L2.map(p => o("tr", { class: "click", onclick: e => { e.target.closest("button,a") || nav("#/project/" + p.id); } },
-    o("td", { class: "nowrap" }, p.ref, o("div", { class: "muted small" }, p.type), roundChip(p), iulaanNos(p)), o("td", { style: { minWidth: "190px" } }, pName(p)), o("td", { dir: "auto", style: { minWidth: "120px" } }, p.vendor || "—"), o("td", { class: "money" }, money(p.contract)), o("td", { class: "nowrap" }, fd(p.handover)), o("td", { class: "nowrap" }, fd(p.due), p.dueOriginal && p.dueOriginal !== p.due ? o("div", { class: "muted small" }, "extended") : null), o("td", {}, cdChip(p)), o("td", { style: { minWidth: "120px" } }, K.PBAR(p.progress)), o("td", {}, stChip(p.status)),
+    o("td", { class: "nowrap" }, p.ref, o("div", { class: "muted small" }, p.type), roundChip(p)), o("td", { style: { minWidth: "190px" } }, pName(p)), o("td", { dir: "auto", style: { minWidth: "120px" } }, p.vendor || "—"), o("td", { class: "money" }, money(p.contract)), o("td", { class: "nowrap" }, fd(p.handover)), o("td", { class: "nowrap" }, fd(p.due), p.dueOriginal && p.dueOriginal !== p.due ? o("div", { class: "muted small" }, "extended") : null), o("td", {}, cdChip(p)), o("td", { style: { minWidth: "120px" } }, K.PBAR(p.progress)), o("td", {}, stChip(p.status)),
     o("td", { class: "pcc-acts" }, can("projects") ? btn("Edit", () => PEDIT2(p), "small") : null))), "pcc-ptable");
 }
 function pcard(p) {

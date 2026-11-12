@@ -511,5 +511,4 @@ Nothing can be edited there; click **Round N (current)** to go back.
 
 A project advertised more than once carries a **2nd Iulaan** (3rd, 4th…) tag in the All projects
 table, cards and Monthly view, on the project header, and on its line in the procurement plan.
-The table and plan also list each Iulaan number (current first, earlier ones struck through); the tag's
-tooltip shows them all. The status filter has **Iulaan more than once (2nd, 3rd…)** to list only these.
+The tag's tooltip lists every Iulaan number. The status filter has **Iulaan more than once (2nd, 3rd…)** to list only these.
