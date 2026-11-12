@@ -672,3 +672,19 @@ async function evalSheetBid(p, D) {
   ii(new Blob([u8], { type: MIME.xlsx }), `Evaluation_${safeName(p.ref)}_${D}.xlsx`);
   audit(p, "Evaluation sheet generated", critLine(p) + " · " + D);
 }
+
+// After evaluation: the project's contractor, contract value and duration follow the awarded bid,
+// or the highest scorer when none is awarded yet. Values typed by hand in Edit project are kept
+// (they are only replaced while they still match what was filled in automatically, or are empty).
+function awardSync(p) {
+  const B = p.bidders || [], w = B.find(b => b.awarded) || B.filter(b => b.responsive !== false && b.rank === 1)[0];
+  if (!w) return false;
+  const first = !p.awardSrc, src = p.awardSrc || {}, same = (cur, prev) => first || cur == null || cur === "" || String(cur) === String(prev ?? "");
+  const ch = [];
+  if (same(p.vendor, src.vendor) && w.vendor && p.vendor !== w.vendor) { p.vendor = w.vendor; ch.push("contractor"); }
+  if (same(p.contract, src.amount) && w.amount != null && p.contract !== w.amount) { p.contract = w.amount; ch.push("contract value"); }
+  if (same(p.duration, src.duration) && w.duration != null && p.duration !== w.duration) { p.duration = w.duration; ch.push("duration"); }
+  p.awardSrc = { id: w.id, vendor: p.vendor === w.vendor ? w.vendor : src.vendor, amount: p.contract === w.amount ? w.amount : src.amount, duration: p.duration === w.duration ? w.duration : src.duration, from: w.awarded ? "awarded" : "rank 1" };
+  if (ch.length) { typeof recalcDue === "function" && recalcDue(p); audit(p, "Filled from the evaluation", `${ch.join(", ")} — ${w.vendor} (${w.awarded ? "awarded" : "rank 1"})`); }
+  return ch.length > 0;
+}
