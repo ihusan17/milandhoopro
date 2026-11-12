@@ -49,7 +49,7 @@ function readvertCard(p) {
   const c = rtSuggest(p), R = c && rtReason(c);
   const why = { nobid: "The bid opening date has passed and no bids are entered.", dq: "Every bid is marked not responsive.", over: "Every responsive bid is above the estimate.", one: "Only one bid was received." }[c];
   return o("div", { class: "card pcc-readv" + (R ? " hint" : "") }, o("div", { class: "grow" }, R ? o("b", {}, R[1], " → re-advertise?") : o("b", {}, "Need to advertise again?"),
-    o("div", { class: "muted small" }, R ? why + " If the Bid Committee decides to advertise again, record it as Re-tender in its meeting, or start the new round here." : "No bids, all disqualified, prices too high, scope change… Record the Bid Committee's decision and start the next round.")),
+    o("div", { class: "muted small" }, R ? why + " Start the new round here, or record it as Re-tender in a Bid Committee meeting if the committee decides." : "No bids, all disqualified, prices too high, scope change… Start the next round with the reason.")),
     btn(`Re-advertise (round ${roundNo(p) + 1})…`, () => retender(p, c), R ? "primary small" : "small"));
 }
 
@@ -65,15 +65,15 @@ async function retender(p, hint) {
   const rs = S(RT_REASONS.map(r => [r[0], r[1]]), code0);
   const why = DVT(pend.note || (rtReason(code0) || [])[2] || "");
   rs.onchange = () => { const cur = why.value.trim(); if (!cur || RT_REASONS.some(r => r[2] === cur)) why.value = (rtReason(rs.value) || [])[2] || ""; };
-  const ref = I(pend.ref || "", { placeholder: "e.g. Bid Committee meeting no." }), dd = D(pend.date || today());
+  const ref = I(pend.ref || "", { placeholder: "Bid Committee meeting no., memo no. — if any" }), dd = D(pend.date || today());
   const adv = I("", { placeholder: "New Iulaan number" }), advD = D(""), open2 = D(""), est = MI(p.estimate);
   const keepC = o("input", { type: "checkbox", checked: true }), keepD = o("input", { type: "checkbox", checked: true });
   const ok = await form(`Re-advertise ${p.ref} — round ${n + 1}`, [
     o("p", { class: "muted small", style: { gridColumn: "1/-1" } }, `Round ${n} (Iulaan ${p.advertNo || "—"}, ${(p.bidders || []).length} bids) is kept under Previous rounds with its bids, points and this decision. The bids table is emptied for the new proposals and the project goes back to Iulaan.`),
-    ["Reason", rs], ["Reason (Dhivehi, for documents)", why], ["Bid Committee decision ref **", ref], ["Decision date", dd], ["New Iulaan number", adv], ["New Iulaan date", advD], ["New bid opening date", open2], ["Estimate / budget (MVR)", est],
+    ["Reason", rs], ["Reason (Dhivehi, for documents)", why], ["Decision / memo reference (optional)", ref], ["Decision date", dd], ["New Iulaan number", adv], ["New Iulaan date", advD], ["New bid opening date", open2], ["Estimate / budget (MVR)", est],
     o("label", { class: "pcc-chk", style: { gridColumn: "1/-1" } }, keepC, " Keep the evaluation criteria (" + (critLine(p) || "none set") + ")"),
     o("label", { class: "pcc-chk", style: { gridColumn: "1/-1" } }, keepD, " Keep the document columns and compulsory documents")
-  ], { top: kbToggle(), check: () => { if (!why.value.trim()) throw err("Type the reason"); if (!ref.value.trim()) throw err("Enter the Bid Committee decision reference (meeting number)"); parseMoney(est, "Estimate"); } });
+  ], { top: kbToggle(), check: () => { if (!why.value.trim()) throw err("Type the reason"); parseMoney(est, "Estimate"); } });
   if (!ok) return;
   save(() => {
     need("projects");

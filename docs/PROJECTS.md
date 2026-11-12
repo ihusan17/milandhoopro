@@ -521,7 +521,8 @@ reason: **No bids received** (bid opening passed, no bids entered), **All bidder
 (every bid not responsive), **All bids above the estimate**, or **Only one bid received**.
 
 The form has a reason list (also *Specification or scope change* and *Other*); picking one fills the
-Dhivehi wording, which can be edited. The **Bid Committee decision ref** is required. A Re-tender item
+Dhivehi wording, which can be edited. A Bid Committee decision is not required: the decision / memo
+reference is optional. A Re-tender item
 in a Bid Committee meeting has the same reason list, and its reason is carried into the form.
 The reason is kept with the round (Previous rounds, the read-only round view, the 2nd Iulaan tag's
 tooltip) and is available to templates as `{retender_reason}` / `{retender_reason_dv}`.
