@@ -47,6 +47,7 @@ const FIELDS = [
     ["round_no", "Advertisement round: 1, or 2, 3… after re-advertising (also {#is_retender}…{/is_retender} shows text only for a re-advertisement)", "2"],
     ["previous_iulaan_no", "Iulaan number of the previous round (also previous_iulaan_date_dv, previous_lowest_bid)", ""],
     ["retender_reason_dv", "Why it was re-advertised (also retender_decision_ref)", ""],
+    ["retender_reason", "Re-advertise reason in English: No bids received, All bidders disqualified, All bids above the estimate, Only one bid received, Specification or scope change, Other", ""],
     ["row_no", "Inside {#responsive_bidders} and {#rejected_bidders}: a number that runs on from the responsive bidders into the rejected ones (1, 2, 3, 4, then 5…), for one table listing both", "5"],
     ["{#payments}…{/payments}", "no, kind, amount, status, invoice_no, memo_ref, paid_date", ""],
     ["{#checklist}…{/checklist}", "no, item, done (✓), date, by", ""],

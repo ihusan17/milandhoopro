@@ -512,3 +512,16 @@ Nothing can be edited there; click **Round N (current)** to go back.
 A project advertised more than once carries a **2nd Iulaan** (3rd, 4th…) tag in the All projects
 table, cards and Monthly view, on the project header, and on its line in the procurement plan.
 The tag's tooltip lists every Iulaan number. The status filter has **Iulaan more than once (2nd, 3rd…)** to list only these.
+
+### Reasons for re-advertising
+
+Re-advertising is possible from the Iulaan until the award, not only when bids are over the estimate.
+The Bid evaluation tab shows **Re-advertise (round N)…** and, when the bids point to it, the likely
+reason: **No bids received** (bid opening passed, no bids entered), **All bidders disqualified**
+(every bid not responsive), **All bids above the estimate**, or **Only one bid received**.
+
+The form has a reason list (also *Specification or scope change* and *Other*); picking one fills the
+Dhivehi wording, which can be edited. The **Bid Committee decision ref** is required. A Re-tender item
+in a Bid Committee meeting has the same reason list, and its reason is carried into the form.
+The reason is kept with the round (Previous rounds, the read-only round view, the 2nd Iulaan tag's
+tooltip) and is available to templates as `{retender_reason}` / `{retender_reason_dv}`.

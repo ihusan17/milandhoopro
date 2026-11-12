@@ -52,7 +52,9 @@ async function meetingEdit(m, k, p, pre) {
       const x = prj(it.projectId), ty = S(MTYPES[k].map(t => [t[0], t[1]]), it.type), note = I(it.note || "", { dir: "auto", placeholder: "Decision / subject (optional)" });
       const amt = MI(it.amount == null ? "" : it.amount < 0 ? -it.amount : it.amount), days = I(it.days ?? "", { inputmode: "numeric", placeholder: "days", style: { width: "80px" } });
       const va = o("span", { class: "pcc-ag-f" }, o("label", {}, "Amount (MVR, − for omission)"), amt), vd = o("span", { class: "pcc-ag-f" }, o("label", {}, "Extra days"), days), vbox = o("div", { class: "pcc-ag-var" }, va, vd);
-      const sync = () => { vbox.style.display = ty.value === "variation" || ty.value === "extension" ? "" : "none"; va.style.display = ty.value === "variation" ? "" : "none"; };
+      const rsel = S([["", "Reason…"], ...RT_REASONS.map(r => [r[0], r[1]])], it.reason || ""); rsel.classList.add("pcc-ag-rs");
+      rsel.onchange = () => { it.reason = rsel.value; const cur = note.value.trim(); if (!cur || RT_REASONS.some(r => r[2] === cur)) { note.value = (rtReason(rsel.value) || [])[2] || ""; it.note = note.value; } };
+      const sync = () => { rsel.style.display = ty.value === "retender" ? "" : "none"; vbox.style.display = ty.value === "variation" || ty.value === "extension" ? "" : "none"; va.style.display = ty.value === "variation" ? "" : "none"; };
       ty.onchange = () => { it.type = ty.value; sync(); }; note.oninput = () => { it.note = note.value; };
       amt.oninput = () => { it._amt = amt.value; }; days.oninput = () => { it.days = days.value.trim() === "" ? null : Number(days.value) || 0; };
       it.amount < 0 && (amt.value = "-" + amt.value); it._amtEl = amt;
@@ -66,7 +68,7 @@ async function meetingEdit(m, k, p, pre) {
           reqBox.append(o("label", { class: "pcc-ag-rf" }, o("span", {}, lab, o("b", { class: "pcc-req" }, " **")), el));
         });
       };
-      const row = o("div", { class: "pcc-ag-row" }, o("b", { class: "pcc-ag-n" }, i + 1), o("div", { class: "pcc-ag-p" }, o("a", { href: "#", class: "pcc-ag-link", title: "Open this project's Edit box", onclick: e => { e.preventDefault(); PEDIT2(x); } }, o("b", {}, x.ref), o("div", { dir: "auto", class: "small" }, x.nameDv || x.name))), ty, note, vbox);
+      const row = o("div", { class: "pcc-ag-row" }, o("b", { class: "pcc-ag-n" }, i + 1), o("div", { class: "pcc-ag-p" }, o("a", { href: "#", class: "pcc-ag-link", title: "Open this project's Edit box", onclick: e => { e.preventDefault(); PEDIT2(x); } }, o("b", {}, x.ref), o("div", { dir: "auto", class: "small" }, x.nameDv || x.name))), ty, o("div", { class: "pcc-ag-nt" }, rsel, note), vbox);
       row.append(reqBox); const ty0 = ty.onchange; ty.onchange = () => { ty0(); drawReq(); }; drawReq();
       sync(); return row;
     }) : [o("p", { class: "muted small" }, "Tick the projects decided at this meeting.")]));
@@ -87,7 +89,7 @@ async function meetingEdit(m, k, p, pre) {
   save(() => {
     need("pdocs");
     const members = mrows.map(({ x, lf }) => ({ ...JSON.parse(JSON.stringify(x)), ...lf.read() }));
-    const its = [...items.values()].filter(it => prj(it.projectId)).map(it => { const r = { projectId: it.projectId, type: it.type }; it.note && it.note.trim() && (r.note = it.note.trim()); if (it.type === "variation" && it._amtEl && it._amtEl.value.trim()) r.amount = signedMoney(it._amtEl, "Variation amount"); else if (it.type === "variation" && it.amount != null && !it._amtEl) r.amount = it.amount; if ((it.type === "variation" || it.type === "extension") && it.days != null) r.days = it.days; return r; });
+    const its = [...items.values()].filter(it => prj(it.projectId)).map(it => { const r = { projectId: it.projectId, type: it.type }; it.note && it.note.trim() && (r.note = it.note.trim()); it.type === "retender" && it.reason && (r.reason = it.reason); if (it.type === "variation" && it._amtEl && it._amtEl.value.trim()) r.amount = signedMoney(it._amtEl, "Variation amount"); else if (it.type === "variation" && it.amount != null && !it._amtEl) r.amount = it.amount; if ((it.type === "variation" || it.type === "extension") && it.days != null) r.days = it.days; return r; });
     const o2 = { kind: k, date: date.value, time: time.value.trim(), start: time.value.trim(), end: end.value.trim(), place: place.value.trim(), notes: notes.value.trim(), items: its, projectIds: its.map(it => it.projectId), members };
     let mm = m;
     if (m) Object.assign(m, o2, ref.value.trim() ? { ref: ref.value.trim() } : {}); else { mm = { id: uid(), ref: ref.value.trim() || refNext(kind, null, date.value.slice(0, 4)), ...o2, by: me(), at: Vt() }; MEETS().push(mm); }
@@ -103,7 +105,7 @@ async function meetingEdit(m, k, p, pre) {
 function meetingSync(m) {
   // A Re-tender decision flags the project so the next round can be started from it.
   if (m.kind === "bid") mItems(m).forEach(it => { const p = prj(it.projectId); if (!p) return;
-    if (it.type === "retender") p.retender = { meetingId: m.id, ref: m.ref, date: m.date, note: it.note || "" };
+    if (it.type === "retender") p.retender = { meetingId: m.id, ref: m.ref, date: m.date, note: it.note || "", code: it.reason || "" };
     else if (p.retender && p.retender.meetingId === m.id) delete p.retender; });
   const pre = m.kind === "eval" ? "evalMeeting" : "bidMeeting", main = m.kind === "eval" ? ["evaluation", "reeval"] : ["award"];
   mItems(m).filter(it => main.includes(it.type)).forEach(it => { const p = prj(it.projectId); if (!p || (p[pre + "No"] && p[pre + "Id"] !== m.id)) return;

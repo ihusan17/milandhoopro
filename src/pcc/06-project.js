@@ -441,7 +441,7 @@ function tBid(n, p) {
 function tEval(n, p) {
   const sel = roundSel(p);
   if (sel) { const v = roundView(p, sel); n.append(...[roundPills(p), roundInfo(v, sel), critCard(v), overBudgetCard(v), bidsCard(v)].filter(Boolean)); return; }
-  n.append(...[roundPills(p), retenderBanner(p), critCard(p), overBudgetCard(p), bidsCard(p), roundsCard(p)].filter(Boolean));
+  n.append(...[roundPills(p), retenderBanner(p), readvertCard(p), critCard(p), overBudgetCard(p), bidsCard(p), roundsCard(p)].filter(Boolean));
 }
 // Bids received (used by the evaluation templates through {#bidders}); shown on the Bid evaluation tab.
 function bidsCard(p) {
