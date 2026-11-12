@@ -13,6 +13,10 @@ const today = () => Zt();
 const isISO = d => /^\d{4}-\d{2}-\d{2}$/.test(d || "");
 const dAdd = (iso, n) => { if (!isISO(iso)) return ""; const d = new Date(iso + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + Number(n || 0)); return d.toISOString().slice(0, 10); };
 const dDiff = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+// Add calendar months (31 Jan + 1 month = 28/29 Feb).
+const mAdd = (iso, n) => { if (!isISO(iso)) return ""; const [y, m, d] = iso.split("-").map(Number), t = new Date(Date.UTC(y, m - 1 + n, 1)), last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate(); t.setUTCDate(Math.min(d, last)); return t.toISOString().slice(0, 10); };
+// Retention period: always 6 months from the date the work was completed.
+const RET_MONTHS = 6;
 const fd = d => (isISO(d) ? Xt(d) : "—");
 const money = v => (v == null || v === "" ? "—" : ht(v));
 const mvr = v => (v == null || v === "" ? "—" : ht(v) + " MVR");
@@ -117,6 +121,7 @@ function migrate() {
     if (p.dueOriginal === undefined) { p.dueOriginal = p.due || ""; ch = true; }
     if (!p.ref) { p.ref = refNext("project", p); ch = true; }
     if (!p.type) { p.type = "Works"; ch = true; }
+    if (p.done) { const e = mAdd(p.done, RET_MONTHS); if (p.retentionEnd !== e) { p.retentionEnd = e; p.retentionDays = dDiff(p.done, e); ch = true; } }
   });
   (z.plan || []).forEach(x => {
     if (x.status === "Dropped") { x.status = "Cancelled"; ch = true; }

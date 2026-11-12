@@ -526,3 +526,10 @@ reference is optional. A Re-tender item
 in a Bid Committee meeting has the same reason list, and its reason is carried into the form.
 The reason is kept with the round (Previous rounds, the read-only round view, the 2nd Iulaan tag's
 tooltip) and is available to templates as `{retender_reason}` / `{retender_reason_dv}`.
+
+### Retention period
+
+The retention period is always **6 months from the work completion date** (calendar months; 31 Aug →
+28 Feb). It is set automatically when the work is marked completed, and the Edit box shows it read-only
+(e.g. `181 days · 31.08.2026 → 28.02.2027`). Existing projects are recalculated on load. Templates:
+`{retention_period_days}`, `{retention_period}` ("6 months"), `{retention_period_dv}` ("6 މަސް").

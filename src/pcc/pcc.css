@@ -523,3 +523,4 @@ td.pcc-pt.dq,td.pcc-pt.dq b{color:#9ca3af!important;font-style:italic}
 .pcc-readv{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 16px}
 .pcc-readv .grow{flex:1 1 260px}
 .pcc-readv.hint{border-left:4px solid #b45309;background:linear-gradient(90deg,rgba(180,83,9,.07),transparent 60%)}
+.pcc-auto{background:var(--soft,#f1f5f9)!important;color:var(--muted,#64748b);cursor:default}
