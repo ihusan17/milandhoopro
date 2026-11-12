@@ -113,3 +113,5 @@ window.addEventListener("online", () => retryUploads());
 // Only for signed-in staff (not on the vendor quotation page).
 setTimeout(() => { try { if (K.SYS().refresh && !/^#\/?(q|vq|login)(\/|$)/.test(location.hash)) { migrate(); retryUploads(); } } catch (e) { console.error(e); } }, 1500);
 if (/^#\/(projects?|plan|worklog)(\/|$)/.test(location.hash)) K.le();
+// The built-in page was hidden while loading (see index.html); show the page now that it is drawn.
+requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove("pcc-wait")));
