@@ -14,11 +14,11 @@ function overBudget(p) {
 
 function overBudgetCard(p) {
   const ob = overBudget(p); if (!ob || !ob.over) return null;
-  const ed = can("projects");
+  const ed = can("projects") && !p.__ro;
   return o("div", { class: "card pcc-ob" + (ob.all ? " all" : "") },
     o("div", { class: "pcc-ob-h" }, ob.all ? "⚠  All responsive bids are above the estimate" : `${ob.over} of ${ob.n} responsive bids are above the estimate`),
     o("div", { class: "pcc-ob-r" }, o("span", {}, "Estimate ", o("b", {}, mvr(ob.est))), o("span", {}, "Lowest responsive bid ", o("b", {}, mvr(ob.low))), ob.all ? o("span", { class: "pcc-ob-pct" }, `+${ob.pct.toFixed(1)}% (${mvr(ob.low - ob.est)} over)`) : null),
-    ob.all ? o("p", { class: "small" }, "If the Bid Committee decides to advertise again, record its decision as Re-tender in the Committee meetings, or start the new round here.") : null,
+    ob.all && !p.__ro ? o("p", { class: "small" }, "If the Bid Committee decides to advertise again, record its decision as Re-tender in the Committee meetings, or start the new round here.") : null,
     ob.all && ed ? btn("Re-advertise (new round)…", () => retender(p), "small") : null);
 }
 
@@ -81,4 +81,30 @@ function roundData(p, d) {
   d.previous_iulaan_no = last ? last.advertNo || "" : ""; d.previous_iulaan_date_dv = last && last.advertised ? dvDate(last.advertised) : "";
   d.retender_reason_dv = last ? last.decision.reason || "" : ""; d.retender_decision_ref = last ? last.decision.ref || "" : "";
   d.previous_lowest_bid = last ? (l => (l.length ? ht(Math.min(...l)) : ""))((last.bidders || []).filter(b => b.responsive !== false && b.amount != null).map(b => b.amount)) : "";
+}
+
+// ---------- Viewing an earlier round ----------
+// The Bid evaluation tab can show any earlier round read-only: its criteria, bids (points, ranks,
+// documents), the estimate comparison, the decision, and its evaluation sheet and checklist.
+const ROUNDSEL = {};
+const roundSel = p => { const n = ROUNDSEL[p.id]; return n && (p.rounds || []).find(r => r.no === n) || null; };
+// A read-only copy of the project as it was in that round (everything else comes from the project).
+function roundView(p, r) {
+  const v = Object.create(p);
+  Object.assign(v, { __ro: true, bidders: r.bidders || [], criteria: r.criteria || [], bidDocs: r.bidDocs && r.bidDocs.length ? r.bidDocs : undefined, bidDocsReq: r.bidDocsReq || [], estimate: r.estimate, advertNo: r.advertNo, advertised: r.advertised, bidOpening: r.bidOpening, evaluation: r.evaluation, award: r.award, vendor: r.vendor, contract: r.contract, duration: r.duration, awardSrc: null, rounds: (p.rounds || []).filter(x => x.no < r.no), showDqPoints: true });
+  return v;
+}
+function roundPills(p) {
+  const R = p.rounds || []; if (!R.length) return null;
+  const cur = ROUNDSEL[p.id] || 0, go = n => { ROUNDSEL[p.id] = n; K.le(); };
+  return o("div", { class: "pcc-rounds" }, o("span", { class: "muted small" }, "Advertisement round:"),
+    R.map(r => o("button", { type: "button", class: "pill" + (cur === r.no ? " on" : ""), onclick: () => go(r.no) }, `Round ${r.no}`, o("small", {}, " · " + (r.advertNo || "no Iulaan no.")))),
+    o("button", { type: "button", class: "pill" + (!cur ? " on" : ""), onclick: () => go(0) }, `Round ${roundNo(p)} (current)`, p.advertNo ? o("small", {}, " · " + p.advertNo) : null));
+}
+function roundInfo(v, r) {
+  const d = r.decision || {};
+  return o("div", { class: "card pcc-rinfo" }, o("div", { class: "pcc-rinfo-h" }, o("b", {}, `Round ${r.no} — read-only`), o("span", { class: "muted small" }, "This is how the bids stood when the round was closed. Changes are made in the current round.")),
+    kvs([["Iulaan number", r.advertNo], ["Iulaan date", r.advertised ? fd(r.advertised) : ""], ["Bid opening", r.bidOpening ? fd(r.bidOpening) : ""], ["Estimate", r.estimate != null ? mvr(r.estimate) : ""], ["Evaluation meeting", [r.evalMeetingNo, r.evalMeetingDate ? fd(r.evalMeetingDate) : ""].filter(Boolean).join(" · ")], ["Bid Committee meeting", [r.bidMeetingNo, r.bidMeetingDate ? fd(r.bidMeetingDate) : ""].filter(Boolean).join(" · ")]]),
+    o("div", { class: "pcc-rinfo-d" }, o("b", {}, "Decision: "), o("span", { dir: "auto" }, d.reason || "—"), d.ref || d.date ? o("div", { class: "muted small", dir: "ltr" }, [d.ref, d.date ? fd(d.date) : ""].filter(Boolean).join(" · ")) : null),
+    o("div", { class: "row", style: { gap: "8px", marginTop: "10px" } }, critsOf(v).length && (v.bidders || []).length ? btn("Evaluation sheet (Excel)", () => critSheet(v).catch(e => xt(e.message, "err")), "small") : null, (v.bidders || []).length ? btn("Checklist PDF", () => bidsChecklist(v), "small") : null));
 }

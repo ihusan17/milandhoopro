@@ -493,3 +493,16 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
   - **Status:** the project goes back to *Iulaan*, and its header shows "Round 2".
 - **Previous rounds.** A card on the Bid evaluation tab lists each earlier round (Iulaan no. and date, bid opening, bids / responsive, lowest bid, estimate, decision), with *View bids*.
 - **Template fields:** `{round_no}`, `{#is_retender}…{/is_retender}`, `{previous_iulaan_no}`, `{previous_iulaan_date_dv}`, `{previous_lowest_bid}`, `{retender_reason_dv}`, `{retender_decision_ref}`.
+
+### Viewing an earlier round (1st bids)
+
+When a project has been re-advertised, the **Bid evaluation** tab shows round buttons at the top:
+`Round 1 · (Iulaan no.)` … `Round N (current)`. Choosing an earlier round shows it **read-only**,
+exactly as it stood when the round was closed:
+
+- Iulaan number and date, bid opening, estimate, meetings, and the Bid Committee's decision;
+- its evaluation criteria and the Bids received table (points, ranks, documents, responsive);
+- the over-budget comparison against that round's estimate;
+- **Evaluation sheet (Excel)** and **Checklist PDF** for that round.
+
+Nothing can be edited there; click **Round N (current)** to go back.

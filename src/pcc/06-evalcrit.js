@@ -87,7 +87,7 @@ async function critEdit(p) {
 
 // Card on the Summary: the criteria as chips, and the actions.
 function critCard(p) {
-  const C = critsOf(p), ed = can("pdocs");
+  const C = critsOf(p), ed = can("pdocs") && !p.__ro;
   return o("div", { class: "card pcc-crit" }, o("div", { class: "row", style: { alignItems: "center" } }, o("h3", { style: { margin: 0 } }, "Evaluation criteria"), o("div", { class: "grow right pcc-acts" }, ed ? btn(C.length ? "Change criteria" : "Set criteria", () => critEdit(p), C.length ? "small" : "small primary") : null, C.length && (p.bidders || []).length ? (() => { const sel = S(EVAL_DESIGNS, evalDesign(), { class: "pcc-evd", title: "Sheet design" }); sel.onchange = () => save(() => { Z().evalDesign = sel.value; }, "Sheet design: " + sel.selectedOptions[0].textContent); return o("span", { class: "pcc-evd-w" }, sel, btn("Evaluation sheet (Excel)", () => critSheet(p, sel.value).catch(e => xt(e.message, "err")), "small primary")); })() : null)),
     C.length ? o("div", { class: "pcc-crit-chips" }, C.map(c => o("span", { class: "pcc-crit-chip t-" + c.type }, o("b", {}, c.weight + "%"), o("span", {}, c.label || critType(c.type)[1]), o("span", { dir: "rtl", lang: "dv" }, c.labelDv || critType(c.type)[2]), critType(c.type)[3] === "per" ? o("small", {}, `${c.per || 1} marks / document`) : null)))
       : o("p", { class: "muted small" }, "No criteria yet. Set them (e.g. Price 75%, Duration 15%, Experience 10%) and each bidder's points and rank are worked out from the bids received."));
@@ -197,7 +197,7 @@ async function critSheet(p, design) {
         const f = T[3] === "lowest" ? `IF(${V}="","",MIN(${rng})/${V}*${x.cr.weight})` : `IF(${V}="","",MIN(${V}*${x.cr.per || 1},${x.cr.weight}))`;
         W.set(rr, x.c, pt == null ? "" : pt, st({ fmt: "0.00", ...(D === "scorecard" ? { fill: (GC[x.cr.type] || GC.other)[1], b: true, color: (GC[x.cr.type] || GC.other)[0] } : {}) }), f);
       }
-      if (x.k === "total") isDq ? W.set(rr, x.c, "ޑިސްކޮލިފައި", st({ ...TH.total, ...TH.dq, fill: undefined, sz: 11 })) : W.set(rr, x.c, b.total ?? 0, st({ ...TH.total, fmt: "0.00" }), `SUM(${ptsRefs.length ? "" : "0"}${cols.filter(y => y.k === "pts").map(y => xref(rr, y.c)).join(",")})`);
+      if (x.k === "total") isDq ? W.set(rr, x.c, "ޑިސްކޮލިފައި", st({ ...TH.total, ...TH.dq, fill: undefined, sz: 11 })) : W.set(rr, x.c, b.total ?? 0, st({ ...TH.total, fmt: "0.00" }), `SUM(${cols.filter(y => y.k === "pts").map(y => xref(rr, y.c)).join(",") || "0"})`);
       if (x.k === "rank") {
         const tc = xref(rr, colOf("total"));
         const medal = !isDq && b.rank && b.rank <= 3 && D !== "navy" ? { 1: "F59E0B", 2: "94A3B8", 3: "B45309" }[b.rank] : null;
