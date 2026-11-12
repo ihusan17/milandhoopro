@@ -46,6 +46,14 @@ function critApply(p) {
   });
   return true;
 }
+// Points a not-responsive bid would get if it were responsive (for comparison only; never ranked).
+function critShadow(p, b) {
+  const C = critsOf(p), R = (p.bidders || []).filter(x => x.responsive !== false), pts = {};
+  C.forEach(c => { const how = critType(c.type)[3], W = Number(c.weight), v = critValue(b, c); if (v == null) { pts[c.key] = null; return; }
+    if (how === "lowest") { const vals = [...R.map(x => critValue(x, c)), v].filter(x => x != null && x > 0), low = vals.length ? Math.min(...vals) : null; pts[c.key] = v > 0 && low ? r2((low / v) * W) : 0; }
+    else if (how === "per") pts[c.key] = r2(Math.min(v * (Number(c.per) || 1), W)); else pts[c.key] = r2(Math.min(Number(v) || 0, W)); });
+  const L = Object.values(pts).filter(x => x != null); return { pts, total: L.length ? r2(L.reduce((a, x) => a + x, 0)) : null };
+}
 const critLine = p => critsOf(p).map(c => `${c.label || critType(c.type)[1]} ${c.weight}%` + (c.type === "experience" || critType(c.type)[3] === "per" ? ` (${c.per || 1} per document)` : "")).join(" · ");
 
 async function critEdit(p) {

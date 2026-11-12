@@ -503,3 +503,4 @@ td.pcc-pt{text-align:center}
 .pcc-bulk .pcc-bk-name,.pcc-bulk .pcc-bk-lab{font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--muted,#64748b)}
 .pcc-bulk th.pcc-bk-h .pcc-bk-name{color:var(--fg)}
 .pcc-bulk .pcc-bk-dvh{font-family:Faruma,"MV Faseyha",var(--font,inherit);font-size:13px!important;font-weight:700;letter-spacing:0!important;text-transform:none!important;color:var(--fg)!important}
+td.pcc-pt.dq,td.pcc-pt.dq b{color:#9ca3af!important;font-style:italic}
