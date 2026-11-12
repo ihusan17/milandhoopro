@@ -474,3 +474,10 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
 - **Compulsory from the template, exactly.** A `*` (or ★) anywhere in a document heading makes it compulsory, even in headings on two lines. A heading without `*` is not compulsory, even if it was before. Line breaks in headings are joined into one name.
 - **Bid evaluation tab.** Evaluation criteria and Bids received moved from Summary to their own tab, *Bid evaluation* (ބިޑް ވަޒަންކުރުން), second in the *Project work* row with the number of bids. Summary shows the project's details only.
 - **Filled from the evaluation.** The project's Contractor / supplier, Contract value and Duration (days) are filled automatically from the awarded bid, or from the highest scorer (rank 1) when none is awarded yet, and the due date is worked out again. They update whenever bids are saved or the ranking changes. After the first fill, a value changed by hand in Edit project is kept. Bids received shows a green line saying where the values came from, and the project's activity records each change.
+- **Evaluation sheet as an Excel template.** The council's evaluation sheet has placeholders for the EV-FORM template:
+  - project name, Iulaan number and criteria weights (`{price_weight}`, `{duration_weight}`, `{experience_weight}`);
+  - one row per responsive bidder (`{#responsive_bidders}` with `{bid_amount}`, `{price_points}`, `{duration_offered}`, `{duration_points}`, `{experience}`, `{experience_points}`, `{total_score}`);
+  - one row per rejected bidder (ޑިސްކޮލިފައި ކުރެވިފައި), numbered on with `{row_no}`;
+  - the evaluation date and the three Evaluation Committee members.
+
+  Points come from the project's evaluation criteria. The sheet has no fixed print area, so it prints in full however many bidders there are.
