@@ -338,7 +338,7 @@ async function bidsBulk(p) {
       Object.keys(M).forEach(k => { if (!["responsive", "alldocs", "vendor"].includes(k) && ynCols.includes(M[k])) delete M[k]; });
       const docCols = ynCols.filter(c => c !== M.responsive && c !== M.alldocs && c !== M.vendor && !/responsive|qualified|all documents/i.test(best.H[c]));
       if (docCols.length) {
-        const old = DOCS; DOCS = docCols.map(c => { const raw = String(best.H[c]).trim(), star = /[*★]\s*$/.test(raw), name = raw.replace(/\s*[*★]\s*$/, ""), prev = old.find(d => docKey(d.name) === docKey(name)); return prev ? { ...prev, name, req: star || prev.req } : { id: uid(), name, orig: name, req: star }; });
+        const old = DOCS; DOCS = docCols.map(c => { const raw = String(best.H[c]), star = /[*★]/.test(raw), name = raw.replace(/[*★]/g, "").replace(/\s+/g, " ").trim(), prev = old.find(d => docKey(d.name) === docKey(name)); return prev ? { ...prev, name, req: star } : { id: uid(), name, orig: name, req: star }; });
         docCols.forEach((c, i) => { M["doc:" + DOCS[i].id] = c; }); redraw();
       }
       const data = best.sh.rows.slice(best.start).filter(r => r && isText(r[M.vendor]) && !/^(grand )?total|^sub ?total|^ޖުމްލަ|^ޖުމުލަ|^ނަން:|^ސޮއި/i.test(String(r[M.vendor]).trim()) && (/\d/.test(String(r[M.amount] || "")) || r.some(v => DQ.test(String(v || "")))));
