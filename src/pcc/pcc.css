@@ -517,3 +517,6 @@ td.pcc-pt.dq,td.pcc-pt.dq b{color:#9ca3af!important;font-style:italic}
 .pcc-rinfo{border-left:4px solid #b45309;background:linear-gradient(90deg,rgba(180,83,9,.06),transparent 60%)}
 .pcc-rinfo-h{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;margin-bottom:8px}
 .pcc-rinfo-d{margin-top:8px}
+.pcc-rchip{display:inline-block;margin:3px 4px 0 0;white-space:nowrap}
+.pcc-iuls{margin-top:3px;line-height:1.35;white-space:nowrap}
+.pcc-iuls s{opacity:.75}

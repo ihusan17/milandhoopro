@@ -108,3 +108,18 @@ function roundInfo(v, r) {
     o("div", { class: "pcc-rinfo-d" }, o("b", {}, "Decision: "), o("span", { dir: "auto" }, d.reason || "—"), d.ref || d.date ? o("div", { class: "muted small", dir: "ltr" }, [d.ref, d.date ? fd(d.date) : ""].filter(Boolean).join(" · ")) : null),
     o("div", { class: "row", style: { gap: "8px", marginTop: "10px" } }, critsOf(v).length && (v.bidders || []).length ? btn("Evaluation sheet (Excel)", () => critSheet(v).catch(e => xt(e.message, "err")), "small") : null, (v.bidders || []).length ? btn("Checklist PDF", () => bidsChecklist(v), "small") : null));
 }
+
+// ---------- Marking re-advertised projects in lists ----------
+const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
+// "2nd Iulaan" chip; the tooltip lists every Iulaan number.
+function roundChip(p) {
+  const R = p.rounds || []; if (!R.length) return null;
+  const n = roundNo(p), tip = [...R.map(r => `${ordinal(r.no)} Iulaan: ${r.advertNo || "—"}`), `${ordinal(n)} Iulaan: ${p.advertNo || "—"} (current)`].join("\n");
+  return o("span", { class: "pcc-plan-chip t-warn pcc-rchip", title: tip }, `${ordinal(n)} Iulaan`);
+}
+// Iulaan numbers of every round, newest first, for the tables.
+function iulaanNos(p) {
+  const R = p.rounds || []; if (!R.length) return null;
+  const n = roundNo(p);
+  return o("div", { class: "pcc-iuls small" }, o("div", {}, o("span", { class: "muted" }, ordinal(n) + ": "), p.advertNo || "—"), R.slice().reverse().map(r => o("div", { class: "muted" }, ordinal(r.no) + ": ", o("s", {}, r.advertNo || "—"))));
+}
