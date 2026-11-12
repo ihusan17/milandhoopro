@@ -481,3 +481,15 @@ Summary → **Evaluation criteria** → *Set criteria*. Tick the criteria used f
   - the evaluation date and the three Evaluation Committee members.
 
   Points come from the project's evaluation criteria. The sheet has no fixed print area, so it prints in full however many bidders there are.
+
+## Over budget and re-advertising (re-Iulaan)
+
+- **Over-budget warning.** On the Bid evaluation tab, a red card appears when every responsive bid is above the project's estimate. It shows the estimate, the lowest responsive bid and the % / amount over. When only some bids are over, an amber card says how many.
+- **Bid Committee decision.** Marking the project *Re-tender* in a Bid Committee meeting (with the reason as the decision note) shows a banner on the Bid evaluation tab, giving the meeting no., date and reason, with *Start new round*. *Re-advertise (new round)* on the warning card does the same without a meeting.
+- **New round.** The form asks for the reason (Dhivehi), the decision reference and date, the new Iulaan number and date, the new bid opening date, and the estimate (it can be revised). It also asks whether to keep the criteria and the document columns.
+  - **Kept as history:** the finished round, with its Iulaan, bid opening, estimate, bids (with points and ranks), criteria, documents, meetings and decision.
+  - **Emptied:** the bids table.
+  - **Cleared:** the award and evaluation fields, and the auto-filled contractor, contract value and duration.
+  - **Status:** the project goes back to *Iulaan*, and its header shows "Round 2".
+- **Previous rounds.** A card on the Bid evaluation tab lists each earlier round (Iulaan no. and date, bid opening, bids / responsive, lowest bid, estimate, decision), with *View bids*.
+- **Template fields:** `{round_no}`, `{#is_retender}…{/is_retender}`, `{previous_iulaan_no}`, `{previous_iulaan_date_dv}`, `{previous_lowest_bid}`, `{retender_reason_dv}`, `{retender_decision_ref}`.

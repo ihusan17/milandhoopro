@@ -44,6 +44,9 @@ const FIELDS = [
     ["criteria_text_dv", "The evaluation criteria in Dhivehi, e.g. އަގު 75%، މުއްދަތު 15%، ތަޖުރިބާ 10%  (criteria_text in English; {#criteria}{label_dv} {weight}%{/criteria} as a list)", ""],
     ["{#responsive_bidders}…{/responsive_bidders}", "Bidders marked Responsive, numbered 1, 2, 3…: same fields as bidders (bidder_name, bid_amount, duration_offered, experience, technical_score, financial_score, total_score)", ""],
     ["{#rejected_bidders}…{/rejected_bidders}", "Bidders marked Not responsive: no, bidder_name, bid_amount, remarks (type the reason for rejection in the bidder's Remarks)", ""],
+    ["round_no", "Advertisement round: 1, or 2, 3… after re-advertising (also {#is_retender}…{/is_retender} shows text only for a re-advertisement)", "2"],
+    ["previous_iulaan_no", "Iulaan number of the previous round (also previous_iulaan_date_dv, previous_lowest_bid)", ""],
+    ["retender_reason_dv", "Why it was re-advertised (also retender_decision_ref)", ""],
     ["row_no", "Inside {#responsive_bidders} and {#rejected_bidders}: a number that runs on from the responsive bidders into the rejected ones (1, 2, 3, 4, then 5…), for one table listing both", "5"],
     ["{#payments}…{/payments}", "no, kind, amount, status, invoice_no, memo_ref, paid_date", ""],
     ["{#checklist}…{/checklist}", "no, item, done (✓), date, by", ""],
@@ -109,7 +112,7 @@ function dataFor(p, extra = {}) {
   Object.entries(moneyVals).forEach(([k, val]) => { d[k] = val == null ? (k === "budget_extra_needed" && p.estimate != null && w && w.amount != null ? "-" : "") : ht(val); d[k + "_words_dv"] = dvMoneyWords(val); d[k + "_words_en"] = enMoneyWords(val); d.__num[k] = rf(val); });
   ["duration_days", "percent_complete", "days_left", "retention_percent", "retention_period_days", "bidder_count", "responsive_count"].forEach(k => { d[k] !== "" && (d.__num[k] = Number(d[k])); });
   d.bidders = (p.bidders || []).slice().sort((a, b) => (a.rank || 99) - (b.rank || 99)).map((x, i) => ({ no: i + 1, rank: x.rank ?? "", bidder_name: x.vendor || "", bid_amount: x.amount == null ? "" : ht(x.amount), bid_amount_words_en: enMoneyWords(x.amount), bid_amount_words_dv: dvMoneyWords(x.amount), bid_validity: x.validity || "", duration_offered: x.duration ?? "", technical_score: x.tech ?? "", financial_score: x.fin ?? "", total_score: x.total ?? "", responsive: x.responsive === false ? "No" : "Yes", remarks: x.remarks || "", experience: x.experience ?? "", __ok: x.responsive !== false, documents: Object.entries(x.docs || {}).filter(e => e[1]).map(e => e[0]).join(", "), __num: { bid_amount: rf(x.amount), technical_score: num(x.tech), financial_score: num(x.fin), total_score: num(x.total), rank: num(x.rank), duration_offered: num(x.duration), experience: num(x.experience) } }));
-  critData(p, d);
+  critData(p, d); roundData(p, d);
   // Responsive bidders (scored) and rejected bidders (with the reason typed in Remarks), numbered 1, 2, 3…
   d.responsive_bidders = d.bidders.filter(x => x.__ok).map((x, i) => ({ ...x, no: i + 1, row_no: i + 1, __num: { ...x.__num, no: i + 1, row_no: i + 1 } }));
   // row_no continues after the responsive bidders, for sheets that list the rejected ones underneath.

@@ -505,3 +505,8 @@ td.pcc-pt{text-align:center}
 .pcc-bulk .pcc-bk-dvh{font-family:Faruma,"MV Faseyha",var(--font,inherit);font-size:13px!important;font-weight:700;letter-spacing:0!important;text-transform:none!important;color:var(--fg)!important}
 td.pcc-pt.dq,td.pcc-pt.dq b{color:#9ca3af!important;font-style:italic}
 .pcc-award-note{margin-top:10px;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,#15803d 8%,var(--card));border:1px solid color-mix(in srgb,#15803d 25%,var(--line));font-size:13px}
+/* over budget and re-advertising */
+.pcc-ob{border-inline-start:4px solid #d97706}.pcc-ob.all{border-inline-start-color:#dc2626;background:color-mix(in srgb,#dc2626 4%,var(--card))}
+.pcc-ob-h{font-weight:800;color:#b45309}.pcc-ob.all .pcc-ob-h{color:#b91c1c}
+.pcc-ob-r{display:flex;flex-wrap:wrap;gap:6px 22px;margin:8px 0;font-size:14px}.pcc-ob-pct{font-weight:800;color:#b91c1c}
+.pcc-rt{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px solid color-mix(in srgb,#d97706 45%,var(--line));background:color-mix(in srgb,#d97706 9%,var(--card))}

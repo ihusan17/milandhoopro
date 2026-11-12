@@ -101,6 +101,10 @@ async function meetingEdit(m, k, p, pre) {
 // The project's own meeting fields (used by single-project documents) follow the meeting
 // that awarded / evaluated it, unless staff typed different ones.
 function meetingSync(m) {
+  // A Re-tender decision flags the project so the next round can be started from it.
+  if (m.kind === "bid") mItems(m).forEach(it => { const p = prj(it.projectId); if (!p) return;
+    if (it.type === "retender") p.retender = { meetingId: m.id, ref: m.ref, date: m.date, note: it.note || "" };
+    else if (p.retender && p.retender.meetingId === m.id) delete p.retender; });
   const pre = m.kind === "eval" ? "evalMeeting" : "bidMeeting", main = m.kind === "eval" ? ["evaluation", "reeval"] : ["award"];
   mItems(m).filter(it => main.includes(it.type)).forEach(it => { const p = prj(it.projectId); if (!p || (p[pre + "No"] && p[pre + "Id"] !== m.id)) return;
     Object.assign(p, { [pre + "Id"]: m.id, [pre + "No"]: m.ref, [pre + "Date"]: m.date, [pre + "Time"]: m.time || "", [pre + "Start"]: m.start || m.time || "", [pre + "End"]: m.end || "" }, m.kind === "eval" ? { evaluation: m.date, evaluationTime: m.start || m.time || "" } : { award: m.date }); });
