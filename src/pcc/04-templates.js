@@ -27,7 +27,7 @@ function knownTag(name, data) { const top = name.split(".")[0]; return Object.pr
 // Placeholders in active templates that no program field fills (and that aren't mapped): they become
 // "Other template fields" on the project form. Returns { tag: [template codes] }.
 // Fields the program fills itself, also those filled only while generating (letters, payments, meetings, reports).
-function progField(n) { const FK = new Set(FIELDKEYS().concat(["y1", "y2", "y3", "year", "bid", "eval", "report_items"])), base = n.replace(/_(dv_ymd|dv_dmy|dv_both|dash|dv|en|hijri|iso|words_dv|words_en)$/, ""); return FK.has(n) || FK.has(base); }
+function progField(n) { const FK = new Set(FIELDKEYS().concat(["y1", "y2", "y3", "year", "bid", "eval", "report_items"])), base = n.replace(/_(dv_ymd|dv_dmy|dv_both|dash|dv|en|hijri|iso|words_dv|words_en)$/, ""); return FK.has(n) || FK.has(base) || /^(price|duration|experience|technical|financial|other)\d*_(weight|points)$/.test(n); } // criteria fields are filled from the project's evaluation criteria
 function extraTags() {
   const sample = dataFor(blankProject()), out = {};
   TPL().filter(t => t.active !== false).forEach(t => ((curVer(t) || {}).tags || []).forEach(x => {
