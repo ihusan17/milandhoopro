@@ -541,3 +541,16 @@ below, the Retention % is ignored: no retention amount, no retention deducted in
 project goes straight to *Completed* (not *In retention*). The Retention tab says
 "Not held — contract is 500,000 MVR or below". Templates: `{retention_applies}` (true/false);
 `{retention_percent}` and `{retention_amount}` are empty when retention is not held.
+
+### Fields filled from rounds and meetings
+
+These PR-03 / PR-12 placeholders are no longer typed on the project (removed from Other template fields):
+
+- `{iulaan_count}` — 01, 02, 03… (the current Iulaan round)
+- `{prev_meeting_no}`, `{prev_meeting_date}`, `{prev_decision_dv}` — the previous round's decision
+  reference, date and Dhivehi reason; `-` when it is the first Iulaan
+- `{agenda_no}` — the project's number on its Bid Committee meeting agenda (in meeting documents, the
+  item's number)
+
+Criteria fields (`{price_weight}`, `{duration_weight}`, … and `*_points`) also come from the project's
+evaluation criteria and are not listed there.

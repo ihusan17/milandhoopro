@@ -159,7 +159,7 @@ function meetingData(m, focus) {
   d[m.kind + "_meeting_time"] = m.time || ""; d[m.kind + "_meeting_start_time"] = m.start || m.time || ""; d[m.kind + "_meeting_end_time"] = m.end || ""; d[m.kind + "_meeting_year"] = isISO(m.date) ? m.date.slice(0, 4) : d[m.kind + "_meeting_year"]; d[m.kind + "_meeting_seq"] = String(Number(((m.ref || "").match(/(\d+)\D*$/) || [])[1] || "") || "");
   const IT = mItems(m);
   d.projects = P.map((p, i) => { const x = dataFor(p), it = IT.find(y => y.projectId === p.id) || { type: m.kind === "eval" ? "evaluation" : "award" }, ty = mtype(m.kind, it.type);
-    const r = { ...scalars(x), no: i + 1, bidders: x.bidders, bid_members: x.bid_members, eval_members: x.eval_members, item_type: ty[1], item_type_dv: ty[2], item_code: ty[0], item_note: it.note || "", is_award: it.type === "award", is_variation: it.type === "variation", is_extension: it.type === "extension",
+    const r = { ...scalars(x), no: i + 1, agenda_no: String(i + 1), bidders: x.bidders, bid_members: x.bid_members, eval_members: x.eval_members, item_type: ty[1], item_type_dv: ty[2], item_code: ty[0], item_note: it.note || "", is_award: it.type === "award", is_variation: it.type === "variation", is_extension: it.type === "extension",
       variation_amount: it.amount == null ? "" : ht(Math.abs(it.amount)), variation_kind_dv: it.amount == null ? "" : it.amount < 0 ? "ކުޑަކުރުން" : "އިތުރުކުރުން", variation_amount_words_dv: it.amount == null ? "" : dvMoneyWords(Math.abs(it.amount)), variation_days: it.days == null ? "" : String(it.days),
       contract_after_variation: it.amount != null && p.contract != null ? ht(p.contract + it.amount) : "" };
     return r; });

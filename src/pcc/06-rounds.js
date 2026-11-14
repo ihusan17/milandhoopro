@@ -113,6 +113,15 @@ function roundData(p, d) {
   d.round_no = String(roundNo(p)); d.is_retender = R.length > 0;
   d.previous_iulaan_no = last ? last.advertNo || "" : ""; d.previous_iulaan_date_dv = last && last.advertised ? dvDate(last.advertised) : "";
   d.retender_reason_dv = last ? last.decision.reason || "" : ""; d.retender_reason = last ? rtLabel(last.decision) : ""; d.retender_decision_ref = last ? last.decision.ref || "" : "";
+  // PR-03 / PR-12 fields, filled from the rounds: Iulaan count (01, 02…) and the previous decision ("-" when none).
+  d.iulaan_count = String(roundNo(p)).padStart(2, "0");
+  d.prev_meeting_no = last && last.decision.ref || "-";
+  d.prev_meeting_date = last && last.decision.date ? Xt(last.decision.date) : "-";
+  d.prev_decision_dv = last && last.decision.reason || "-";
+  // Agenda number: the project's place in its Bid Committee meeting (the latest one it is on).
+  const ms = MEETS().filter(m => m.kind === "bid" && (m.items || []).some(it => it.projectId === p.id)).sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+  const mm = ms.find(m => m.id === p.bidMeetingId) || ms[0];
+  d.agenda_no = mm ? String(mm.items.findIndex(it => it.projectId === p.id) + 1) : "";
   d.previous_lowest_bid = last ? (l => (l.length ? ht(Math.min(...l)) : ""))((last.bidders || []).filter(b => b.responsive !== false && b.amount != null).map(b => b.amount)) : "";
 }
 

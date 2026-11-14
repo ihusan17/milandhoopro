@@ -48,6 +48,7 @@ const FIELDS = [
     ["previous_iulaan_no", "Iulaan number of the previous round (also previous_iulaan_date_dv, previous_lowest_bid)", ""],
     ["retender_reason_dv", "Why it was re-advertised (also retender_decision_ref)", ""],
     ["retender_reason", "Re-advertise reason in English: No bids received, All bidders disqualified, All bids above the estimate, Only one bid received, Specification or scope change, Other", ""],
+    ["iulaan_count", "How many times the Iulaan was announced: 01, 02… (from the rounds)", "02"], ["prev_meeting_no", "Previous round: decision / meeting reference, or -", "(IUL)351-PRO/2026/BM001"], ["prev_meeting_date", "Previous round: decision date, or -", "12.11.2026"], ["prev_decision_dv", "Previous round: what was decided (Dhivehi), or -", ""], ["agenda_no", "The project's number on the Bid Committee meeting agenda", "2"],
     ["row_no", "Inside {#responsive_bidders} and {#rejected_bidders}: a number that runs on from the responsive bidders into the rejected ones (1, 2, 3, 4, then 5…), for one table listing both", "5"],
     ["{#payments}…{/payments}", "no, kind, amount, status, invoice_no, memo_ref, paid_date", ""],
     ["{#checklist}…{/checklist}", "no, item, done (✓), date, by", ""],

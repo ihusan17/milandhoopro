@@ -42,14 +42,12 @@ const OWN = () => Z().ownFields || [];
 // Own fields the council's PR-03 / PR-12 forms use; added once, editable on the cheat-sheet.
 const OWN_DEFAULTS = [
   { key: "psip_no", label: "PSIP number", kind: "text" },
-  { key: "agenda_no", label: "Agenda number (in the Bid Committee meeting)", kind: "text" },
-  { key: "iulaan_count", label: "How many times the Iulaan was announced", kind: "text", def: "01" },
-  { key: "interest_count", label: "Number of parties who expressed interest", kind: "number" },
-  { key: "prev_meeting_no", label: "If presented to the Bid Committee before: meeting number", kind: "text", def: "-" },
-  { key: "prev_meeting_date", label: "If presented before: date", kind: "text", def: "-" },
-  { key: "prev_decision_dv", label: "If presented before: what was decided", kind: "dv", def: "-" }
+  { key: "interest_count", label: "Number of parties who expressed interest", kind: "number" }
 ];
-function seedOwn(z) { if ((z.ownV || 0) >= 1) return false; z.ownFields = z.ownFields || []; OWN_DEFAULTS.forEach(f => { z.ownFields.some(x => x.key === f.key) || z.ownFields.push({ ...f }); }); z.ownV = 1; return true; }
+// Fields the program now fills itself (from the rounds and the meetings); removed from your own fields once.
+const OWN_AUTO = ["agenda_no", "iulaan_count", "prev_meeting_no", "prev_meeting_date", "prev_decision_dv"];
+function seedOwn(z) {
+  if ((z.ownV || 0) < 2 && (z.ownV || 0) >= 1) { z.ownFields = (z.ownFields || []).filter(f => !OWN_AUTO.includes(f.key)); z.ownV = 2; return true; } if ((z.ownV || 0) >= 1) return false; z.ownFields = z.ownFields || []; OWN_DEFAULTS.forEach(f => { z.ownFields.some(x => x.key === f.key) || z.ownFields.push({ ...f }); }); z.ownV = 2; return true; }
 const ownOf = k => OWN().find(f => f.key === k);
 async function ownEdit(f0) {
   const x = f0 || {}, key = I(x.key || "", { placeholder: "e.g. psip_no", dir: "ltr" }), label = I(x.label || "", { placeholder: "e.g. PSIP number" }), kind = S([["text", "Text"], ["dv", "Dhivehi text"], ["date", "Date"], ["time", "Time"], ["number", "Number"]], x.kind || "text"); const def = I(x.def || "", { placeholder: "e.g. -" });
