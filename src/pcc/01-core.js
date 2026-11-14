@@ -35,6 +35,9 @@ const DVI = (v, a = {}) => thaanaInput(o("input", { type: "text", dir: "rtl", la
 const DVT = (v, a = {}) => { const t = o("textarea", { rows: 3, dir: "rtl", lang: "dv", class: "dv", ...a }); t.value = v ?? ""; return thaanaInput(t); };
 const D = v => o("input", { type: "date", value: v || "" });
 const N = (v, a = {}) => o("input", { type: "number", value: v ?? "", ...a });
+// Time picker (HH:MM, 24-hour). Older typed values such as "10.30", "2pm" or "1030" are converted.
+const toHM = s => { const m = String(s || "").trim().match(/^(\d{1,2})(?:[:.]?(\d{2}))?\s*([ap])?\.?m?\.?$/i); if (!m) return ""; let h = Number(m[1]); const mi = Number(m[2] || 0), ap = (m[3] || "").toLowerCase(); if (ap === "p" && h < 12) h += 12; if (ap === "a" && h === 12) h = 0; return h < 24 && mi < 60 ? String(h).padStart(2, "0") + ":" + String(mi).padStart(2, "0") : ""; };
+const TM = (v, a = {}) => { const el = o("input", { type: "time", step: 300, ...a }); el.value = toHM(v); return el; };
 const MI = v => o("input", { type: "text", inputmode: "decimal", value: v == null || v === "" ? "" : _e(v), placeholder: "0.00" });
 const S = (opts, cur, a = {}) => o("select", a, opts.map(x => (Array.isArray(x) ? bt(x[0], x[1], String(x[0]) === String(cur)) : bt(x, x, x === cur))));
 const parseMoney = (el, name) => { const x = yn(el.value); if (Number.isNaN(x)) throw err(name + ": type an amount like 12500.00"); return x; };

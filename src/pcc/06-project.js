@@ -24,7 +24,7 @@ async function PEDIT2(p, type, pre, ref) {
   };
   // Placeholders in your templates that the program has no field for: typed here once per project.
   const xtags = extraTags(), xf = {};
-  Object.keys(xtags).sort().forEach(k => { const val = (v.fields || {})[k] ?? "", kd = (ownOf(k) || {}).kind || (/_date$/.test(k) ? "date" : /_time$/.test(k) ? "time" : /_dv$/.test(k) ? "dv" : "text"); xf[k] = kd === "date" ? D(val) : kd === "time" ? o("input", { type: "time", value: val }) : kd === "dv" ? DVI(val) : kd === "number" ? N(val) : I(val); });
+  Object.keys(xtags).sort().forEach(k => { const val = (v.fields || {})[k] ?? "", kd = (ownOf(k) || {}).kind || (/_date$/.test(k) ? "date" : /_time$/.test(k) ? "time" : /_dv$/.test(k) ? "dv" : "text"); xf[k] = kd === "date" ? D(val) : kd === "time" ? TM(val) : kd === "dv" ? DVI(val) : kd === "number" ? N(val) : I(val); });
   f.desc.value = v.desc || ""; f.notes.value = v.notes || "";
   let manual = !!v.dueManual;
   const hint = o("div", { class: "muted small" });
