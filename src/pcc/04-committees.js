@@ -19,7 +19,7 @@ const copyMembers = L2 => (L2 || []).map(m => ({ ...JSON.parse(JSON.stringify(m)
 const noTitle = s => String(s || "").replace(/^\s*(?:(?:އަލްފާޟިލް|އަލްފާޟިލާ|ޖަނާބު|ފަޟީލަތުލް|Mr\.?|Ms\.?|Mrs\.?)\s+)+/, "");
 function memberData(m, i) {
   const leave = !!m.onLeave, lt = m.leaveText || LEAVE_TEXTS[0];
-  return { no: i + 1, member_no: i + 1, member_name: m.name || m.nameDv || "", member_name_dv: m.nameDv || m.name || "", member_short_dv: noTitle(m.nameDv || m.name || ""), member_id_card: m.idCard || "", member_office_dv: m.officeDv || "ށ. މިލަންދޫ ކައުންސިލް އިދާރާ", member_designation: m.designation || "", member_designation_dv: m.designationDv || m.designation || "", member_role: m.role || "Member", member_role_dv: ROLEDV[m.role || "Member"] || "",
+  return { no: i + 1, member_no: i + 1, member_name: m.name || m.nameDv || "", member_name_dv: m.nameDv || m.name || "", member_short_dv: noTitle(m.nameDv || m.name || ""), member_id_card: m.idCard || "", member_office_dv: m.officeDv || OFF().memberOfficeDv, member_designation: m.designation || "", member_designation_dv: m.designationDv || m.designation || "", member_role: m.role || "Member", member_role_dv: ROLEDV[m.role || "Member"] || "",
     on_leave: leave ? "Yes" : "", leave_text: leave ? lt : "", leave: leave ? "⟦L⟧" + lt : "", absent_mark: leave ? "⟦G⟧-" : "", present: leave ? "" : "✓", __leave: leave };
 }
 
@@ -52,9 +52,9 @@ function leaveCells(u8, byName = []) {
       for (let i = ni + 2; i < cells.length; i++) rest.push(i);
       if (rest.length < 2 || rest.some(i => txt[i] !== "" && txt[i] !== "-") || /<w:gridSpan w:val="([2-9]|\d\d)"/.test(cells.slice(ni + 2).join(""))) return tr;
       const run = text => '<w:r><w:rPr><w:rtl/></w:rPr><w:t xml:space="preserve">' + xmlEsc(text) + "</w:t></w:r>";
-      const put = (tc, text) => (/<w:p\b[^>]*\/>/.test(tc) && !/<w:p\b[^>]*[^/]>/.test(tc.replace(/<w:pPr>|<w:p\b[^>]*\/>/g, ""))
+      const put = (tc, text) => (/<w:p\b[^>]*\/>/.test(tc) && !/<w:p(?:\s[^>]*[^/])?>/.test(tc.replace(/<w:pPr>|<w:p\b[^>]*\/>/g, ""))
         ? tc.replace(/<w:p\b([^>]*)\/>/, (m, a) => "<w:p" + a + ">" + run(text) + "</w:p>")
-        : tc.replace(/(<w:p\b[^>]*[^/]>(?:\s*<w:pPr>[\s\S]*?<\/w:pPr>)?)([\s\S]*?)(<\/w:p>)/, (m, a, b, c) => a + run(text) + c));
+        : tc.replace(/(<w:p(?:\s[^>]*[^/])?>(?:\s*<w:pPr>[\s\S]*?<\/w:pPr>)?)([\s\S]*?)(<\/w:p>)/, (m, a, b, c) => a + run(text) + c));
       cells[rest[0]] = put(cells[rest[0]].replace(/<w:t[^>]*>-<\/w:t>/, "<w:t></w:t>"), "⟦G⟧-"); cells[rest[1]] = put(cells[rest[1]], "⟦L⟧" + who.text);
       let k = 0; return tr.replace(/<w:tc\b[\s\S]*?<\/w:tc>/g, () => cells[k++]);
     });
@@ -114,7 +114,7 @@ function STANDCARD(n) {
 }
 async function standEdit(k, m) {
   const x = m || {}, nameDv = DVI(x.nameDv), name = I(x.name), desDv = DVI(x.designationDv), des = I(x.designation), idc = I(x.idCard || "", { placeholder: "e.g. A123456" }), off = DVI(x.officeDv || ""), role = S(["Chair", "Member", "Secretary"], x.role || "Member");
-  if (!(await form((m ? "Edit" : "Add") + " standing " + (k === "bid" ? "Bid" : "Evaluation") + " Committee member", [["Name (Dhivehi)", nameDv], ["Name (English)", name], ["Designation (Dhivehi)", desDv], ["Designation (English)", des], ["ID card number", idc], ["Office (Dhivehi) — empty: ށ. މިލަންދޫ ކައުންސިލް އިދާރާ", off], ["Role", role]], { top: kbToggle(), check: () => { if (!nameDv.value.trim() && !name.value.trim()) throw err("Type the name"); } }))) return;
+  if (!(await form((m ? "Edit" : "Add") + " standing " + (k === "bid" ? "Bid" : "Evaluation") + " Committee member", [["Name (Dhivehi)", nameDv], ["Name (English)", name], ["Designation (Dhivehi)", desDv], ["Designation (English)", des], ["ID card number", idc], ["Office (Dhivehi) — empty: the default in Office settings", off], ["Role", role]], { top: kbToggle(), check: () => { if (!nameDv.value.trim() && !name.value.trim()) throw err("Type the name"); } }))) return;
   save(() => { need("templates"); const st = STAND(), v = { nameDv: nameDv.value.trim(), name: name.value.trim(), designationDv: desDv.value.trim(), designation: des.value.trim(), idCard: idc.value.trim(), officeDv: off.value.trim(), role: role.value }; if (v.role === "Chair") (st[k] || []).forEach(y => { y !== m && y.role === "Chair" && (y.role = "Member"); }); if (m) Object.assign(m, v); else (st[k] = st[k] || []).push(v); }, "Saved");
 }
 // Leave toggles used in the member and meeting forms.

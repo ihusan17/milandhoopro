@@ -141,24 +141,24 @@ async function critSheet(p, design) {
   let r = 2;
   if (orig) {
     W.set(2, first, "`", { ...base, sz: 16, h: "center" }).merge(2, first, 2, last); H[1] = 9.75; H[2] = 31.5;
-    W.set(3, last, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ / މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...base, b: true, h: "right" }); H[3] = 25.5;
-    W.set(4, last, "ށ.މިލަންދޫ / ދިވެހިރާއްޖެ", { ...base, h: "right" }); H[4] = 21.75;
+    W.set(3, last, offT("ބިޑް އިވެލުއޭޝަން ކޮމެޓީ / މިލަންދޫ ކައުންސިލްގެ އިދާރާ"), { ...base, b: true, h: "right" }); H[3] = 25.5;
+    W.set(4, last, offT("ށ.މިލަންދޫ / ދިވެހިރާއްޖެ"), { ...base, h: "right" }); H[4] = 21.75;
     W.set(6, first, title, { ...base, b: true, sz: 14, h: "center", wrap: true }).merge(6, first, 6, last); H[6] = 51; r = 8;
   } else if (D === "emerald") {
     W.set(2, first, "ބިޑް އިވެލުއޭޝަން — ޕޮއިންޓް ލިބުނުގޮތުގެ ތަފްޞީލް", { ...base, b: true, sz: 18, fill: "0F766E", color: "FFFFFF", h: "center" }).merge(2, first, 2, last); W.box(2, first, 2, last, { fill: "0F766E" }); H[2] = 40;
-    W.set(3, first, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  ·  މިލަންދޫ ކައުންސިލްގެ އިދާރާ  ·  ށ.މިލަންދޫ", { ...base, sz: 11, fill: "14B8A6", color: "FFFFFF", h: "center" }).merge(3, first, 3, last); W.box(3, first, 3, last, { fill: "14B8A6" }); H[3] = 22;
+    W.set(3, first, offT("ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  ·  މިލަންދޫ ކައުންސިލްގެ އިދާރާ  ·  ށ.މިލަންދޫ"), { ...base, sz: 11, fill: "14B8A6", color: "FFFFFF", h: "center" }).merge(3, first, 3, last); W.box(3, first, 3, last, { fill: "14B8A6" }); H[3] = 22;
     W.set(5, first, title, { ...base, b: true, sz: 13, color: "0F5149", h: "center", wrap: true }).merge(5, first, 5, last); H[5] = 44;
     W.set(6, first, critTxt + (p.advertNo ? "     ·     " + p.advertNo : ""), { ...base, sz: 11, color: "0F766E", fill: "F0FDFA", h: "center", border: { style: "thin", color: "99E2D6" } }).merge(6, first, 6, last); W.box(6, first, 6, last, { fill: "F0FDFA", border: { style: "thin", color: "99E2D6" } }); H[6] = 24; r = 8;
   } else if (D === "navy") {
-    W.set(2, last, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...base, b: true, sz: 16, color: "1E3A8A", h: "right" }); H[2] = 30;
-    W.set(3, last, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  —  ށ.މިލަންދޫ، ދިވެހިރާއްޖެ", { ...base, sz: 11, color: "475569", h: "right" });
+    W.set(2, last, offT("މިލަންދޫ ކައުންސިލްގެ އިދާރާ"), { ...base, b: true, sz: 16, color: "1E3A8A", h: "right" }); H[2] = 30;
+    W.set(3, last, offT("ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  —  ށ.މިލަންދޫ، ދިވެހިރާއްޖެ"), { ...base, sz: 11, color: "475569", h: "right" });
     W.set(2, first, "ބިޑް އިވެލުއޭޝަން ޝީޓް", { ...base, b: true, sz: 14, color: "FFFFFF", fill: "1E3A8A", h: "center" }).merge(2, first, 3, first + 1); W.box(2, first, 3, first + 1, { fill: "1E3A8A" });
     W.box(4, first, 4, last, { border: { style: "medium", color: "1E3A8A" } }); H[4] = 4;
     W.set(5, first, title, { ...base, b: true, sz: 13, h: "center", wrap: true, color: "0F172A" }).merge(5, first, 5, last); H[5] = 44;
     W.set(6, last, "ކްރައިޓީރިއާ:", { ...base, b: true, sz: 11, color: "1E3A8A", h: "right", fill: "EEF2FF" }); W.set(6, first, critTxt + (p.advertNo ? "     ·     އިޢުލާން " + p.advertNo : ""), { ...base, sz: 11, color: "1E3A8A", h: "right", fill: "EEF2FF" }).merge(6, first, 6, last - 1); W.box(6, first, 6, last, { fill: "EEF2FF" }); H[6] = 24; r = 8;
   } else {
     W.set(2, first, "ބިޑް އިވެލުއޭޝަން ސްކޯކާޑް", { ...base, b: true, sz: 20, color: "111827", h: "right" }).merge(2, first, 2, last); H[2] = 38;
-    W.set(3, first, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ  ·  ބިޑް އިވެލުއޭޝަން ކޮމެޓީ" + (p.advertNo ? "  ·  " + p.advertNo : ""), { ...base, sz: 11, color: "6B7280", h: "right" }).merge(3, first, 3, last);
+    W.set(3, first, offT("މިލަންދޫ ކައުންސިލްގެ އިދާރާ  ·  ބިޑް އިވެލުއޭޝަން ކޮމެޓީ") + (p.advertNo ? "  ·  " + p.advertNo : ""), { ...base, sz: 11, color: "6B7280", h: "right" }).merge(3, first, 3, last);
     W.set(5, first, title, { ...base, b: true, sz: 13, h: "right", wrap: true }).merge(5, first, 5, last); H[5] = 42;
     // weight chips: one coloured cell per criterion group
     cols.filter(x => x.k === "pts").forEach(x => { const g = GC[x.cr.type] || GC.other, span = colOf("val", x.cr) ? [x.c, colOf("val", x.cr)] : [x.c, x.c]; W.set(6, span[0], `${x.cr.labelDv || critType(x.cr.type)[2]}  ${x.cr.weight}%`, { ...base, b: true, sz: 11, fill: g[1], color: g[0], h: "center" }).merge(6, span[0], 6, span[1]); W.box(6, span[0], 6, span[1], { fill: g[1] }); });
@@ -242,8 +242,8 @@ async function evalSheetPro(p, D) {
   let r = 2;
   // Header: council (right) and a document box (left)
   const box = Math.min(3, Math.max(2, Math.floor(NC / 3)));
-  W.set(2, c1, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 18, color: NAVY, h: "right" }).merge(2, c1, 2, cN - box); H[2] = 34;
-  W.set(3, c1, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  ·  ށ. މިލަންދޫ، ދިވެހިރާއްޖެ", { ...b0, sz: 11, color: MUTE, h: "right" }).merge(3, c1, 3, cN - box);
+  W.set(2, c1, offT("މިލަންދޫ ކައުންސިލްގެ އިދާރާ"), { ...b0, b: true, sz: 18, color: NAVY, h: "right" }).merge(2, c1, 2, cN - box); H[2] = 34;
+  W.set(3, c1, offT("ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  ·  ށ. މިލަންދޫ، ދިވެހިރާއްޖެ"), { ...b0, sz: 11, color: MUTE, h: "right" }).merge(3, c1, 3, cN - box);
   const dt = { ...b0, sz: 10, color: "FFFFFF", fill: NAVY, h: "center" };
   W.set(2, cN - box + 1, D === "calc" ? "ޕޮއިންޓް ހިސާބުކުރި ގޮތް" : D === "matrix" ? "ބިޑް އަޅާކިޔުމުގެ ޝީޓް" : "ބިޑް އިވެލުއޭޝަން ޝީޓް", { ...dt, b: true, sz: 13 }).merge(2, cN - box + 1, 2, cN);
   W.set(3, cN - box + 1, "ތާރީޚް: " + dvDate(today()), dt).merge(3, cN - box + 1, 3, cN); W.box(2, cN - box + 1, 3, cN, { fill: NAVY });
@@ -398,24 +398,24 @@ async function evalSheetStyled(p, V = "styled") {
   // ----- Header -----
   if (V === "polished") {
     W.set(2, c1, "`", { ...b0, sz: 16, h: "center" }).merge(2, c1, 2, cN); H[2] = 30;
-    W.set(3, c1, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ / މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 12, h: "right" }).merge(3, c1, 3, cN); H[3] = 30;
-    W.set(4, c1, "ށ.މިލަންދޫ / ދިވެހިރާއްޖެ", { ...b0, sz: 11, color: "404040", h: "right" }).merge(4, c1, 4, cN); H[4] = 30;
+    W.set(3, c1, offT("ބިޑް އިވެލުއޭޝަން ކޮމެޓީ / މިލަންދޫ ކައުންސިލްގެ އިދާރާ"), { ...b0, b: true, sz: 12, h: "right" }).merge(3, c1, 3, cN); H[3] = 30;
+    W.set(4, c1, offT("ށ.މިލަންދޫ / ދިވެހިރާއްޖެ"), { ...b0, sz: 11, color: "404040", h: "right" }).merge(4, c1, 4, cN); H[4] = 30;
     rule(5, "000000", "thin"); H[6] = 10;
     W.set(7, c1, `${p.nameDv || p.name || ""} ކޮށްދޭނެ ފަރާތެއް ހޯދުމަށްކުރި އިޢުލާނާ ގުޅިގެން ބީލަން ހުށައެޅުއްވި ފަރާތްތަކަށް ޕޮއިންޓް ލިބިފައިވާގޮތުގެ ތަފްޞީލް`, { ...b0, b: true, sz: 14, h: "center", wrap: true }).merge(7, c1, 7, cN); H[7] = 48;
     if (p.advertNo) { W.set(8, c1, "އިޢުލާން ނަންބަރު: " + p.advertNo, { ...b0, sz: 10, color: "595959", h: "center" }).merge(8, c1, 8, cN); H[8] = 18; }
     r = 9;
   } else if (V === "styled") {
     band(2, "`", { ...b0, sz: 18, color: "FFFFFF", fill: DEEP, h: "center" }, 30);
-    band(3, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 17, color: "FFFFFF", fill: DEEP, h: "center" }, 30);
-    band(4, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ   ·   ށ. މިލަންދޫ، ދިވެހިރާއްޖެ", { ...b0, sz: 11, color: "D7F2EE", fill: T.acc, h: "center" }, 22);
+    band(3, offT("މިލަންދޫ ކައުންސިލްގެ އިދާރާ"), { ...b0, b: true, sz: 17, color: "FFFFFF", fill: DEEP, h: "center" }, 30);
+    band(4, offT("ބިޑް އިވެލުއޭޝަން ކޮމެޓީ   ·   ށ. މިލަންދޫ، ދިވެހިރާއްޖެ"), { ...b0, sz: 11, color: "D7F2EE", fill: T.acc, h: "center" }, 22);
     band(5, "", { fill: GOLD }, 4); H[6] = 10;
     W.set(7, c1, p.nameDv || p.name || "", { ...b0, b: true, sz: 16, color: DEEP, h: "center", wrap: true }).merge(7, c1, 7, cN); H[7] = 36;
     W.set(8, c1, title2, { ...b0, sz: 11, color: MUTE, h: "center" }).merge(8, c1, 8, cN); H[8] = 22; r = 10;
   } else if (V === "royal") {
     const bx = Math.min(3, cN - c1 - 2);
     W.set(2, c1 + bx, "`", { ...b0, sz: 16, color: DEEP, h: "right" }).merge(2, c1 + bx, 2, cN); H[2] = 26;
-    W.set(3, c1 + bx, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 18, color: DEEP, h: "right" }).merge(3, c1 + bx, 3, cN); H[3] = 32;
-    W.set(4, c1 + bx, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  —  ށ. މިލަންދޫ، ދިވެހިރާއްޖެ", { ...b0, sz: 11, color: GOLD, h: "right" }).merge(4, c1 + bx, 4, cN); H[4] = 22;
+    W.set(3, c1 + bx, offT("މިލަންދޫ ކައުންސިލްގެ އިދާރާ"), { ...b0, b: true, sz: 18, color: DEEP, h: "right" }).merge(3, c1 + bx, 3, cN); H[3] = 32;
+    W.set(4, c1 + bx, offT("ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  —  ށ. މިލަންދޫ، ދިވެހިރާއްޖެ"), { ...b0, sz: 11, color: GOLD, h: "right" }).merge(4, c1 + bx, 4, cN); H[4] = 22;
     W.set(2, c1, "ބިޑް އިވެލުއޭޝަން ޝީޓް", { ...b0, b: true, sz: 14, color: "E9C46A", fill: DEEP, h: "center" }).merge(2, c1, 3, c1 + bx - 1);
     W.set(4, c1, "ތާރީޚް: " + dvDate(today()), { ...b0, sz: 10, color: "FFFFFF", fill: DEEP, h: "center" }).merge(4, c1, 4, c1 + bx - 1); W.box(2, c1, 4, c1 + bx - 1, { fill: DEEP });
     rule(5, GOLD, "thick"); H[6] = 4; rule(6, DEEP, "thin"); H[7] = 10;
@@ -423,15 +423,15 @@ async function evalSheetStyled(p, V = "styled") {
     W.set(9, c1, title2, { ...b0, sz: 11, color: "7C6A3A", h: "center", i: true }).merge(9, c1, 9, cN); H[9] = 22; r = 11;
   } else if (V === "minimal") {
     W.set(2, c1, "ތާރީޚް  " + dvDate(today()), { ...b0, sz: 10, color: MUTE, h: "left" }).merge(2, c1, 2, c1 + 2);
-    W.set(2, c1 + 3, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 20, color: DEEP, h: "right" }).merge(2, c1 + 3, 2, cN); H[2] = 38;
+    W.set(2, c1 + 3, offT("މިލަންދޫ ކައުންސިލްގެ އިދާރާ"), { ...b0, b: true, sz: 20, color: DEEP, h: "right" }).merge(2, c1 + 3, 2, cN); H[2] = 38;
     W.set(3, c1, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  ·  ބިޑް އިވެލުއޭޝަން ޝީޓް", { ...b0, sz: 11, color: MUTE, h: "right" }).merge(3, c1, 3, cN); H[3] = 20;
     rule(4, DEEP, "medium"); H[5] = 14;
     W.set(6, c1, p.nameDv || p.name || "", { ...b0, b: true, sz: 15, color: DEEP, h: "right", wrap: true }).merge(6, c1, 6, cN); H[6] = 30;
     W.set(7, c1, title2, { ...b0, sz: 11, color: MUTE, h: "right" }).merge(7, c1, 7, cN); H[7] = 20; r = 9;
   } else {
     band(2, "`", { ...b0, sz: 18, color: "FFFFFF", fill: "0C4A6E", h: "center" }, 28);
-    band(3, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 18, color: "FFFFFF", fill: "0C4A6E", h: "center" }, 32);
-    band(4, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ   ·   ށ. މިލަންދޫ، ދިވެހިރާއްޖެ", { ...b0, sz: 11, color: "E0F2FE", fill: "0284C7", h: "center" }, 22);
+    band(3, offT("މިލަންދޫ ކައުންސިލްގެ އިދާރާ"), { ...b0, b: true, sz: 18, color: "FFFFFF", fill: "0C4A6E", h: "center" }, 32);
+    band(4, offT("ބިޑް އިވެލުއޭޝަން ކޮމެޓީ   ·   ށ. މިލަންދޫ، ދިވެހިރާއްޖެ"), { ...b0, sz: 11, color: "E0F2FE", fill: "0284C7", h: "center" }, 22);
     band(5, "", { fill: "38BDF8" }, 5); band(6, "", { fill: "99F6E4" }, 3); H[7] = 12;
     W.set(8, c1, p.nameDv || p.name || "", { ...b0, b: true, sz: 16, color: "0C4A6E", fill: "F0F9FF", h: "center", wrap: true }).merge(8, c1, 8, cN); W.box(8, c1, 9, cN, { fill: "F0F9FF" }); H[8] = 34;
     W.set(9, c1, title2, { ...b0, sz: 11, color: "0369A1", fill: "F0F9FF", h: "center" }).merge(9, c1, 9, cN); H[9] = 22; outline(8, c1, 9, cN, "thin", "7DD3FC"); r = 11;
@@ -565,12 +565,12 @@ async function evalSheetBid(p, D) {
     mergeSet(2, cN - 1, cN, "EV-01", { ...b0, b: true, sz: 12, h: "center", border: { style: "medium", color: "000000" } }, 24);
     mergeSet(3, cN - 1, cN, "ސަފުހާ 1", { ...b0, sz: 9, color: MUTE, h: "center", border: { style: "thin", color: "000000" } });
     mergeSet(2, c1, cN - 2, "`", { ...b0, sz: 16, h: "center" });
-    mergeSet(3, c1, cN - 2, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 16, h: "center" }, 28);
+    mergeSet(3, c1, cN - 2, offT("މިލަންދޫ ކައުންސިލްގެ އިދާރާ"), { ...b0, b: true, sz: 16, h: "center" }, 28);
     mergeSet(4, c1, cN, "ބިޑް އިވެލުއޭޝަން ފޯމު", { ...b0, b: true, sz: 15, h: "center", border: { style: "double", color: "000000", only: ["top", "bottom"] } }, 30);
     r = 6;
   } else {
-    mergeSet(2, c1, cN - 3, "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { ...b0, b: true, sz: 18, color: NAVY, h: "right" }, 32);
-    mergeSet(3, c1, cN - 3, "ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  ·  ށ. މިލަންދޫ، ދިވެހިރާއްޖެ", { ...b0, sz: 11, color: MUTE, h: "right" });
+    mergeSet(2, c1, cN - 3, offT("މިލަންދޫ ކައުންސިލްގެ އިދާރާ"), { ...b0, b: true, sz: 18, color: NAVY, h: "right" }, 32);
+    mergeSet(3, c1, cN - 3, offT("ބިޑް އިވެލުއޭޝަން ކޮމެޓީ  ·  ށ. މިލަންދޫ، ދިވެހިރާއްޖެ"), { ...b0, sz: 11, color: MUTE, h: "right" });
     W.set(2, cN - 2, D === "award" ? "ހަވާލުކުރުމަށް ލަފާ" : "ބިޑް އިވެލުއޭޝަން ރިޕޯޓު", { ...b0, b: true, sz: 13, color: "FFFFFF", fill: D === "award" ? TEAL : NAVY, h: "center" }).merge(2, cN - 2, 2, cN);
     W.set(3, cN - 2, (p.advertNo || "") + "   ·   " + dvDate(today()), { ...b0, sz: 9, color: "FFFFFF", fill: D === "award" ? TEAL : NAVY, h: "center" }).merge(3, cN - 2, 3, cN); W.box(2, cN - 2, 3, cN, { fill: D === "award" ? TEAL : NAVY });
     W.box(4, c1, 4, cN, { border: { style: "medium", color: D === "award" ? TEAL : NAVY, only: "bottom" } }); H[4] = 4; r = 6;

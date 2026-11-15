@@ -568,3 +568,29 @@ Fields added for these forms: `{invite_date}` (+ `_dv_dmy`, `_hijri`: today, or 
 made later), `{#bidders_received}` (bids in the order received, with `dq`, `dq_text_dv`, `*_ok`,
 `bid_amount_or_dq`). Hijri dates are written as on council forms (`06 ރަބީޢުލްއައްވަލް 1448`), and
 `{budget_after_award}` is `-` when the award is above the budget.
+
+### Office settings
+
+Templates › **Office settings**: office name (full, short, very short, English), island, country, default meeting
+place, default member office, head of office and title, phone / e-mail / website, footer line and an optional
+letterhead image. The built-in evaluation sheets, page labels and defaults read from here instead of fixed
+Milandhoo text, so another office only changes these settings. Template fields: `{office_name_dv}`, `{office_dv}`,
+`{office_short_dv}`, `{office_name_en}`, `{office_island_dv}`, `{office_country_dv}`, `{office_place_dv}`,
+`{office_head_name}`, `{office_head_title_dv}`, `{office_phone}`, `{office_email}`, `{office_web}`, `{office_footer_dv}`.
+
+### Documents written in the portal
+
+Templates › **New document (write in portal)** opens a full-screen editor: blocks on the left, a live preview filled
+with a real project (and its meeting) on the right.
+
+- Blocks: Paragraph (alignment, bold, underline, size, space after), Label – value rows, Table (fixed rows, or one row
+  per committee member / bid / project / criterion; columns right to left; columns with the same group heading share a
+  heading cell), Signatures (side by side), Space, Page break. Blocks can be moved, copied and deleted.
+- **Insert field** picks fields from the list (with the sample value), including the row fields of a repeating table;
+  unknown fields are listed in red. The Thaana keyboard works in every box.
+- Letterhead (the uploaded image, or the State emblem with the office name) and optional page numbers.
+- **Print / PDF** opens a print view (Save as PDF in the browser).
+- Saving builds a real Word file with placeholders and stores it as the template's next version, so packs, document
+  sets (Type 01…), meeting documents, leave marking, previews and versions work as for uploaded templates.
+  **Edit document** on the Templates page reopens it.
+- Starters: *Bid Committee invitation (one project, as Type 01)* and a *Simple letter*.

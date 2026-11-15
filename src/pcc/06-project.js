@@ -395,7 +395,7 @@ function bidsChecklist(p) {
   .y{color:#15803d;font-weight:bold;font-size:15px}.x{color:#b91c1c;font-weight:bold;font-size:15px}.dq td{color:#b91c1c}.c{font-weight:bold}
   .sig{display:flex;gap:24px;margin-top:28px}.sig div{flex:1;border-top:1px dashed #94a3b8;padding-top:6px;text-align:center}.sig b{display:block}.sig span{color:#64748b;font-size:11px}
   .lg{margin-top:8px;color:#64748b;font-size:11px}</style></head><body>
-  <div class="hd"><div><h1>މިލަންދޫ ކައުންސިލްގެ އިދާރާ</h1><div class="s">ބިޑް އިވެލުއޭޝަން ކޮމެޓީ · ށ. މިލަންދޫ، ދިވެހިރާއްޖެ</div></div><div class="box"><b>ލިޔެކިޔުންތަކުގެ ޗެކްލިސްޓް</b>${E(dvDate(today()))}</div></div>
+  <div class="hd"><div><h1>${E(OFF().officeDv)}</h1><div class="s">ބިޑް އިވެލުއޭޝަން ކޮމެޓީ · ${E(OFF().islandDv)}، ${E(OFF().countryDv)}</div></div><div class="box"><b>ލިޔެކިޔުންތަކުގެ ޗެކްލިސްޓް</b>${E(dvDate(today()))}</div></div>
   <div class="ttl">${E(p.nameDv || p.name || "")}</div><div class="sub">ބީލަން ހުށައެޅުއްވި ފަރާތްތަކުން ހުށަހެޅި ލިޔެކިޔުންތައް${p.advertNo ? " · " + E(p.advertNo) : ""}</div>
   <table class="ck"><colgroup><col style="width:28px"><col style="width:200px"><col style="width:100px">${D.map(() => '<col class="dc">').join("")}<col style="width:58px"><col style="width:84px"><col></colgroup>
   <thead><tr><th>#</th><th>ބިޑް ހުށައެޅި ފަރާތް</th><th>ހުށަހެޅި އަގު</th>${D.map(d => `<th class="v${RQ.includes(d) ? " rq" : ""}"><span>${E(d)}${RQ.includes(d) ? " ★" : ""}</span></th>`).join("")}<th>ހުށަހެޅި</th><th>ޝަރުތު</th><th>ބަޔާން</th></tr></thead><tbody>

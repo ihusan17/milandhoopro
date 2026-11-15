@@ -39,7 +39,7 @@ const MREQ = [["contract", "Contract value (MVR)", "money"], ["vendor", "Contrac
 const mMissing = x => MREQ.filter(([key]) => x[key] == null || !String(x[key]).trim()).map(r => r[1]);
 const mNeeds = (k, t) => k === "bid" && ["award", "variation", "extension"].includes(t);
 async function meetingEdit(m, k, p, pre) {
-  const v = m || {}, date = D(v.date || today()), time = TM(v.start || v.time || (m ? "" : k === "eval" ? "09:00" : "10:00")), end = TM(v.end), place = I(v.place || "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", { dir: "auto" }), notes = o("textarea", { rows: 2, dir: "auto" });
+  const v = m || {}, date = D(v.date || today()), time = TM(v.start || v.time || (m ? "" : k === "eval" ? "09:00" : "10:00")), end = TM(v.end), place = I(v.place || OFF().placeDv, { dir: "auto" }), notes = o("textarea", { rows: 2, dir: "auto" });
   const kind = k === "eval" ? "evalmeeting" : "meeting", ref = I(v.ref || "", { placeholder: refPeek(kind), title: "Leave empty: the next number is given automatically" });
   notes.value = v.notes || "";
   const items = new Map(mItems(v).map(it => [it.projectId, { ...it }]));
@@ -152,7 +152,7 @@ function MEETPAGE(n, [y, kf]) {
     loose.length ? o("details", { class: "card" }, o("summary", { style: { cursor: "pointer", fontWeight: 700 } }, `Meetings typed on projects only (${loose.length}) — not in the register yet`),
       o("p", { class: "muted small" }, "These meeting numbers were typed in a project's Edit form. Add them to the register to keep every meeting in one list."),
       tbl(["Committee", "Meeting no.", "Date", "Projects", ""], loose.sort((a, b) => String(a.date).localeCompare(String(b.date))).map(g => o("tr", {}, o("td", {}, KLAB[g.k]), o("td", {}, g.no), o("td", {}, fd(g.date)), o("td", {}, g.P.map(p => o("div", { class: "small" }, p.ref, " ", o("span", { dir: "auto" }, p.nameDv || p.name)))),
-        o("td", {}, ed ? btn("Add to register", () => save(() => { need("pdocs"); const pre = g.k === "eval" ? "evalMeeting" : "bidMeeting", src = g.P.find(p => (p.committees[g.k] || []).length); const mm = { id: uid(), ref: g.no, kind: g.k, date: g.date || "", time: g.time, start: g.time, end: g.P[0][pre + "End"] || "", place: "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", notes: "", items: g.P.map(p => ({ projectId: p.id, type: g.k === "eval" ? "evaluation" : "award" })), projectIds: g.P.map(p => p.id), members: JSON.parse(JSON.stringify(src ? src.committees[g.k] : STAND()[g.k] || [])), by: me(), at: Vt() }; MEETS().push(mm); g.P.forEach(p => { p[pre + "Id"] = mm.id; }); }, "Added to the register"), "small") : null))))) : null);
+        o("td", {}, ed ? btn("Add to register", () => save(() => { need("pdocs"); const pre = g.k === "eval" ? "evalMeeting" : "bidMeeting", src = g.P.find(p => (p.committees[g.k] || []).length); const mm = { id: uid(), ref: g.no, kind: g.k, date: g.date || "", time: g.time, start: g.time, end: g.P[0][pre + "End"] || "", place: OFF().placeDv, notes: "", items: g.P.map(p => ({ projectId: p.id, type: g.k === "eval" ? "evaluation" : "award" })), projectIds: g.P.map(p => p.id), members: JSON.parse(JSON.stringify(src ? src.committees[g.k] : STAND()[g.k] || [])), by: me(), at: Vt() }; MEETS().push(mm); g.P.forEach(p => { p[pre + "Id"] = mm.id; }); }, "Added to the register"), "small") : null))))) : null);
 }
 function meetingData(m, focus) {
   const P = mItems(m).map(it => prj(it.projectId)).filter(Boolean), first = focus || P[0];
