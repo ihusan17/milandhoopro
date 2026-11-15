@@ -159,6 +159,9 @@ function meetingData(m, focus) {
   const mem = m.members.map(memberData);
   const d = dataFor(first, { meeting_ref: m.ref || "", meeting_date: Xt(m.date), meeting_date_dv: dvDate(m.date), meeting_date_en: enDate(m.date), meeting_date_hijri: hijri(m.date), meeting_time: m.time || "", meeting_place: m.place || "", meeting_notes: m.notes || "", project_count: P.length, letter_date: Xt(m.date), letter_date_dv: dvDate(m.date), letter_date_hijri: hijri(m.date) });
   d[m.kind + "_members"] = mem; numberedMembers(d, m.kind, mem);
+  // Invitation date: today when the documents are made before the meeting, else the day before it.
+  const inv = isISO(m.date) && today() < m.date ? today() : dAdd(m.date, -1);
+  d.invite_date = Xt(inv); d.invite_date_dv = dvDate(inv); d.invite_date_hijri = hijri(inv);
   d[m.kind + "_meeting_no"] = m.ref || ""; d[m.kind + "_meeting_date"] = Xt(m.date); d[m.kind + "_meeting_date_dv"] = dvDate(m.date); d[m.kind + "_meeting_date_en"] = enDate(m.date); d[m.kind + "_meeting_date_hijri"] = hijri(m.date);
   d[m.kind + "_meeting_time"] = m.time || ""; d[m.kind + "_meeting_start_time"] = m.start || m.time || ""; d[m.kind + "_meeting_end_time"] = m.end || ""; d[m.kind + "_meeting_year"] = isISO(m.date) ? m.date.slice(0, 4) : d[m.kind + "_meeting_year"]; d[m.kind + "_meeting_seq"] = String(Number(((m.ref || "").match(/(\d+)\D*$/) || [])[1] || "") || "");
   const IT = mItems(m);
@@ -176,6 +179,10 @@ function meetingData(m, focus) {
   return addYMD(d);
 }
 
+// Document sets: a meeting of a given shape uses its own set of templates (tagged on the Templates page).
+const DOCSETS = [["01", "Type 01 — one project, award", m => m.kind === "bid" && mItems(m).length === 1 && mItems(m)[0].type === "award"]];
+const mSet = m => DOCSETS.find(s => s[2](m)) || null;
+const setLabel = c => (DOCSETS.find(s => s[0] === c) || [c, "Type " + c])[1];
 async function meetingGen(m) {
   try {
     need("pdocs");
@@ -186,16 +193,19 @@ async function meetingGen(m) {
     // ({#projects}…{/projects}) makes one document for the whole meeting; any other template
     // (your own one-project formats) makes one document per project, filled with this meeting's
     // number, date, time and members.
-    for (const t of TPL().filter(x => x.active !== false && x.group === group).sort((a, b) => (a.order || 0) - (b.order || 0))) cands.push({ t, multi: await meetingTpl(t), own: !String((curVer(t) || {}).fileId || "").startsWith("demo:") });
+    // A matching document set brings its templates from any group (e.g. the evaluation form), in their order.
+    const ds = mSet(m), inSet = t => ds && (t.sets || []).includes(ds[0]);
+    for (const t of TPL().filter(x => x.active !== false && (x.group === group || inSet(x))).sort((a, b) => (a.order || 0) - (b.order || 0))) cands.push({ t, multi: await meetingTpl(t), own: !String((curVer(t) || {}).fileId || "").startsWith("demo:"), set: inSet(t) });
     if (!cands.length) throw err(`No templates in the ${group} group yet — upload them under Templates.`);
-    const hasOwn = cands.some(c => c.own);
-    const cbs = cands.map(c => o("input", { type: "checkbox", checked: hasOwn ? c.own : c.multi }));
+    const hasOwn = cands.some(c => c.own), hasSet = cands.some(c => c.set);
+    // With a document set, exactly its templates are ticked; templates tagged for other sets are left out.
+    const cbs = cands.map(c => o("input", { type: "checkbox", checked: hasSet ? c.set : (c.t.sets || []).length ? false : hasOwn ? c.own : c.multi }));
     // Members with their leave status: leave marked on any of the meeting's projects is picked up here too.
     const same = (a, b) => (a.nameDv && a.nameDv === b.nameDv) || (a.name && a.name === b.name);
     const mrows = m.members.map(x => { const src = P.map(p => (p.committees[m.kind] || []).find(y => same(x, y))).find(y => y && y.onLeave); return { x, lf: leaveFields(src && !x.onLeave ? { onLeave: true, leaveText: src.leaveText } : x) }; });
     const how = c => c.multi ? "one for the whole meeting" : P.length > 1 ? `one per project (${P.length})` : "for this project";
     if (!(await Mt(`Documents for ${m.ref || "the meeting"} · ${fd(m.date)}`, [o("p", {}, `${P.length} project${P.length === 1 ? "" : "s"}: ${P.map(p => p.ref).join(", ")}`), o("h4", {}, "Members at this meeting"), o("div", { class: "pcc-mmem" }, mrows.map(({ x, lf }) => o("div", { class: "pcc-mrow2" }, o("span", { dir: "auto", lang: x.nameDv ? "dv" : null }, (x.nameDv || x.name) + " · " + (x.role || "Member")), lf.el))),
-      o("h4", {}, "Documents"), o("p", { class: "muted small" }, "Your uploaded templates are ticked. Each is filled with this meeting's number, date, time and members. A template with {#projects}…{/projects} makes one document listing every project; other templates make one document per project."),
+      o("h4", {}, "Documents"), hasSet ? o("div", { class: "pcc-set-note" }, "Document set: ", o("b", {}, ds[1]), " — its templates are ticked.") : null, o("p", { class: "muted small" }, "Your uploaded templates are ticked. Each is filled with this meeting's number, date, time and members. A template with {#projects}…{/projects} makes one document listing every project; other templates make one document per project."),
       ...cands.map((c, i) => o("label", { class: "pcc-chk", style: { display: "flex", margin: "6px 0", gap: "8px", alignItems: "center" } }, cbs[i], o("span", { class: "pcc-fmt f-" + c.t.type }, c.t.type === "xlsx" ? "XLSX" : "DOCX"), o("span", {}, o("b", {}, c.t.code), " ", c.t.nameEn, o("span", { class: "muted small" }, " · " + how(c) + (c.t.perMember ? " · one per member present" : "") + (c.own ? "" : " · built-in sample format")))))], [{ label: "Cancel", value: !1 }, { label: "Generate", primary: !0, value: !0 }]))) return;
     m.members = mrows.map(({ x, lf }) => Object.assign(x, lf.read()));
     const all = [];

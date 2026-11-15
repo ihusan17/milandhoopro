@@ -554,3 +554,17 @@ These PR-03 / PR-12 placeholders are no longer typed on the project (removed fro
 
 Criteria fields (`{price_weight}`, `{duration_weight}`, … and `*_points`) also come from the project's
 evaluation criteria and are not listed there.
+
+### Document sets (Type 01)
+
+A template can belong to a **document set** (Templates › Edit › Document set). When a meeting matches a set,
+its Documents box ticks exactly that set's templates, taking them from any group (e.g. the evaluation form).
+
+- **Type 01 — one project, award:** a Bid Committee meeting with one agenda item, an award.
+  Set: Bid Committee invitation, Bid Evaluation Form (both sheets), PR-05 award sheet, PR-07 Yaumiyya,
+  PR-12 award data sheet.
+
+Fields added for these forms: `{invite_date}` (+ `_dv_dmy`, `_hijri`: today, or the day before the meeting when
+made later), `{#bidders_received}` (bids in the order received, with `dq`, `dq_text_dv`, `*_ok`,
+`bid_amount_or_dq`). Hijri dates are written as on council forms (`06 ރަބީޢުލްއައްވަލް 1448`), and
+`{budget_after_award}` is `-` when the award is above the budget.

@@ -530,3 +530,4 @@ input[type=time]{border:1px solid var(--line2);border-radius:10px;padding:0 12px
 .pcc-ag-rf.miss .pcc-ag-rv{background:#fef2f2;color:#b91c1c;border:1px dashed #fca5a5}
 .pcc-ag-rfix{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;font-size:12px}
 .pcc-ag-rfix.miss{color:#b91c1c;font-weight:600}
+.pcc-settag{display:inline-block;margin-top:4px;background:#e0f2fe;color:#075985;font-size:11px}.pcc-set-note{margin:4px 0 8px;padding:8px 10px;border-radius:8px;background:#ecfeff;border:1px solid #a5f3fc;font-size:13px}
