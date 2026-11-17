@@ -52,6 +52,7 @@ const FIELDS = [
     ["retender_reason", "Re-advertise reason in English: No bids received, All bidders disqualified, All bids above the estimate, Only one bid received, Specification or scope change, Other", ""],
     ["iulaan_count", "How many times the Iulaan was announced: 01, 02… (from the rounds)", "02"], ["prev_meeting_no", "Previous round: decision / meeting reference, or -", "(IUL)351-PRO/2026/BM001"], ["prev_meeting_date", "Previous round: decision date, or -", "12.11.2026"], ["prev_decision_dv", "Previous round: what was decided (Dhivehi), or -", ""], ["agenda_no", "The project's number on the Bid Committee meeting agenda", "2"],
     ["invite_date", "Meeting invitation date: today, or the day before the meeting when made later (also _dv_dmy, _dv_ymd, _hijri)", "19.08.2026"],
+    ["project_work_dv", "Project name as \"… ކުރުމުގެ މަސައްކަތް\" (from the base name … ކުރުން / … ދިނުން); also project_work_with_dv (… މަސައްކަތާ), project_work_to_dv (… މަސައްކަތަށް), project_doer_dv (… ކޮށްދޭނެ), project_gen_dv (… ކުރުމުގެ)", ""], ["{#projects}…{/projects}", "One row per agenda item at the meeting: agenda_text_dv, agenda_docs_dv, discussion_dv, decision_dv (from Agenda wording, or the meeting's own text), item_type_dv, item_days, item_days_words_dv, variation_no, plus the project's fields", ""], ["meeting_secretary_dv", "Secretary of the meeting (writes the Yaumiyya)", ""],
     ["row_no", "Inside {#responsive_bidders} and {#rejected_bidders}: a number that runs on from the responsive bidders into the rejected ones (1, 2, 3, 4, then 5…), for one table listing both", "5"],
     ["{#payments}…{/payments}", "no, kind, amount, status, invoice_no, memo_ref, paid_date", ""],
     ["{#checklist}…{/checklist}", "no, item, done (✓), date, by", ""],
@@ -178,6 +179,6 @@ function dataFor(p, extra = {}) {
   (Z().ownFields || []).forEach(f => { const raw = (p.fields || {})[f.key]; f.kind === "date" && [["_dv", dvDate], ["_en", enDate], ["_hijri", hijri]].forEach(([x, fn]) => { d[f.key + x] === undefined && (d[f.key + x] = isISO(raw) ? fn(raw) : ""); }); f.kind === "date" && d[f.key + "_iso"] === undefined && (d[f.key + "_iso"] = isISO(raw) ? raw : "");
   });
   (Z().ownFields || []).forEach(f => { f.kind === "number" && d[f.key] !== "" && d[f.key] != null && !isNaN(Number(d[f.key])) && (d.__num[f.key] = Number(d[f.key])); (d[f.key] === undefined || d[f.key] === "") && (d[f.key] = f.def || ""); });
-  officeData(d);
+  officeData(d); nameFields(d, p.nameDv || p.name || "");
   return addYMD(Object.assign(d, extra));
 }

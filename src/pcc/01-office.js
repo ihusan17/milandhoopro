@@ -3,7 +3,7 @@
 const OFFICE_DEFAULTS = {
   nameDv: "މިލަދުންމަޑުލު އުތުރުބުރީ މިލަންދޫ ކައުންސިލްގެ އިދާރާ", officeDv: "މިލަންދޫ ކައުންސިލްގެ އިދާރާ", shortDv: "މިލަންދޫ ކައުންސިލް",
   nameEn: "Milandhoo Council", islandDv: "ށ.މިލަންދޫ", countryDv: "ދިވެހިރާއްޖެ", placeDv: "މިލަންދޫ ކައުންސިލްގެ އިދާރާ",
-  memberOfficeDv: "ށ. މިލަންދޫ ކައުންސިލް އިދާރާ", headName: "", headTitleDv: "ކައުންސިލްގެ ރައީސް", phone: "", email: "", web: "", footerDv: "", letterhead: ""
+  memberOfficeDv: "ށ. މިލަންދޫ ކައުންސިލް އިދާރާ", headName: "", headTitleDv: "ކައުންސިލްގެ ރައީސް", secretaryDv: "", phone: "", email: "", web: "", footerDv: "", letterhead: ""
 };
 const OFF = () => { const z = Z(); z.office = Object.assign({}, OFFICE_DEFAULTS, z.office || {}); return z.office; };
 // Swap the built-in Milandhoo wording for this office's own (used by the built-in sheet designs).
@@ -12,13 +12,13 @@ const offT = s => { const f = OFF(); return String(s).replace(/މިލަދުން�
 function officeData(d) {
   const f = OFF();
   Object.assign(d, { office_name_dv: f.nameDv, office_dv: f.officeDv, office_short_dv: f.shortDv, office_name_en: f.nameEn, office_island_dv: f.islandDv, office_country_dv: f.countryDv, office_place_dv: f.placeDv,
-    office_head_name: f.headName, office_head_title_dv: f.headTitleDv, office_phone: f.phone, office_email: f.email, office_web: f.web, office_footer_dv: f.footerDv });
+    office_head_name: f.headName, office_head_title_dv: f.headTitleDv, office_secretary_dv: f.secretaryDv, office_phone: f.phone, office_email: f.email, office_web: f.web, office_footer_dv: f.footerDv });
   return d;
 }
 async function officeEdit() {
   const f = OFF(), el = {
     nameDv: DVI(f.nameDv), officeDv: DVI(f.officeDv), shortDv: DVI(f.shortDv), nameEn: I(f.nameEn), islandDv: DVI(f.islandDv), countryDv: DVI(f.countryDv), placeDv: DVI(f.placeDv), memberOfficeDv: DVI(f.memberOfficeDv),
-    headName: DVI(f.headName), headTitleDv: DVI(f.headTitleDv), phone: I(f.phone), email: I(f.email), web: I(f.web), footerDv: DVI(f.footerDv)
+    headName: DVI(f.headName), headTitleDv: DVI(f.headTitleDv), secretaryDv: DVI(f.secretaryDv), phone: I(f.phone), email: I(f.email), web: I(f.web), footerDv: DVI(f.footerDv)
   };
   let lh = f.letterhead || "";
   const lhImg = o("img", { class: "pcc-lh-prev", alt: "" }), lhInfo = o("span", { class: "muted small" });
@@ -30,7 +30,7 @@ async function officeEdit() {
     o("p", { class: "muted small", style: { gridColumn: "1/-1" } }, "Used by documents written in the portal, the built-in evaluation sheets, page headings and defaults. Template fields: {office_name_dv}, {office_dv}, {office_island_dv}, {office_head_name}, {office_head_title_dv}…"),
     ["Office name — full, as on the letterhead", el.nameDv], ["Office name — short", el.officeDv], ["Office — very short", el.shortDv], ["Office name (English)", el.nameEn],
     ["Island", el.islandDv], ["Country", el.countryDv], ["Default meeting place", el.placeDv], ["Default office of committee members", el.memberOfficeDv],
-    ["Head of office — name", el.headName], ["Head of office — title", el.headTitleDv], ["Phone", el.phone], ["E-mail", el.email], ["Website", el.web], ["Footer line (Dhivehi)", el.footerDv],
+    ["Head of office — name", el.headName], ["Head of office — title", el.headTitleDv], ["Bid Committee secretary (writes the Yaumiyya)", el.secretaryDv], ["Phone", el.phone], ["E-mail", el.email], ["Website", el.web], ["Footer line (Dhivehi)", el.footerDv],
     o("div", { style: { gridColumn: "1/-1" } }, o("label", {}, "Letterhead image (top of documents written in the portal)"), o("div", { class: "row", style: { gap: "8px", alignItems: "center" } }, pick, clear, lhInfo), lhImg)
   ], { top: kbToggle(), check: () => { if (!el.officeDv.value.trim()) throw err("Type the office name"); } });
   if (!ok) return;

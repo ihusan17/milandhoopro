@@ -42,9 +42,12 @@ async function meetingEdit(m, k, p, pre) {
   const v = m || {}, date = D(v.date || today()), time = TM(v.start || v.time || (m ? "" : k === "eval" ? "09:00" : "10:00")), end = TM(v.end), place = I(v.place || OFF().placeDv, { dir: "auto" }), notes = o("textarea", { rows: 2, dir: "auto" });
   const kind = k === "eval" ? "evalmeeting" : "meeting", ref = I(v.ref || "", { placeholder: refPeek(kind), title: "Leave empty: the next number is given automatically" });
   notes.value = v.notes || "";
-  const items = new Map(mItems(v).map(it => [it.projectId, { ...it }]));
-  if (!m && p) items.set(p.id, { projectId: p.id, type: k === "eval" ? "evaluation" : "award" });
-  (pre || []).forEach(it => items.set(it.projectId, { ...it }));
+  // Agenda items, in order. A project can have several (e.g. a time extension and two variations).
+  const items = mItems(v).map(it => ({ ...it, texts: it.texts ? { ...it.texts } : undefined }));
+  const hasP = id => items.some(it => it.projectId === id), dropP = id => { for (let i = items.length - 1; i >= 0; i--) items[i].projectId === id && items.splice(i, 1); };
+  if (!m && p) items.push({ projectId: p.id, type: k === "eval" ? "evaluation" : "award" });
+  (pre || []).forEach(it => { dropP(it.projectId); items.push({ ...it }); });
+  const secretary = DVI(v.secretary ?? OFF().secretaryDv ?? "");
   // End time follows the start (+30 min) until it is changed by hand.
   const plus30 = t => { if (!t) return ""; const [h, mi] = t.split(":").map(Number), x = Math.min(h * 60 + mi + 30, 23 * 60 + 59); return String(Math.floor(x / 60)).padStart(2, "0") + ":" + String(x % 60).padStart(2, "0"); };
   let endAuto = !end.value || end.value === plus30(time.value);
@@ -52,20 +55,20 @@ async function meetingEdit(m, k, p, pre) {
   time.addEventListener("input", () => { if (endAuto) end.value = plus30(time.value); });
   end.addEventListener("input", () => { endAuto = end.value === plus30(time.value) || !end.value; });
   const q = o("input", { type: "search", placeholder: "Search projects by number or name" }), qt = S([["", "All types"], ...PCATS.map(c => [c[0], c[0]])], ""), list = o("div", { class: "pcc-mpick" }), agenda = o("div", { class: "pcc-agenda" });
-  const drawList = () => { const s = q.value.trim().toLowerCase(); list.replaceChildren(...PRJ().filter(x => (items.has(x.id) || (x.advertNo && !["Completed", "In retention", "Closed", "Cancelled"].includes(x.status))) && (!qt.value || x.type === qt.value || items.has(x.id)) && (!s || `${x.ref} ${x.name} ${x.nameDv || ""} ${x.prNumber || ""}`.toLowerCase().includes(s) || items.has(x.id))).sort((a, b) => (items.has(b.id) - items.has(a.id)) || String(a.ref).localeCompare(String(b.ref), undefined, { numeric: true })).slice(0, 60).map(x => o("label", { class: "pcc-chk pcc-mrow" }, o("input", { type: "checkbox", checked: items.has(x.id), onchange: e => { e.target.checked ? items.set(x.id, { projectId: x.id, type: k === "eval" ? "evaluation" : x.contract != null && x.status !== "Not started" && x.status !== "Planned" ? "variation" : "award" }) : items.delete(x.id); drawAgenda(); drawSrc(); } }), o("span", { class: "nowrap" }, x.ref), o("span", { dir: "auto", class: "small" }, x.nameDv || x.name), stChip(x.status)))); };
+  const drawList = () => { const s = q.value.trim().toLowerCase(); list.replaceChildren(...PRJ().filter(x => (hasP(x.id) || (x.advertNo && !["Completed", "In retention", "Closed", "Cancelled"].includes(x.status))) && (!qt.value || x.type === qt.value || hasP(x.id)) && (!s || `${x.ref} ${x.name} ${x.nameDv || ""} ${x.prNumber || ""}`.toLowerCase().includes(s) || hasP(x.id))).sort((a, b) => (hasP(b.id) - hasP(a.id)) || String(a.ref).localeCompare(String(b.ref), undefined, { numeric: true })).slice(0, 60).map(x => o("label", { class: "pcc-chk pcc-mrow" }, o("input", { type: "checkbox", checked: hasP(x.id), onchange: e => { e.target.checked ? items.push({ projectId: x.id, type: k === "eval" ? "evaluation" : x.contract != null && x.status !== "Not started" && x.status !== "Planned" ? "variation" : "award" }) : dropP(x.id); drawAgenda(); drawSrc(); } }), o("span", { class: "nowrap" }, x.ref), o("span", { dir: "auto", class: "small" }, x.nameDv || x.name), stChip(x.status)))); };
   q.addEventListener("input", drawList); qt.addEventListener("change", drawList);
   // One line per chosen project: what it is for, and the variation amount / days when it is a variation.
   const drawAgenda = () => {
-    const L2 = [...items.values()];
+    const L2 = items;
     agenda.replaceChildren(...(L2.length ? L2.map((it, i) => {
       const x = prj(it.projectId), ty = S(MTYPES[k].map(t => [t[0], t[1]]), it.type), note = I(it.note || "", { dir: "auto", placeholder: "Decision / subject (optional)" });
-      const amt = MI(it.amount == null ? "" : it.amount < 0 ? -it.amount : it.amount), days = I(it.days ?? "", { inputmode: "numeric", placeholder: "days", style: { width: "80px" } });
+      const amt = MI(it.amount == null ? "" : it.amount < 0 ? -it.amount : it.amount), days = I(it.daysText ?? it.days ?? "", { inputmode: "numeric", placeholder: "days", style: { width: "80px" } });
       const va = o("span", { class: "pcc-ag-f" }, o("label", {}, "Amount (MVR, − for omission)"), amt), vd = o("span", { class: "pcc-ag-f" }, o("label", {}, "Extra days"), days), vbox = o("div", { class: "pcc-ag-var" }, va, vd);
       const rsel = S([["", "Reason…"], ...RT_REASONS.map(r => [r[0], r[1]])], it.reason || ""); rsel.classList.add("pcc-ag-rs");
       rsel.onchange = () => { it.reason = rsel.value; const cur = note.value.trim(); if (!cur || RT_REASONS.some(r => r[2] === cur)) { note.value = (rtReason(rsel.value) || [])[2] || ""; it.note = note.value; } };
       const sync = () => { rsel.style.display = ty.value === "retender" ? "" : "none"; vbox.style.display = ty.value === "variation" || ty.value === "extension" ? "" : "none"; va.style.display = ty.value === "variation" ? "" : "none"; };
       ty.onchange = () => { it.type = ty.value; sync(); }; note.oninput = () => { it.note = note.value; };
-      amt.oninput = () => { it._amt = amt.value; }; days.oninput = () => { it.days = days.value.trim() === "" ? null : Number(days.value) || 0; };
+      amt.oninput = () => { it._amt = amt.value; }; days.oninput = () => { it.days = days.value.trim() === "" ? null : Number(days.value) || 0; it.daysText = days.value.trim() || undefined; refreshW(); };
       it.amount < 0 && (amt.value = "-" + amt.value); it._amtEl = amt;
       // Required project details, filled in right here (saved to the project with the meeting).
       const reqBox = o("div", { class: "pcc-ag-req" }), drawReq = () => {
@@ -76,18 +79,27 @@ async function meetingEdit(m, k, p, pre) {
           miss.length ? o("div", { class: "pcc-ag-rfix miss" }, "⚠ Fill " + miss.join(", ") + " in the project before saving — click the project number above.") : null);
       };
       const row = o("div", { class: "pcc-ag-row" }, o("b", { class: "pcc-ag-n" }, i + 1), o("div", { class: "pcc-ag-p" }, o("a", { href: "#", class: "pcc-ag-link", title: "Open this project's Edit box", onclick: async e => { e.preventDefault(); await PEDIT2(x); drawReq(); } }, o("b", {}, x.ref), o("div", { dir: "auto", class: "small" }, x.nameDv || x.name))), ty, o("div", { class: "pcc-ag-nt" }, rsel, note), vbox);
-      row.append(reqBox); const ty0 = ty.onchange; ty.onchange = () => { ty0(); drawReq(); }; drawReq();
+      // Yaumiyya wording of this item: the standard text filled in; a change is kept for this meeting only.
+      const wbox = o("div", { class: "pcc-ag-wd" }), wd = o("details", { class: "pcc-ag-wdd" }, o("summary", {}, "Wording in the Yaumiyya", it.texts && Object.keys(it.texts).length ? o("span", { class: "pcc-tag pcc-settag" }, "changed") : null), wbox);
+      const refreshW = () => { const row2 = itemRow({ id: v.id || "new", kind: k, date: date.value, ref: v.ref }, it, x, i, items), std = itemTexts({ ...it, texts: {} }, row2), cur = itemTexts(it, row2);
+        wbox.replaceChildren(...WORD_KEYS.map(([f, l]) => { const ta = thaanaInput(o("textarea", { rows: f === "decision" ? 4 : 2, dir: "rtl", lang: "dv", class: "dv" })); ta.value = cur[f];
+          ta.oninput = () => { it.texts = it.texts || {}; ta.value.trim() === std[f].trim() ? delete it.texts[f] : (it.texts[f] = ta.value); };
+          return o("label", { class: "pcc-ag-wf" }, o("span", {}, l), ta); }), btn("Use the standard wording", () => { delete it.texts; refreshW(); }, "small")); };
+      wd.addEventListener("toggle", () => wd.open && refreshW());
+      const more = k === "bid" ? btn("+ Another item for this project", () => { items.splice(i + 1, 0, { projectId: it.projectId, type: "variation" }); drawAgenda(); }, "small") : null;
+      const del = btn("Remove item", () => { items.splice(i, 1); drawAgenda(); drawList(); drawSrc(); }, "small");
+      row.append(reqBox, wd, o("div", { class: "pcc-ag-acts" }, more, del)); const ty0 = ty.onchange; ty.onchange = () => { ty0(); drawReq(); wd.open && refreshW(); }; drawReq();
       sync(); return row;
     }) : [o("p", { class: "muted small" }, "Tick the projects decided at this meeting.")]));
   };
   const src = o("select", {}), mprev = o("div", { class: "pcc-mmem" }); let mrows = [];
   const stand = () => (STAND()[k] || []);
-  const drawSrc = () => { const opts = [...items.keys()].map(id => prj(id)).filter(x => x && (x.committees[k] || []).length), cur = src.value; src.replaceChildren(...(m ? [bt("@keep", "Keep this meeting's members (" + (v.members || []).length + ")", true)] : []), ...(stand().length ? [bt("@stand", "Standing " + KLAB[k] + " (" + stand().length + ")", !m)] : []), ...opts.map(x => bt(x.id, `Committee of ${x.ref} (${x.committees[k].length})`, false))); cur && [...src.options].some(op => op.value === cur) && (src.value = cur); showPrev(); };
+  const drawSrc = () => { const opts = [...new Set(items.map(it => it.projectId))].map(id => prj(id)).filter(x => x && (x.committees[k] || []).length), cur = src.value; src.replaceChildren(...(m ? [bt("@keep", "Keep this meeting's members (" + (v.members || []).length + ")", true)] : []), ...(stand().length ? [bt("@stand", "Standing " + KLAB[k] + " (" + stand().length + ")", !m)] : []), ...opts.map(x => bt(x.id, `Committee of ${x.ref} (${x.committees[k].length})`, false))); cur && [...src.options].some(op => op.value === cur) && (src.value = cur); showPrev(); };
   const showPrev = () => { const L2 = src.value === "@keep" ? v.members || [] : src.value === "@stand" ? stand() : ((prj(src.value) || {}).committees || {})[k] || []; mrows = L2.map(x => ({ x, lf: leaveFields(x) })); mprev.replaceChildren(...(L2.length ? mrows.map(({ x, lf }) => o("div", { class: "pcc-mrow2" }, o("span", { dir: "auto" }, (x.nameDv || x.name) + " · " + (x.role || "Member")), lf.el)) : [o("p", { class: "muted small" }, `No ${KLAB[k]} members yet — add the standing committee under Templates › Standing committees, or on a project.`)])); };
   src.addEventListener("change", showPrev);
   drawList(); drawAgenda(); drawSrc();
-  const ok = await form((m ? "Edit " : "New ") + KLAB[k] + " meeting", [["Meeting date", date], ["Meeting no. (automatic if empty)", ref], ["Starts", time], ["Ends", end], o("div", { style: { gridColumn: "1/-1" } }, L("Place", place), o("label", { style: { marginTop: "10px" } }, "Projects at this meeting"), o("div", { class: "pcc-mq" }, q, qt), list, o("p", { class: "muted small", style: { margin: "-4px 0 8px" } }, "Only projects with an Iulaan number that are not completed are listed. Add the Iulaan number on the project to see it here."), o("label", { style: { marginTop: "10px" } }, "Agenda — what each project is for"), k === "bid" ? o("p", { class: "muted small", style: { margin: "2px 0 4px" } }, "Details marked ", o("b", { class: "pcc-req" }, "**"), " are needed for an award, variation or time extension. They come from the project — click the project number to fill or change them.") : null, agenda, L("Committee members", src), mprev, L("Notes", notes))], {
-    check: () => { if (!date.value) throw err("Choose the meeting date"); if (time.value && end.value && end.value <= time.value) throw err("The end time must be after the start time"); if (items.size < 1) throw err("Tick at least one project"); if (!mrows.length) throw err(`Add ${KLAB[k]} members first`);
+  const ok = await form((m ? "Edit " : "New ") + KLAB[k] + " meeting", [["Meeting date", date], ["Meeting no. (automatic if empty)", ref], ["Starts", time], ["Ends", end], o("div", { style: { gridColumn: "1/-1" } }, L("Place", place), o("label", { style: { marginTop: "10px" } }, "Projects at this meeting"), o("div", { class: "pcc-mq" }, q, qt), list, o("p", { class: "muted small", style: { margin: "-4px 0 8px" } }, "Only projects with an Iulaan number that are not completed are listed. Add the Iulaan number on the project to see it here."), o("label", { style: { marginTop: "10px" } }, "Agenda — what each project is for"), k === "bid" ? o("p", { class: "muted small", style: { margin: "2px 0 4px" } }, "Details marked ", o("b", { class: "pcc-req" }, "**"), " are needed for an award, variation or time extension. They come from the project — click the project number to fill or change them.") : null, agenda, L("Committee members", src), mprev, L("Secretary (writes the Yaumiyya)", secretary), L("Notes", notes))], {
+    check: () => { if (!date.value) throw err("Choose the meeting date"); if (time.value && end.value && end.value <= time.value) throw err("The end time must be after the start time"); if (items.length < 1) throw err("Tick at least one project"); if (!mrows.length) throw err(`Add ${KLAB[k]} members first`);
       items.forEach(it => { if (it.type === "variation" && it._amtEl && it._amtEl.value.trim()) signedMoney(it._amtEl, "Variation amount"); });
       const miss = []; items.forEach(it => { if (!mNeeds(k, it.type)) return; const x = prj(it.projectId), mm = mMissing(x); mm.length && miss.push(x.ref + ": " + mm.join(", ")); });
       if (miss.length) throw err("Fill these in the project (click its project number) — " + miss.slice(0, 3).join("; ") + (miss.length > 3 ? ` and ${miss.length - 3} more` : "")); },
@@ -96,12 +108,12 @@ async function meetingEdit(m, k, p, pre) {
   save(() => {
     need("pdocs");
     const members = mrows.map(({ x, lf }) => ({ ...JSON.parse(JSON.stringify(x)), ...lf.read() }));
-    const its = [...items.values()].filter(it => prj(it.projectId)).map(it => { const r = { projectId: it.projectId, type: it.type }; it.note && it.note.trim() && (r.note = it.note.trim()); it.type === "retender" && it.reason && (r.reason = it.reason); if (it.type === "variation" && it._amtEl && it._amtEl.value.trim()) r.amount = signedMoney(it._amtEl, "Variation amount"); else if (it.type === "variation" && it.amount != null && !it._amtEl) r.amount = it.amount; if ((it.type === "variation" || it.type === "extension") && it.days != null) r.days = it.days; return r; });
-    const o2 = { kind: k, date: date.value, time: time.value.trim(), start: time.value.trim(), end: end.value.trim(), place: place.value.trim(), notes: notes.value.trim(), items: its, projectIds: its.map(it => it.projectId), members };
+    const its = items.filter(it => prj(it.projectId)).map(it => { const r = { projectId: it.projectId, type: it.type }; it.texts && Object.keys(it.texts).length && (r.texts = { ...it.texts }); it.daysText && (r.daysText = it.daysText); it.note && it.note.trim() && (r.note = it.note.trim()); it.type === "retender" && it.reason && (r.reason = it.reason); if (it.type === "variation" && it._amtEl && it._amtEl.value.trim()) r.amount = signedMoney(it._amtEl, "Variation amount"); else if (it.type === "variation" && it.amount != null && !it._amtEl) r.amount = it.amount; if ((it.type === "variation" || it.type === "extension") && it.days != null) r.days = it.days; return r; });
+    const o2 = { kind: k, date: date.value, time: time.value.trim(), start: time.value.trim(), end: end.value.trim(), place: place.value.trim(), notes: notes.value.trim(), items: its, projectIds: [...new Set(its.map(it => it.projectId))], members, secretary: secretary.value.trim() };
     let mm = m;
     if (m) Object.assign(m, o2, ref.value.trim() ? { ref: ref.value.trim() } : {}); else { mm = { id: uid(), ref: ref.value.trim() || refNext(kind, null, date.value.slice(0, 4)), ...o2, by: me(), at: Vt() }; MEETS().push(mm); }
     meetingSync(mm);
-    o2.projectIds.forEach(id => audit(prj(id), `${KLAB[k]} meeting ${m ? "changed" : "recorded"}`, `${mm.ref} · ${fd(o2.date)} · ${mtype(k, its.find(it => it.projectId === id).type)[1]}`));
+    o2.projectIds.forEach(id => audit(prj(id), `${KLAB[k]} meeting ${m ? "changed" : "recorded"}`, `${mm.ref} · ${fd(o2.date)} · ${its.filter(it => it.projectId === id).map(it => mtype(k, it.type)[1]).join(", ")}`));
   }, m ? "Meeting saved" : "Meeting recorded");
 }
 // The project's own meeting fields (used by single-project documents) follow the meeting
@@ -134,7 +146,7 @@ function MEETPAGE(n, [y, kf]) {
     PRJ().filter(p => p[pre + "No"] && !p[pre + "Id"] && String(p[pre + "Date"] || "").slice(0, 4) === yr && !MEETS().some(m => m.kind === k && m.ref === p[pre + "No"])).forEach(p => { const key = p[pre + "No"] + "|" + (p[pre + "Date"] || ""); (g[key] = g[key] || { k, no: p[pre + "No"], date: p[pre + "Date"], time: p[pre + "Time"] || "", P: [] }).P.push(p); });
     loose.push(...Object.values(g)); });
   const waiting = PRJ().filter(p => p.status !== "Cancelled" && MEETS().some(m => m.kind === "eval" && mItems(m).some(it => it.projectId === p.id)) && !MEETS().some(m => m.kind === "bid" && mItems(m).some(it => it.projectId === p.id && it.type === "award")) && !p.bidMeetingNo);
-  n.append(o("div", { class: "row" }, o("h1", { style: { margin: 0 } }, "Committee meetings " + yr), o("div", { class: "grow right pcc-acts" }, ed ? btn("New Bid Committee meeting", () => meetingEdit(null, "bid"), "primary") : null, ed ? btn("New Evaluation meeting", () => meetingEdit(null, "eval")) : null)),
+  n.append(o("div", { class: "row" }, o("h1", { style: { margin: 0 } }, "Committee meetings " + yr), o("div", { class: "grow right pcc-acts" }, ed ? btn("New Bid Committee meeting", () => meetingEdit(null, "bid"), "primary") : null, ed ? btn("New Evaluation meeting", () => meetingEdit(null, "eval")) : null, ed ? btn("Agenda wording", () => wordingEdit()) : null)),
     PCNAV("meet"),
     o("div", { class: "card toolbar" }, o("div", { class: "row", style: { alignItems: "center" } }, o("div", {}, o("label", {}, "Year"), ys), o("div", { class: "grow muted" }, `${all.length} meeting${all.length === 1 ? "" : "s"} · numbered automatically in order (Bid Committee ${refPeek("meeting").replace(/\d+$/, "…")}, Evaluation ${refPeek("evalmeeting").replace(/\d+$/, "…")})`)),
       o("div", { class: "pills", style: { marginTop: "12px" } }, [["", "All meetings", all.length], ["bid", "Bid Committee", all.filter(m => m.kind === "bid").length], ["eval", "Evaluation Committee", all.filter(m => m.kind === "eval").length]].map(([k, l, c]) => o("a", { href: `#/projects/meetings/${yr}${k ? "/" + k : ""}`, class: "pill" + (k === K2 ? " on" : ""), style: { textDecoration: "none" } }, l, o("span", {}, String(c)))))),
@@ -163,18 +175,17 @@ function meetingData(m, focus) {
   const inv = isISO(m.date) && today() < m.date ? today() : dAdd(m.date, -1);
   d.invite_date = Xt(inv); d.invite_date_dv = dvDate(inv); d.invite_date_hijri = hijri(inv);
   d[m.kind + "_meeting_no"] = m.ref || ""; d[m.kind + "_meeting_date"] = Xt(m.date); d[m.kind + "_meeting_date_dv"] = dvDate(m.date); d[m.kind + "_meeting_date_en"] = enDate(m.date); d[m.kind + "_meeting_date_hijri"] = hijri(m.date);
-  d[m.kind + "_meeting_time"] = m.time || ""; d[m.kind + "_meeting_start_time"] = m.start || m.time || ""; d[m.kind + "_meeting_end_time"] = m.end || ""; d[m.kind + "_meeting_year"] = isISO(m.date) ? m.date.slice(0, 4) : d[m.kind + "_meeting_year"]; d[m.kind + "_meeting_seq"] = String(Number(((m.ref || "").match(/(\d+)\D*$/) || [])[1] || "") || "");
+  d[m.kind + "_meeting_time"] = m.time || ""; d[m.kind + "_meeting_start_time"] = m.start || m.time || ""; d[m.kind + "_meeting_end_time"] = m.end || ""; d[m.kind + "_meeting_year"] = isISO(m.date) ? m.date.slice(0, 4) : d[m.kind + "_meeting_year"]; d[m.kind + "_meeting_seq"] = (n => n ? String(n).padStart(2, "0") : "")(Number(((m.ref || "").match(/(\d+)\D*$/) || [])[1] || "")); // "02", as in the council's Yaumiyya
   const IT = mItems(m);
-  d.projects = P.map((p, i) => { const x = dataFor(p), it = IT.find(y => y.projectId === p.id) || { type: m.kind === "eval" ? "evaluation" : "award" }, ty = mtype(m.kind, it.type);
-    const r = { ...scalars(x), no: i + 1, agenda_no: String(i + 1), bidders: x.bidders, bid_members: x.bid_members, eval_members: x.eval_members, item_type: ty[1], item_type_dv: ty[2], item_code: ty[0], item_note: it.note || "", is_award: it.type === "award", is_variation: it.type === "variation", is_extension: it.type === "extension",
-      variation_amount: it.amount == null ? "" : ht(Math.abs(it.amount)), variation_kind_dv: it.amount == null ? "" : it.amount < 0 ? "ކުޑަކުރުން" : "އިތުރުކުރުން", variation_amount_words_dv: it.amount == null ? "" : dvMoneyWords(Math.abs(it.amount)), variation_days: it.days == null ? "" : String(it.days),
-      contract_after_variation: it.amount != null && p.contract != null ? ht(p.contract + it.amount) : "" };
-    return r; });
+  // One row per agenda item (a project can have several items at one meeting).
+  d.projects = IT.map((it, i) => itemRow(m, it, prj(it.projectId), i, IT));
+  d.agenda_items = d.projects; d.item_count = IT.length;
+  d.meeting_secretary_dv = m.secretary || OFF().secretaryDv || ""; d[m.kind + "_secretary_dv"] = d.meeting_secretary_dv;
   d.projects.forEach((r, i, A) => { r.is_first = i === 0; r.is_last = i === A.length - 1; r.is_middle = !r.is_first && !r.is_last; });
   ["award", "variation", "extension", "evaluation"].forEach(t => { const L3 = d.projects.filter(r => r.item_code === t || (t === "evaluation" && r.item_code === "reeval")).map((r, i) => ({ ...r, no: i + 1 })); d[t === "evaluation" ? "evaluations" : t + "s"] = L3; d[t + "_count"] = L3.length; });
   const mine = d.projects.find(r => r.ref_no === first.ref) || d.projects[P.indexOf(first)] || {};
   ["item_type", "item_type_dv", "item_code", "item_note", "is_award", "is_variation", "is_extension", "variation_amount", "variation_kind_dv", "variation_amount_words_dv", "variation_days", "contract_after_variation"].forEach(k => { k in mine && (d[k] = mine[k]); });
-  d.agenda_dv = mSummary(m).map(([t, c, ty]) => c + " " + ty[2]).join("، "); d.agenda = mSummary(m).map(([t, c, ty]) => c + " " + ty[1]).join(", "); d.meeting_seq = String(mSeq(m) || ""); d.meeting_year = mYear(m);
+  d.agenda_dv = mSummary(m).map(([t, c, ty]) => c + " " + ty[2]).join("، "); d.agenda = mSummary(m).map(([t, c, ty]) => c + " " + ty[1]).join(", "); d.meeting_seq = mSeq(m) ? String(mSeq(m)).padStart(2, "0") : ""; d.meeting_year = mYear(m);
   d.meeting_date_dv_ymd = dvYMD(m.date); d[m.kind + "_meeting_date_dv_ymd"] = dvYMD(m.date); d.meeting_date_dv_dmy = dvDMY(m.date); d[m.kind + "_meeting_date_dv_dmy"] = dvDMY(m.date); d[m.kind + "_meeting_date_dv_both"] = dvBoth(m.date);
   return addYMD(d);
 }

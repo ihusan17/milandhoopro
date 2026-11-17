@@ -594,3 +594,23 @@ with a real project (and its meeting) on the right.
   sets (Type 01…), meeting documents, leave marking, previews and versions work as for uploaded templates.
   **Edit document** on the Templates page reopens it.
 - Starters: *Bid Committee invitation (one project, as Type 01)* and a *Simple letter*.
+
+### One Yaumiyya for any agenda (award, extension, variation…)
+
+- **Several agenda items per project** at one meeting (e.g. a time extension and two variations): in the meeting
+  box, **+ Another item for this project**; **Remove item** removes one.
+- **Agenda wording** (Committee meetings page): the four texts of each kind of item — agenda item, papers submitted,
+  discussed, decision — for Award, Time extension, Variation, Re-tender, Cancellation, Other and Evaluation. The
+  defaults are the council's wording from its Yaumiyyas (2026 award wording; variation agenda as
+  "މި އިދާރާއިން އިތުރުކުރަން ބޭނުންވާ މަސައްކަތް … (ވޭރިއޭޝަން 01)").
+- In the meeting box each item has **Wording in the Yaumiyya**: the standard texts already filled in; any text can be
+  changed for that meeting (usually the decision of a variation). **Use the standard wording** undoes it.
+- Automatic: variation number per project (01, 02…, counting earlier meetings), days with Dhivehi words
+  ("8 (އަށެއް)"), meeting number padded ("02"), secretary (Office settings, changeable per meeting).
+- Project-name forms for sentences, from the base name (… ކުރުން / … ދިނުން): `{project_work_dv}`,
+  `{project_work_with_dv}`, `{project_work_to_dv}`, `{project_doer_dv}`, `{project_gen_dv}`.
+- `{#projects}` now gives **one row per agenda item** with `agenda_text_dv`, `agenda_docs_dv`, `discussion_dv`,
+  `decision_dv`, `item_days`, `item_days_words_dv`, `variation_no` (also `{#agenda_items}`, `{item_count}`).
+- Template *PR-07 – Yaumiyya (any agenda)* made from the council's Yaumiyya: the agenda table and the
+  discussion/decision block repeat per item. Recreating the council's Yaumiyya 02 (extension + 2 variations)
+  gives the same text word for word.
