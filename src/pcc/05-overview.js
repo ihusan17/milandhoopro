@@ -75,12 +75,12 @@ function OVERVIEW(n, type) {
   }
   function draw() {
     stSel.value = F.status; odChk.checked = F.overdue; fCnt();
-    const phone = matchMedia("(max-width:760px)").matches, cur = phone && F.view === "table" ? "card" : F.view;
+    const cur = F.view;
     views.replaceChildren(...[["table", "Table"], ["card", "Cards"], ["timeline", "Timeline"], ["monthly", "Monthly"]].map(([k, l]) => o("button", { type: "button", class: (cur === k ? "on" : "") + (k === "table" ? " pcc-v-table" : ""), onclick: () => { F.view = k; setViewPref(k); draw(); } }, l)));
     const L2 = list();
     if (!L2.length) { body.replaceChildren(o("div", { class: "card" }, empty(all.length ? "No projects match these filters." : "No projects yet. Add the first one, or start one from a procurement plan item.", can("projects") && !all.length ? btn("New project", () => PEDIT2(null, T && T[1]), "primary") : null))); return; }
     const mobile = matchMedia("(max-width:760px)").matches;
-    body.replaceChildren(F.view === "monthly" ? monthly(L2, F, T) : F.view === "timeline" ? timeline(L2) : F.view === "card" || mobile ? o("div", { class: "pcc-cards" }, L2.map(pcard)) : o("div", { class: "card flush" }, ptable(L2)));
+    body.replaceChildren(F.view === "monthly" ? monthly(L2, F, T) : F.view === "timeline" ? timeline(L2) : F.view === "card" ? o("div", { class: "pcc-cards" }, L2.map(pcard)) : o("div", { class: "card flush pcc-ptwrap" }, ptable(L2)));
   }
   draw();
 }

@@ -583,7 +583,13 @@ body.pcc-noscroll{overflow:hidden}
   .pcc-tools{padding:12px;gap:10px}
   .pcc-tools:not(.fopen) .pcc-frow{display:none}
   .pcc-tools.fopen .pcc-frow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pcc-frow>select{min-width:0;width:100%}.pcc-frow>.pcc-chk{grid-column:1/-1}
-  .pcc-seg{display:grid!important;grid-template-columns:repeat(3,1fr);width:100%}.pcc-seg .pcc-v-table{display:none}.pcc-seg button{padding:8px 6px;font-size:14px}
+  .pcc-seg{display:grid!important;grid-template-columns:repeat(4,1fr);width:100%}.pcc-seg button{padding:8px 4px;font-size:13.5px}
+  /* Table on phones, as on the computer: scrolls sideways, project number stays on the left */
+  .pcc-ptwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0!important}
+  .pcc-ptwrap table.pcc-ptable{min-width:880px;font-size:13px}
+  .pcc-ptwrap table.pcc-ptable td,.pcc-ptwrap table.pcc-ptable th{padding:8px!important}
+  .pcc-ptwrap table.pcc-ptable tr>:first-child{position:sticky;left:0;z-index:1;background:var(--card,#fff);box-shadow:1px 0 0 var(--line)}
+  .pcc-ptwrap table.pcc-ptable thead tr>:first-child{background:var(--bg2,#f8fafc)}
   .pcc-kpis{display:flex;overflow-x:auto;gap:8px;margin:0 -4px 12px;padding:2px 4px 6px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
   .pcc-kpis .stat{flex:0 0 auto;min-width:118px;max-width:160px;padding:10px 12px;border-radius:14px;scroll-snap-align:start}
   .pcc-kpis .stat .k{font-size:11.5px;line-height:1.25;white-space:normal}.pcc-kpis .stat .v{font-size:20px;margin-top:2px}
