@@ -32,7 +32,7 @@ function OVERVIEW(n, type) {
   const F = { q: "", status: "", year: "", vendor: "", overdue: false, sort: "due", view: viewPref() };
   const kpi = (l, v, cls, f) => o("button", { type: "button", class: "stat pcc-kpi " + (cls || ""), onclick: f || null }, o("div", { class: "k" }, l), o("div", { class: "v" }, v));
   n.append(
-    o("div", { class: "row" }, o("h1", { style: { margin: 0 } }, T ? T[1] + " projects" : "Projects"), o("div", { class: "grow right" }, can("projects") ? btn("New project", () => PEDIT2(null, T && T[1]), "primary") : null)),
+    o("div", { class: "row pcc-head" }, o("h1", { style: { margin: 0 } }, T ? T[1] + " projects" : "Projects"), o("div", { class: "grow right" }, can("projects") ? btn("New project", () => PEDIT2(null, T && T[1]), "primary") : null)),
     PCNAV(T ? T[0] : "all"),
     o("div", { class: "stats pcc-kpis" },
       kpi("Total projects", String(all.length), "", () => { F.status = ""; F.overdue = false; draw(); }),
@@ -52,7 +52,11 @@ function OVERVIEW(n, type) {
   const views = o("div", { class: "pcc-seg", role: "tablist" }), body = o("div", {});
   const sync = () => { F.q = q.value.trim().toLowerCase(); F.status = stSel.value; F.year = ySel.value; F.vendor = vSel.value; F.overdue = odChk.checked; F.sort = sSel.value; draw(); };
   [q, stSel, ySel, vSel, odChk, sSel].forEach(e => e.addEventListener(e === q ? "input" : "change", sync));
-  n.append(o("div", { class: "card toolbar pcc-tools" }, o("div", { class: "pcc-trow" }, o("div", { class: "grow" }, q), views), o("div", { class: "pcc-trow" }, stSel, ySel, vSel, sSel, o("label", { class: "pcc-chk" }, odChk, " Overdue only"))), body);
+  const fRow = o("div", { class: "pcc-trow pcc-frow" }, stSel, ySel, vSel, sSel, o("label", { class: "pcc-chk" }, odChk, " Overdue only"));
+  const fBtn = o("button", { type: "button", class: "btn pcc-fbtn", onclick: () => { tools.classList.toggle("fopen"); } }, "Filters"), fCnt = () => { const c = [stSel.value, ySel.value, vSel.value, odChk.checked].filter(Boolean).length; fBtn.textContent = c ? `Filters (${c})` : "Filters"; fBtn.classList.toggle("on", c > 0); };
+  [stSel, ySel, vSel, odChk].forEach(e => e.addEventListener("change", fCnt));
+  const tools = o("div", { class: "card toolbar pcc-tools" }, o("div", { class: "pcc-trow" }, o("div", { class: "grow pcc-qrow" }, q, fBtn), views), fRow);
+  n.append(tools, body);
   function list() {
     let L2 = all.filter(p => {
       if (F.q && !`${p.ref} ${p.name} ${p.nameDv || ""} ${p.nameEn || ""} ${p.vendor || ""} ${p.location || ""} ${p.officer || ""}`.toLowerCase().includes(F.q)) return false;
@@ -70,8 +74,9 @@ function OVERVIEW(n, type) {
     return L2.sort(cmp);
   }
   function draw() {
-    stSel.value = F.status; odChk.checked = F.overdue;
-    views.replaceChildren(...[["table", "Table"], ["card", "Cards"], ["timeline", "Timeline"], ["monthly", "Monthly"]].map(([k, l]) => o("button", { type: "button", class: F.view === k ? "on" : "", onclick: () => { F.view = k; setViewPref(k); draw(); } }, l)));
+    stSel.value = F.status; odChk.checked = F.overdue; fCnt();
+    const phone = matchMedia("(max-width:760px)").matches, cur = phone && F.view === "table" ? "card" : F.view;
+    views.replaceChildren(...[["table", "Table"], ["card", "Cards"], ["timeline", "Timeline"], ["monthly", "Monthly"]].map(([k, l]) => o("button", { type: "button", class: (cur === k ? "on" : "") + (k === "table" ? " pcc-v-table" : ""), onclick: () => { F.view = k; setViewPref(k); draw(); } }, l)));
     const L2 = list();
     if (!L2.length) { body.replaceChildren(o("div", { class: "card" }, empty(all.length ? "No projects match these filters." : "No projects yet. Add the first one, or start one from a procurement plan item.", can("projects") && !all.length ? btn("New project", () => PEDIT2(null, T && T[1]), "primary") : null))); return; }
     const mobile = matchMedia("(max-width:760px)").matches;
@@ -84,8 +89,20 @@ function ptable(L2) {
     o("td", { class: "nowrap" }, p.ref, o("div", { class: "muted small" }, p.type), roundChip(p)), o("td", { style: { minWidth: "190px" } }, pName(p)), o("td", { dir: "auto", style: { minWidth: "120px" } }, p.vendor || "—"), o("td", { class: "money" }, money(p.contract)), o("td", { class: "nowrap" }, fd(p.handover)), o("td", { class: "nowrap" }, fd(p.due), p.dueOriginal && p.dueOriginal !== p.due ? o("div", { class: "muted small" }, "extended") : null), o("td", {}, cdChip(p)), o("td", { style: { minWidth: "120px" } }, K.PBAR(p.progress)), o("td", {}, stChip(p.status)),
     o("td", { class: "pcc-acts" }, can("projects") ? btn("Edit", () => PEDIT2(p), "small") : null))), "pcc-ptable");
 }
+// Project card. Before a contract exists the card shows one line with the next step instead of empty rows.
+function pcNext(p) {
+  const nb = (p.bidders || []).length;
+  if (p.status === "Iulaan") return [p.advertNo ? "Iulaan " + p.advertNo : "Iulaan", p.bidOpening ? "bid opening " + fd(p.bidOpening) : ""].filter(Boolean).join(" · ");
+  if (p.status === "Under evaluation") return [nb ? nb + " bid" + (nb === 1 ? "" : "s") : "", p.evaluation ? "evaluation " + fd(p.evaluation) : ""].filter(Boolean).join(" · ") || "Under evaluation";
+  if (p.status === "Awarded") return [p.vendor, p.award ? "awarded " + fd(p.award) : ""].filter(Boolean).join(" · ") || "Awarded";
+  const pl = (Z().plan || []).find(x => x.projectId === p.id), d = pl && pl.dates && (pl.dates.ifb || pl.dates.reoi);
+  return [p.estimate != null ? "Estimate " + mvr(p.estimate) : "", d ? "Iulaan planned " + fd(d) : ""].filter(Boolean).join(" · ") || "Not started yet";
+}
 function pcard(p) {
-  return o("a", { class: "card pcc-pc", href: "#/project/" + p.id }, o("div", { class: "pcc-hc-top" }, o("span", { class: "muted small" }, p.ref + " · " + p.type), o("span", {}, roundChip(p), " ", stChip(p.status))), pName(p), o("div", { class: "small muted", dir: "auto" }, [p.vendor, p.location].filter(Boolean).join(" · ") || "—"), o("div", { class: "pcc-hc-kv" }, o("span", {}, "Contract"), o("b", {}, mvr(p.contract)), o("span", {}, "Due"), o("b", {}, fd(p.due))), o("div", { class: "row", style: { alignItems: "center", gap: "10px" } }, cdChip(p)), dualBar(p));
+  const started = p.contract != null || p.due || p.handover, sub = [p.vendor, p.location].filter(Boolean).join(" · ");
+  return o("a", { class: "card pcc-pc" + (started ? "" : " pre"), href: "#/project/" + p.id }, o("div", { class: "pcc-hc-top" }, o("span", { class: "muted small" }, p.ref + " · " + p.type), o("span", { class: "pcc-pc-st" }, roundChip(p), " ", stChip(p.status))), pName(p),
+    started ? [sub ? o("div", { class: "small muted", dir: "auto" }, sub) : null, o("div", { class: "pcc-hc-kv" }, o("span", {}, "Contract"), o("b", {}, mvr(p.contract)), o("span", {}, "Due"), o("b", {}, fd(p.due))), o("div", { class: "row", style: { alignItems: "center", gap: "10px" } }, cdChip(p)), dualBar(p)]
+      : o("div", { class: "pcc-pc-next", dir: "auto" }, pcNext(p)));
 }
 // Monthly view: procurements grouped by the month their Iulaan is (or is planned to be) announced.
 // Date: the project's Iulaan date, else the linked PR-09 item's planned IFB / REOI date. Plan items
